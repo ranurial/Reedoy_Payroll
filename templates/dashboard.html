@@ -18,6 +18,7 @@
             color: #263238;
         }
 
+        /* HEADER */
         .header {
             background: #1565c0;
             color: white;
@@ -36,68 +37,70 @@
         .logout {
             color: white;
             text-decoration: none;
-            background: rgba(255,255,255,.15);
-            padding: 8px 15px;
+            background: rgba(255,255,255,.18);
+            padding: 9px 16px;
             border-radius: 7px;
+            font-weight: 600;
         }
 
+        .logout:hover {
+            background: rgba(255,255,255,.28);
+        }
+
+        /* MAIN */
         .container {
             max-width: 1200px;
             margin: 30px auto;
             padding: 0 20px;
         }
 
+        /* WELCOME */
         .welcome {
             background: white;
             border-radius: 12px;
-            padding: 22px;
+            padding: 24px;
             margin-bottom: 25px;
             box-shadow: 0 2px 10px rgba(0,0,0,.07);
         }
 
         .welcome h2 {
-            margin: 0 0 6px;
+            margin: 0 0 8px;
             color: #1565c0;
         }
 
-        .cards {
+        .welcome p {
+            margin: 0;
+            color: #666;
+        }
+
+        /* STAT CARDS */
+        .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 18px;
             margin-bottom: 30px;
         }
 
-        .card {
+        .stat-card {
             background: white;
             padding: 22px;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,.07);
-            text-decoration: none;
-            color: #263238;
-            transition: .2s;
         }
 
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 16px rgba(0,0,0,.12);
-        }
-
-        .icon {
-            font-size: 30px;
-            margin-bottom: 10px;
-        }
-
-        .card h3 {
-            margin: 0 0 6px;
-            font-size: 18px;
-        }
-
-        .card p {
-            margin: 0;
+        .stat-title {
             color: #777;
             font-size: 14px;
+            margin-bottom: 8px;
         }
 
+        .stat-value {
+            color: #1565c0;
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        /* MENU SECTION */
         .section {
             background: white;
             padding: 25px;
@@ -107,48 +110,73 @@
 
         .section h2 {
             margin-top: 0;
+            margin-bottom: 20px;
             color: #1565c0;
         }
 
         .menu {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 14px;
         }
 
         .menu a {
             display: block;
-            padding: 14px;
+            padding: 16px;
             border: 1px solid #e0e6ed;
-            border-radius: 8px;
+            border-radius: 9px;
             text-decoration: none;
             color: #1565c0;
             font-weight: 600;
             background: #fafcff;
+            transition: .2s;
         }
 
         .menu a:hover {
             background: #eef5ff;
+            transform: translateY(-2px);
         }
 
+        .menu-icon {
+            font-size: 23px;
+            margin-right: 7px;
+        }
+
+        /* FOOTER */
         .footer {
             text-align: center;
-            padding: 25px;
+            padding: 30px 20px;
             color: #888;
             font-size: 12px;
         }
 
+        /* MOBILE */
         @media(max-width:600px) {
+
             .header {
                 padding: 15px;
             }
 
             .header h1 {
-                font-size: 18px;
+                font-size: 17px;
+            }
+
+            .logout {
+                padding: 7px 10px;
+                font-size: 13px;
             }
 
             .container {
                 margin: 20px auto;
+                padding: 0 12px;
+            }
+
+            .welcome {
+                padding: 18px;
+            }
+
+            .stat-value {
+                font-size: 25px;
             }
         }
     </style>
@@ -156,9 +184,12 @@
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
 
-    <h1>REEDOY TEXTILE — Payroll</h1>
+    <h1>
+        REEDOY TEXTILE — Payroll
+    </h1>
 
     <a class="logout" href="{{ url_for('logout') }}">
         Logout
@@ -167,11 +198,16 @@
 </div>
 
 
+<!-- MAIN -->
 <div class="container">
 
+
+    <!-- WELCOME -->
     <div class="welcome">
 
-        <h2>স্বাগতম 👋</h2>
+        <h2>
+            স্বাগতম 👋
+        </h2>
 
         <p>
             Reedoy Textile Dyeing Printing & Finishing
@@ -181,79 +217,157 @@
     </div>
 
 
-    <div class="cards">
-
-        <a class="card" href="{{ url_for('workers') }}">
-            <div class="icon">👷</div>
-            <h3>Workers</h3>
-            <p>শ্রমিক ও কর্মচারীর তথ্য</p>
-        </a>
+    <!-- STATISTICS -->
+    <div class="stats">
 
 
-        <a class="card" href="{{ url_for('attendance') }}">
-            <div class="icon">📅</div>
-            <h3>Attendance</h3>
-            <p>উপস্থিতি ও অনুপস্থিতি</p>
-        </a>
+        <!-- WORKERS -->
+        <div class="stat-card">
+
+            <div class="stat-title">
+                মোট Workers
+            </div>
+
+            <div class="stat-value">
+                {{ workers }}
+            </div>
+
+        </div>
 
 
-        <a class="card" href="{{ url_for('advances') }}">
-            <div class="icon">💰</div>
-            <h3>Advance Salary</h3>
-            <p>অগ্রিম বেতন ব্যবস্থাপনা</p>
-        </a>
+        <!-- ADVANCE -->
+        <div class="stat-card">
+
+            <div class="stat-title">
+                মোট Advance Salary
+            </div>
+
+            <div class="stat-value">
+                ৳ {{ advances }}
+            </div>
+
+        </div>
 
 
-        <a class="card" href="{{ url_for('report') }}">
-            <div class="icon">📊</div>
-            <h3>Salary Report</h3>
-            <p>বেতন রিপোর্ট ও হিসাব</p>
-        </a>
+        <!-- DEPARTMENT -->
+        <div class="stat-card">
+
+            <div class="stat-title">
+                মোট Department
+            </div>
+
+            <div class="stat-value">
+                {{ departments }}
+            </div>
+
+        </div>
+
+
+        <!-- MONTH -->
+        <div class="stat-card">
+
+            <div class="stat-title">
+                Current Month
+            </div>
+
+            <div class="stat-value">
+                {{ month }}
+            </div>
+
+        </div>
 
     </div>
 
 
+    <!-- MENU -->
     <div class="section">
 
-        <h2>Quick Menu</h2>
+        <h2>
+            Quick Menu
+        </h2>
 
         <div class="menu">
 
+
+            <!-- WORKERS -->
             <a href="{{ url_for('workers') }}">
-                👷 Workers
+
+                <span class="menu-icon">👷</span>
+
+                Workers
+
             </a>
 
+
+            <!-- ATTENDANCE -->
             <a href="{{ url_for('attendance') }}">
-                📅 Attendance
+
+                <span class="menu-icon">📅</span>
+
+                Attendance
+
             </a>
 
+
+            <!-- ADVANCE -->
             <a href="{{ url_for('advances') }}">
-                💵 Advance Salary
+
+                <span class="menu-icon">💰</span>
+
+                Advance Salary
+
             </a>
 
+
+            <!-- REPORT -->
             <a href="{{ url_for('report') }}">
-                📊 Salary Report
+
+                <span class="menu-icon">📊</span>
+
+                Salary Report
+
             </a>
 
+
+            <!-- DEPARTMENT -->
             <a href="{{ url_for('department') }}">
-                🏢 Department
+
+                <span class="menu-icon">🏢</span>
+
+                Department
+
             </a>
 
-            <a href="{{ url_for('payslip') }}">
-                🧾 Payslip
-            </a>
 
+            <!-- SETTINGS -->
             <a href="{{ url_for('settings') }}">
-                ⚙️ Settings
+
+                <span class="menu-icon">⚙️</span>
+
+                Settings
+
             </a>
 
+
+            <!-- USERS -->
             <a href="{{ url_for('users') }}">
-                👤 Users
+
+                <span class="menu-icon">👤</span>
+
+                Users
+
             </a>
 
+
+            <!-- ACTIVITY -->
             <a href="{{ url_for('activity') }}">
-                📋 Activity
+
+                <span class="menu-icon">📋</span>
+
+                Activity
+
             </a>
+
 
         </div>
 
@@ -262,8 +376,11 @@
 </div>
 
 
+<!-- FOOTER -->
 <div class="footer">
+
     REEDOY TEXTILE DYEING PRINTING & FINISHING
+
 </div>
 
 </body>
