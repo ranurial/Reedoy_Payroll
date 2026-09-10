@@ -1,1 +1,168 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reedoy Payroll - Login</title>
 
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Noto Sans Bengali", "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #0d47a1, #1976d2, #42a5f5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 430px;
+            background: white;
+            border-radius: 18px;
+            padding: 35px 32px;
+            box-shadow: 0 15px 45px rgba(0,0,0,.22);
+        }
+
+        .logo {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+            background: #1565c0;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 25px;
+            font-weight: bold;
+        }
+
+        h1 {
+            margin: 0;
+            text-align: center;
+            color: #123;
+            font-size: 25px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #777;
+            margin: 7px 0 28px;
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            margin: 14px 0 7px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1px solid #d4d9df;
+            border-radius: 9px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #1976d2;
+            box-shadow: 0 0 0 3px rgba(25,118,210,.12);
+        }
+
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 13px;
+            border: 0;
+            border-radius: 9px;
+            background: #1565c0;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0d47a1;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            color: #888;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-box">
+
+    <div class="logo">RT</div>
+
+    <h1>রিডয় টেক্সটাইল</h1>
+
+    <div class="subtitle">
+        Payroll Management System
+    </div>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+
+        <label for="username">ইউজারনেম</label>
+
+        <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="ইউজারনেম লিখুন"
+            required
+        >
+
+        <label for="password">পাসওয়ার্ড</label>
+
+        <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="পাসওয়ার্ড লিখুন"
+            required
+        >
+
+        <button type="submit">
+            লগইন করুন
+        </button>
+
+    </form>
+
+    <div class="footer">
+        REEDOY TEXTILE DYEING PRINTING & FINISHING
+    </div>
+
+</div>
+
+</body>
+</html>
