@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<h2>{{tr('Activity Log')}}</h2><div class="card table-wrap"><table><tr><th>ID</th><th>{{tr('Username')}}</th><th>{{tr('Action')}}</th><th>{{tr('Date')}}</th></tr>{% for x in logs %}<tr><td>{{x['id']}}</td><td>{{x['username']}}</td><td>{{x['action']}}</td><td>{{x['log_time']}}</td></tr>{% endfor %}</table></div>{% endblock %}
