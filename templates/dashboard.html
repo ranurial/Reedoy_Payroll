@@ -1,1 +1,270 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>Reedoy Payroll - Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Noto Sans Bengali", "Segoe UI", Arial, sans-serif;
+            background: #f4f7fb;
+            color: #263238;
+        }
+
+        .header {
+            background: #1565c0;
+            color: white;
+            padding: 18px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,.15);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .logout {
+            color: white;
+            text-decoration: none;
+            background: rgba(255,255,255,.15);
+            padding: 8px 15px;
+            border-radius: 7px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .welcome {
+            background: white;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.07);
+        }
+
+        .welcome h2 {
+            margin: 0 0 6px;
+            color: #1565c0;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.07);
+            text-decoration: none;
+            color: #263238;
+            transition: .2s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 16px rgba(0,0,0,.12);
+        }
+
+        .icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        .card h3 {
+            margin: 0 0 6px;
+            font-size: 18px;
+        }
+
+        .card p {
+            margin: 0;
+            color: #777;
+            font-size: 14px;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.07);
+        }
+
+        .section h2 {
+            margin-top: 0;
+            color: #1565c0;
+        }
+
+        .menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .menu a {
+            display: block;
+            padding: 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #1565c0;
+            font-weight: 600;
+            background: #fafcff;
+        }
+
+        .menu a:hover {
+            background: #eef5ff;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 25px;
+            color: #888;
+            font-size: 12px;
+        }
+
+        @media(max-width:600px) {
+            .header {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .container {
+                margin: 20px auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+
+    <h1>REEDOY TEXTILE — Payroll</h1>
+
+    <a class="logout" href="{{ url_for('logout') }}">
+        Logout
+    </a>
+
+</div>
+
+
+<div class="container">
+
+    <div class="welcome">
+
+        <h2>স্বাগতম 👋</h2>
+
+        <p>
+            Reedoy Textile Dyeing Printing & Finishing
+            Payroll Management System
+        </p>
+
+    </div>
+
+
+    <div class="cards">
+
+        <a class="card" href="{{ url_for('workers') }}">
+            <div class="icon">👷</div>
+            <h3>Workers</h3>
+            <p>শ্রমিক ও কর্মচারীর তথ্য</p>
+        </a>
+
+
+        <a class="card" href="{{ url_for('attendance') }}">
+            <div class="icon">📅</div>
+            <h3>Attendance</h3>
+            <p>উপস্থিতি ও অনুপস্থিতি</p>
+        </a>
+
+
+        <a class="card" href="{{ url_for('advances') }}">
+            <div class="icon">💰</div>
+            <h3>Advance Salary</h3>
+            <p>অগ্রিম বেতন ব্যবস্থাপনা</p>
+        </a>
+
+
+        <a class="card" href="{{ url_for('report') }}">
+            <div class="icon">📊</div>
+            <h3>Salary Report</h3>
+            <p>বেতন রিপোর্ট ও হিসাব</p>
+        </a>
+
+    </div>
+
+
+    <div class="section">
+
+        <h2>Quick Menu</h2>
+
+        <div class="menu">
+
+            <a href="{{ url_for('workers') }}">
+                👷 Workers
+            </a>
+
+            <a href="{{ url_for('attendance') }}">
+                📅 Attendance
+            </a>
+
+            <a href="{{ url_for('advances') }}">
+                💵 Advance Salary
+            </a>
+
+            <a href="{{ url_for('report') }}">
+                📊 Salary Report
+            </a>
+
+            <a href="{{ url_for('department') }}">
+                🏢 Department
+            </a>
+
+            <a href="{{ url_for('payslip') }}">
+                🧾 Payslip
+            </a>
+
+            <a href="{{ url_for('settings') }}">
+                ⚙️ Settings
+            </a>
+
+            <a href="{{ url_for('users') }}">
+                👤 Users
+            </a>
+
+            <a href="{{ url_for('activity') }}">
+                📋 Activity
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="footer">
+    REEDOY TEXTILE DYEING PRINTING & FINISHING
+</div>
+
+</body>
+</html>
