@@ -1,1 +1,196 @@
-{% extends 'base.html' %}{% block content %}<h2>{{tr('Attendance')}}</h2><div class="card"><form method="post"><label>{{tr('Month')}}</label><input type="month" name="month" value="{{month}}"><br><div class="table-wrap"><table><tr><th>ID</th><th>{{tr('Name')}}</th><th>{{tr('Department')}}</th><th>{{tr('Present')}}</th><th>{{tr('Absent')}}</th><th>{{tr('OT Hours')}}</th></tr>{% for w in data %}<tr><td>{{w['id']}}</td><td>{{w['bangla_name'] or w['name']}}</td><td>{{dept(w['department'])}}</td><td><input type="number" min="0" name="present_{{w['id']}}" value="{{w['present_days']}}"></td><td><input type="number" min="0" name="absent_{{w['id']}}" value="{{w['absent_days']}}"></td><td><input type="number" min="0" step="0.25" name="ot_{{w['id']}}" value="{{w['ot_hours']}}"></td></tr>{% endfor %}</table></div><br><button>{{tr('Save')}}</button></form></div>{% endblock %}
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h2>{{ tr('Attendance') }}</h2>
+        <p class="muted">Daily worker attendance and overtime</p>
+    </div>
+</div>
+
+<div class="card">
+
+    <form method="post">
+
+        <div class="formgrid">
+
+            <div>
+                <label>{{ tr('Date') }}</label>
+                <input
+                    type="date"
+                    name="date"
+                    value="{{ date }}"
+                    required>
+            </div>
+
+            <div>
+                <label>{{ tr('Worker') }}</label>
+                <select name="worker_id" required>
+
+                    <option value="">
+                        -- {{ tr('Select Worker') }} --
+                    </option>
+
+                    {% for w in workers %}
+
+                    <option
+                        value="{{ w['id'] }}"
+                        {% if selected_worker == w['id'] %}selected{% endif %}>
+
+                        {{ w['name'] }}
+                        {% if w['bangla_name'] %}
+                            - {{ w['bangla_name'] }}
+                        {% endif %}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+            </div>
+
+            <div>
+                <label>{{ tr('Present Days') }}</label>
+                <input
+                    type="number"
+                    name="present"
+                    min="0"
+                    max="31"
+                    step="1"
+                    value="{{ attendance['present'] if attendance else 1 }}">
+            </div>
+
+            <div>
+                <label>{{ tr('Absent Days') }}</label>
+                <input
+                    type="number"
+                    name="absent"
+                    min="0"
+                    max="31"
+                    step="1"
+                    value="{{ attendance['absent'] if attendance else 0 }}">
+            </div>
+
+            <div>
+                <label>{{ tr('OT Hours') }}</label>
+                <input
+                    type="number"
+                    name="ot_hours"
+                    min="0"
+                    step="0.5"
+                    value="{{ attendance['ot_hours'] if attendance else 0 }}">
+            </div>
+
+        </div>
+
+        <div style="margin-top:20px;">
+
+            <button type="submit" class="btn">
+                {{ tr('Save Attendance') }}
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<div class="card">
+
+    <div class="page-header">
+
+        <h3>{{ tr('Attendance Records') }}</h3>
+
+        <form method="get" class="actions">
+
+            <input
+                type="date"
+                name="date"
+                value="{{ date }}">
+
+            <button type="submit" class="btn">
+                {{ tr('Search') }}
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <div class="table-wrap">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>{{ tr('Date') }}</th>
+                    <th>{{ tr('Worker') }}</th>
+                    <th>{{ tr('Department') }}</th>
+                    <th>{{ tr('Present') }}</th>
+                    <th>{{ tr('Absent') }}</th>
+                    <th>{{ tr('OT Hours') }}</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for a in attendance_rows %}
+
+                <tr>
+
+                    <td>{{ a['date'] }}</td>
+
+                    <td>
+                        {{ a['name'] }}
+
+                        {% if a['bangla_name'] %}
+                            <br>
+                            <span class="muted">
+                                {{ a['bangla_name'] }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {{ dept(a['department']) }}
+                    </td>
+
+                    <td>{{ a['present'] }}</td>
+
+                    <td>{{ a['absent'] }}</td>
+
+                    <td>{{ a['ot_hours'] }}</td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        style="text-align:center;padding:30px;">
+
+                        {{ tr('No attendance records found') }}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}
+```
