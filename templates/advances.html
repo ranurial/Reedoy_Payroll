@@ -1,1 +1,213 @@
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h2>{{ tr('Advance Salary') }}</h2>
+        <p class="muted">Worker advance salary entry and records</p>
+    </div>
+</div>
+
+<div class="card">
+
+    <h3>{{ tr('Add Advance Salary') }}</h3>
+
+    <form method="post">
+
+        <div class="formgrid">
+
+            <div>
+                <label>{{ tr('Date') }}</label>
+                <input
+                    type="date"
+                    name="date"
+                    value="{{ date }}"
+                    required>
+            </div>
+
+            <div>
+                <label>{{ tr('Worker') }}</label>
+
+                <select name="worker_id" required>
+
+                    <option value="">
+                        -- {{ tr('Select Worker') }} --
+                    </option>
+
+                    {% for w in workers %}
+
+                    <option value="{{ w['id'] }}">
+
+                        {{ w['name'] }}
+
+                        {% if w['bangla_name'] %}
+                            - {{ w['bangla_name'] }}
+                        {% endif %}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+            </div>
+
+            <div>
+                <label>{{ tr('Amount') }}</label>
+
+                <input
+                    type="number"
+                    name="amount"
+                    min="0"
+                    step="0.01"
+                    required
+                    placeholder="0.00">
+            </div>
+
+            <div>
+                <label>{{ tr('Note') }}</label>
+
+                <input
+                    type="text"
+                    name="note"
+                    placeholder="{{ tr('Note') }}">
+            </div>
+
+        </div>
+
+        <div style="margin-top:20px;">
+
+            <button type="submit" class="btn">
+                {{ tr('Save') }}
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<div class="card">
+
+    <div class="page-header">
+
+        <h3>{{ tr('Advance Salary Records') }}</h3>
+
+        <form method="get" class="actions">
+
+            <input
+                type="text"
+                name="q"
+                value="{{ q }}"
+                placeholder="{{ tr('Search') }}">
+
+            <button type="submit" class="btn">
+                {{ tr('Search') }}
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <div class="table-wrap">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>ID</th>
+                    <th>{{ tr('Date') }}</th>
+                    <th>{{ tr('Worker') }}</th>
+                    <th>{{ tr('Department') }}</th>
+                    <th>{{ tr('Amount') }}</th>
+                    <th>{{ tr('Note') }}</th>
+                    <th>{{ tr('Action') }}</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for a in advances %}
+
+                <tr>
+
+                    <td>{{ a['id'] }}</td>
+
+                    <td>{{ a['date'] }}</td>
+
+                    <td>
+
+                        {{ a['name'] }}
+
+                        {% if a['bangla_name'] %}
+                            <br>
+                            <span class="muted">
+                                {{ a['bangla_name'] }}
+                            </span>
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+                        {{ dept(a['department']) }}
+                    </td>
+
+                    <td>
+                        {{ '%.2f'|format(a['amount'] or 0) }}
+                    </td>
+
+                    <td>
+                        {{ a['note'] or '' }}
+                    </td>
+
+                    <td>
+
+                        {% if a['id'] %}
+
+                        <a
+                            class="btn danger"
+                            href="{{ url_for('delete_advance', aid=a['id']) }}"
+                            onclick="return confirm('Delete this advance salary record?');">
+
+                            {{ tr('Delete') }}
+
+                        </a>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="7"
+                        style="text-align:center;padding:30px;">
+
+                        {{ tr('No advance salary records found') }}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}
+```
 
