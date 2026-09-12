@@ -1,1 +1,203 @@
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h2>{{ tr('Department Salary Sheet') }}</h2>
+        <p class="muted">Department-wise monthly salary summary</p>
+    </div>
+</div>
+
+<div class="card">
+
+    <form method="get">
+
+        <div class="formgrid">
+
+            <div>
+                <label>{{ tr('Month') }}</label>
+
+                <input
+                    type="month"
+                    name="month"
+                    value="{{ month }}"
+                    required>
+            </div>
+
+            <div>
+                <label>{{ tr('Department') }}</label>
+
+                <select name="department">
+
+                    <option value="">
+                        {{ tr('All Departments') }}
+                    </option>
+
+                    {% for d in departments %}
+
+                    <option
+                        value="{{ d }}"
+                        {% if selected_department == d %}selected{% endif %}>
+
+                        {{ dept(d) }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+            </div>
+
+        </div>
+
+        <div style="margin-top:20px;">
+
+            <button type="submit" class="btn">
+                {{ tr('Generate Report') }}
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<div class="card">
+
+    <div class="page-header">
+
+        <h3>{{ tr('Department Summary') }}</h3>
+
+        {% if month %}
+        <strong>{{ month }}</strong>
+        {% endif %}
+
+    </div>
+
+
+    <div class="table-wrap">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>{{ tr('Department') }}</th>
+                    <th>{{ tr('Workers') }}</th>
+                    <th>{{ tr('Basic Salary') }}</th>
+                    <th>{{ tr('OT Amount') }}</th>
+                    <th>{{ tr('Refreshment') }}</th>
+                    <th>{{ tr('Advance') }}</th>
+                    <th>{{ tr('Net Salary') }}</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for r in department_rows %}
+
+                <tr>
+
+                    <td>
+                        {{ dept(r['department']) }}
+                    </td>
+
+                    <td>
+                        {{ r['workers'] or 0 }}
+                    </td>
+
+                    <td>
+                        {{ '%.2f'|format(r['basic_salary'] or 0) }}
+                    </td>
+
+                    <td>
+                        {{ '%.2f'|format(r['ot_amount'] or 0) }}
+                    </td>
+
+                    <td>
+                        {{ '%.2f'|format(r['refreshment'] or 0) }}
+                    </td>
+
+                    <td>
+                        {{ '%.2f'|format(r['advance'] or 0) }}
+                    </td>
+
+                    <td>
+                        <strong>
+                            {{ '%.2f'|format(r['net_salary'] or 0) }}
+                        </strong>
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="7"
+                        style="text-align:center;padding:35px;">
+
+                        {{ tr('No department records found') }}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+
+            {% if department_rows %}
+
+            <tfoot>
+
+                <tr>
+
+                    <th>{{ tr('Total') }}</th>
+
+                    <th>
+                        {{ total_workers or 0 }}
+                    </th>
+
+                    <th>
+                        {{ '%.2f'|format(total_basic or 0) }}
+                    </th>
+
+                    <th>
+                        {{ '%.2f'|format(total_ot or 0) }}
+                    </th>
+
+                    <th>
+                        {{ '%.2f'|format(total_refreshment or 0) }}
+                    </th>
+
+                    <th>
+                        {{ '%.2f'|format(total_advance or 0) }}
+                    </th>
+
+                    <th>
+                        {{ '%.2f'|format(total_net or 0) }}
+                    </th>
+
+                </tr>
+
+            </tfoot>
+
+            {% endif %}
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}
+```
 
