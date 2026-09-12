@@ -1,1 +1,83 @@
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h2>{{ tr('Activity Log') }}</h2>
+        <p class="muted">Application activity and user actions</p>
+    </div>
+</div>
+
+<div class="card">
+
+    <div class="table-wrap">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>ID</th>
+                    <th>{{ tr('Date / Time') }}</th>
+                    <th>{{ tr('User') }}</th>
+                    <th>{{ tr('Action') }}</th>
+                    <th>{{ tr('Details') }}</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for a in activities %}
+
+                <tr>
+
+                    <td>{{ a['id'] }}</td>
+
+                    <td>
+                        {{ a['created_at'] or '' }}
+                    </td>
+
+                    <td>
+                        {{ a['username'] or '' }}
+                    </td>
+
+                    <td>
+                        {{ a['action'] or '' }}
+                    </td>
+
+                    <td>
+                        {{ a['details'] or '' }}
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        style="text-align:center;padding:35px;">
+
+                        {{ tr('No activity records found') }}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}
+```
 
