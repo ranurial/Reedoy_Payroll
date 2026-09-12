@@ -1,1 +1,144 @@
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h2>{{ tr('Settings') }}</h2>
+        <p class="muted">Company and application settings</p>
+    </div>
+</div>
+
+<div class="card">
+
+    <h3>{{ tr('Company Information') }}</h3>
+
+    <form method="post">
+
+        <div class="formgrid">
+
+            <div>
+                <label>{{ tr('Company Name') }}</label>
+
+                <input
+                    type="text"
+                    name="company_name"
+                    value="{{ settings.get('company_name','') }}"
+                    placeholder="{{ tr('Company Name') }}">
+            </div>
+
+            <div>
+                <label>{{ tr('Company Address') }}</label>
+
+                <input
+                    type="text"
+                    name="company_address"
+                    value="{{ settings.get('company_address','') }}"
+                    placeholder="{{ tr('Company Address') }}">
+            </div>
+
+            <div>
+                <label>{{ tr('Phone') }}</label>
+
+                <input
+                    type="text"
+                    name="phone"
+                    value="{{ settings.get('phone','') }}"
+                    placeholder="{{ tr('Phone') }}">
+            </div>
+
+            <div>
+                <label>{{ tr('Email') }}</label>
+
+                <input
+                    type="email"
+                    name="email"
+                    value="{{ settings.get('email','') }}"
+                    placeholder="{{ tr('Email') }}">
+            </div>
+
+            <div>
+                <label>{{ tr('Language') }}</label>
+
+                <select name="language">
+
+                    <option
+                        value="en"
+                        {% if session.get('lang','en') == 'en' %}selected{% endif %}>
+                        English
+                    </option>
+
+                    <option
+                        value="bn"
+                        {% if session.get('lang','en') == 'bn' %}selected{% endif %}>
+                        বাংলা
+                    </option>
+
+                </select>
+            </div>
+
+        </div>
+
+        <div style="margin-top:20px;">
+
+            <button type="submit" class="btn">
+                {{ tr('Save Settings') }}
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<div class="card">
+
+    <h3>{{ tr('Report Settings') }}</h3>
+
+    <p class="muted">
+        {{ tr('These settings will be used in salary reports and payslips.') }}
+    </p>
+
+    <div class="formgrid">
+
+        <div>
+            <label>{{ tr('Company Name') }}</label>
+
+            <div class="value-box">
+                {{ settings.get('company_name','') }}
+            </div>
+        </div>
+
+        <div>
+            <label>{{ tr('Company Address') }}</label>
+
+            <div class="value-box">
+                {{ settings.get('company_address','') }}
+            </div>
+        </div>
+
+        <div>
+            <label>{{ tr('Phone') }}</label>
+
+            <div class="value-box">
+                {{ settings.get('phone','') }}
+            </div>
+        </div>
+
+        <div>
+            <label>{{ tr('Email') }}</label>
+
+            <div class="value-box">
+                {{ settings.get('email','') }}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+```
 
