@@ -1,9 +1,11 @@
+```html
 <!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reedoy Payroll - Login</title>
+
+    <title>Reedoy Textile Payroll - Login</title>
 
     <style>
         * {
@@ -13,8 +15,8 @@
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: "Noto Sans Bengali", "Segoe UI", Arial, sans-serif;
-            background: linear-gradient(135deg, #0d47a1, #1976d2, #42a5f5);
+            font-family: Arial, "Noto Sans Bengali", "SolaimanLipi", sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e3a8a);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -26,66 +28,66 @@
             max-width: 430px;
             background: white;
             border-radius: 18px;
-            padding: 35px 32px;
-            box-shadow: 0 15px 45px rgba(0,0,0,.22);
+            padding: 35px;
+            box-shadow: 0 20px 50px rgba(0,0,0,.25);
         }
 
         .logo {
-            width: 72px;
-            height: 72px;
-            margin: 0 auto 16px;
+            width: 75px;
+            height: 75px;
+            margin: 0 auto 15px;
             border-radius: 50%;
-            background: #1565c0;
+            background: #1d4ed8;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 25px;
+            font-size: 28px;
             font-weight: bold;
         }
 
         h1 {
-            margin: 0;
             text-align: center;
-            color: #123;
+            margin: 0;
+            color: #111827;
             font-size: 25px;
         }
 
         .subtitle {
             text-align: center;
-            color: #777;
-            margin: 7px 0 28px;
+            color: #6b7280;
+            margin: 8px 0 28px;
             font-size: 14px;
         }
 
         label {
             display: block;
-            margin: 14px 0 7px;
-            color: #333;
+            margin-bottom: 7px;
             font-weight: 600;
+            color: #374151;
         }
 
         input {
             width: 100%;
             padding: 13px 14px;
-            border: 1px solid #d4d9df;
+            margin-bottom: 18px;
+            border: 1px solid #d1d5db;
             border-radius: 9px;
             font-size: 15px;
             outline: none;
         }
 
         input:focus {
-            border-color: #1976d2;
-            box-shadow: 0 0 0 3px rgba(25,118,210,.12);
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,.12);
         }
 
         button {
             width: 100%;
-            margin-top: 24px;
-            padding: 13px;
             border: 0;
             border-radius: 9px;
-            background: #1565c0;
+            padding: 13px;
+            background: #2563eb;
             color: white;
             font-size: 16px;
             font-weight: bold;
@@ -93,23 +95,25 @@
         }
 
         button:hover {
-            background: #0d47a1;
+            background: #1d4ed8;
         }
 
         .error {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
-            padding: 10px 12px;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            padding: 11px;
             border-radius: 8px;
-            margin-bottom: 14px;
+            margin-bottom: 18px;
+            text-align: center;
+            font-size: 14px;
         }
 
         .footer {
             text-align: center;
-            margin-top: 24px;
-            color: #888;
+            color: #9ca3af;
             font-size: 12px;
+            margin-top: 25px;
         }
     </style>
 </head>
@@ -118,51 +122,61 @@
 
 <div class="login-box">
 
-    <div class="logo">RT</div>
+    <div class="logo">
+        RT
+    </div>
 
-    <h1>রিডয় টেক্সটাইল</h1>
+    <h1>Reedoy Textile</h1>
 
     <div class="subtitle">
-        Payroll Management System
+        Payroll & HR Management System
     </div>
 
     {% if error %}
-        <div class="error">{{ error }}</div>
+    <div class="error">
+        {{ error }}
+    </div>
     {% endif %}
 
-    <form method="POST" action="{{ url_for('login') }}">
+    <form method="post">
 
-        <label for="username">ইউজারনেম</label>
+        <label for="username">
+            Username / ইউজারনেম
+        </label>
 
         <input
             type="text"
             id="username"
             name="username"
-            placeholder="ইউজারনেম লিখুন"
             required
-        >
+            autocomplete="username"
+            autofocus
+            placeholder="Enter username">
 
-        <label for="password">পাসওয়ার্ড</label>
+        <label for="password">
+            Password / পাসওয়ার্ড
+        </label>
 
         <input
             type="password"
             id="password"
             name="password"
-            placeholder="পাসওয়ার্ড লিখুন"
             required
-        >
+            autocomplete="current-password"
+            placeholder="Enter password">
 
         <button type="submit">
-            লগইন করুন
+            Login / লগইন
         </button>
 
     </form>
 
     <div class="footer">
-        REEDOY TEXTILE DYEING PRINTING & FINISHING
+        Reedoy Textile Dyeing Printing & Finishing
     </div>
 
 </div>
 
 </body>
 </html>
+```
