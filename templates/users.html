@@ -1,1 +1,191 @@
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h2>{{ tr('Users') }}</h2>
+        <p class="muted">Create and manage application users</p>
+    </div>
+</div>
+
+<div class="card">
+
+    <h3>{{ tr('Create User') }}</h3>
+
+    <form method="post">
+
+        <div class="formgrid">
+
+            <div>
+                <label>{{ tr('Username') }}</label>
+
+                <input
+                    type="text"
+                    name="username"
+                    required
+                    autocomplete="off"
+                    placeholder="{{ tr('Username') }}">
+            </div>
+
+            <div>
+                <label>{{ tr('Full Name') }}</label>
+
+                <input
+                    type="text"
+                    name="full_name"
+                    placeholder="{{ tr('Full Name') }}">
+            </div>
+
+            <div>
+                <label>{{ tr('Password') }}</label>
+
+                <input
+                    type="password"
+                    name="password"
+                    required
+                    autocomplete="new-password"
+                    placeholder="{{ tr('Password') }}">
+            </div>
+
+            <div>
+                <label>{{ tr('Role') }}</label>
+
+                <select name="role">
+
+                    <option value="User">
+                        {{ tr('User') }}
+                    </option>
+
+                    <option value="Manager">
+                        {{ tr('Manager') }}
+                    </option>
+
+                    <option value="Administrator">
+                        {{ tr('Administrator') }}
+                    </option>
+
+                </select>
+            </div>
+
+        </div>
+
+        <div style="margin-top:20px;">
+
+            <button type="submit" class="btn">
+                {{ tr('Create User') }}
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<div class="card">
+
+    <h3>{{ tr('User List') }}</h3>
+
+    <div class="table-wrap">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>ID</th>
+                    <th>{{ tr('Username') }}</th>
+                    <th>{{ tr('Full Name') }}</th>
+                    <th>{{ tr('Role') }}</th>
+                    <th>{{ tr('Status') }}</th>
+                    <th>{{ tr('Action') }}</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for u in users %}
+
+                <tr>
+
+                    <td>{{ u['id'] }}</td>
+
+                    <td>{{ u['username'] }}</td>
+
+                    <td>{{ u['full_name'] or '' }}</td>
+
+                    <td>{{ u['role'] }}</td>
+
+                    <td>
+
+                        {% if u['active'] %}
+
+                        <span class="badge">
+                            {{ tr('Active') }}
+                        </span>
+
+                        {% else %}
+
+                        <span class="badge danger">
+                            {{ tr('Inactive') }}
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {% if u['username'] != 'admin' %}
+
+                        <a
+                            class="btn danger"
+                            href="{{ url_for('delete_user', uid=u['id']) }}"
+                            onclick="return confirm('Delete this user?');">
+
+                            {{ tr('Delete') }}
+
+                        </a>
+
+                        {% else %}
+
+                        <span class="muted">
+                            {{ tr('Protected') }}
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        style="text-align:center;padding:30px;">
+
+                        {{ tr('No users found') }}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}
+```
 
