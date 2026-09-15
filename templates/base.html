@@ -1,136 +1,261 @@
-{% extends 'base.html' %}
+```html
+<!doctype html>
+<html lang="{{ 'bn' if session.get('lang','en')=='bn' else 'en' }}">
 
-{% block content %}
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<div class="page-header">
-    <div>
-        <h2>{{ tr('Attendance') }}</h2>
-        <p class="muted">Monthly worker attendance and overtime</p>
+    <title>{{ company }} - Reedoy Payroll</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, "Noto Sans Bengali", sans-serif;
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .nav {
+            background: #0b4f9c;
+            color: #fff;
+            padding: 12px 18px;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav a {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .brand {
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .wrap {
+            max-width: 1250px;
+            margin: 22px auto;
+            padding: 0 14px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 10px #0001;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+
+        .stat {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .btn,
+        button {
+            background: #0b4f9c;
+            color: #fff;
+            border: 0;
+            padding: 9px 13px;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .danger {
+            background: #b42318;
+        }
+
+        .muted {
+            color: #667085;
+        }
+
+        .table-wrap {
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 9px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        input,
+        select {
+            padding: 9px;
+            border: 1px solid #ccd3dd;
+            border-radius: 6px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin: 8px 0 4px;
+        }
+
+        .formgrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .flash {
+            padding: 10px;
+            border-radius: 6px;
+            background: #e7f6ec;
+            margin-bottom: 10px;
+        }
+
+        .flash.danger {
+            background: #fdecec;
+            color: #8b1e1e;
+        }
+
+        .right {
+            margin-left: auto;
+        }
+
+        @media print {
+            .nav,
+            .no-print {
+                display: none;
+            }
+
+            .wrap {
+                margin: 0;
+            }
+
+            .card {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="nav">
+
+        <span class="brand">
+            Reedoy Payroll
+        </span>
+
+        {% if session.get('user') %}
+
+            <a href="{{ url_for('dashboard') }}">
+                {{ tr('Dashboard') }}
+            </a>
+
+            <a href="{{ url_for('workers') }}">
+                {{ tr('Workers') }}
+            </a>
+
+            <a href="{{ url_for('attendance') }}">
+                {{ tr('Attendance') }}
+            </a>
+
+            <a href="{{ url_for('advances') }}">
+                {{ tr('Advances') }}
+            </a>
+
+            <a href="{{ url_for('report') }}">
+                {{ tr('Payroll Report') }}
+            </a>
+
+            <a href="{{ url_for('department') }}">
+                {{ tr('Department Salary') }}
+            </a>
+
+            {% if session.get('role') == 'Administrator' %}
+
+                <a href="{{ url_for('users') }}">
+                    {{ tr('Users') }}
+                </a>
+
+                <a href="{{ url_for('activity') }}">
+                    {{ tr('Activity Log') }}
+                </a>
+
+                <a href="{{ url_for('settings') }}">
+                    {{ tr('Company Settings') }}
+                </a>
+
+            {% endif %}
+
+            <span class="right">
+
+                {{ session.get('user') }}
+
+                |
+
+                <a href="{{ url_for(
+                    'set_language',
+                    lang='bn' if session.get('lang','en')=='en' else 'en'
+                ) }}">
+                    {{ tr('Bangla') if session.get('lang','en')=='en' else tr('English') }}
+                </a>
+
+                |
+
+                <a href="{{ url_for('logout') }}">
+                    {{ tr('Logout') }}
+                </a>
+
+            </span>
+
+        {% endif %}
+
     </div>
-</div>
 
-<div class="card">
 
-```
-<form method="post">
+    <div class="wrap">
 
-    <div class="formgrid">
+        {% with messages = get_flashed_messages(with_categories=true) %}
 
-        <div>
-            <label>{{ tr('Month') }}</label>
-            <input
-                type="month"
-                name="month"
-                value="{{ month }}"
-                required>
-        </div>
+            {% for cat, msg in messages %}
 
-    </div>
-
-    <div class="table-wrap" style="margin-top:20px;">
-
-        <table>
-
-            <thead>
-                <tr>
-                    <th>{{ tr('Worker ID') }}</th>
-                    <th>{{ tr('Name') }}</th>
-                    <th>{{ tr('Department') }}</th>
-                    <th>{{ tr('Present') }}</th>
-                    <th>{{ tr('Absent') }}</th>
-                    <th>{{ tr('OT Hours') }}</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-            {% for w in data %}
-
-                <tr>
-
-                    <td>{{ w['id'] }}</td>
-
-                    <td>
-                        {{ w['name'] }}
-
-                        {% if w['bangla_name'] %}
-                            <br>
-                            <span class="muted">
-                                {{ w['bangla_name'] }}
-                            </span>
-                        {% endif %}
-                    </td>
-
-                    <td>
-                        {{ dept(w['department']) }}
-                    </td>
-
-                    <td>
-                        <input
-                            type="number"
-                            name="present_{{ w['id'] }}"
-                            min="0"
-                            max="31"
-                            step="1"
-                            value="{{ w['present_days'] or 0 }}"
-                            style="width:80px;">
-                    </td>
-
-                    <td>
-                        <input
-                            type="number"
-                            name="absent_{{ w['id'] }}"
-                            min="0"
-                            max="31"
-                            step="1"
-                            value="{{ w['absent_days'] or 0 }}"
-                            style="width:80px;">
-                    </td>
-
-                    <td>
-                        <input
-                            type="number"
-                            name="ot_{{ w['id'] }}"
-                            min="0"
-                            step="0.5"
-                            value="{{ w['ot_hours'] or 0 }}"
-                            style="width:90px;">
-                    </td>
-
-                </tr>
-
-            {% else %}
-
-                <tr>
-                    <td colspan="6"
-                        style="text-align:center;padding:30px;">
-                        {{ tr('No data') }}
-                    </td>
-                </tr>
+                <div class="flash {{ cat }}">
+                    {{ msg }}
+                </div>
 
             {% endfor %}
 
-            </tbody>
+        {% endwith %}
 
-        </table>
 
-    </div>
+        {% block content %}
 
-    {% if data %}
-
-    <div style="margin-top:20px;">
-
-        <button type="submit" class="btn">
-            {{ tr('Save') }}
-        </button>
+        {% endblock %}
 
     </div>
 
-    {% endif %}
+</body>
 
-</form>
+</html>
 ```
-
-</div>
-
-{% endblock %}
