@@ -10,6 +10,7 @@
     </div>
 </div>
 
+
 <div class="card">
 
     <form method="get">
@@ -18,6 +19,7 @@
 
             <div>
                 <label>{{ tr('Month') }}</label>
+
                 <input
                     type="month"
                     name="month"
@@ -26,31 +28,17 @@
             </div>
 
             <div>
-                <label>{{ tr('Department') }}</label>
+                <label>{{ tr('Search') }}</label>
 
-                <select name="department">
-
-                    <option value="">
-                        {{ tr('All Departments') }}
-                    </option>
-
-                    {% for d in departments %}
-
-                    <option
-                        value="{{ d }}"
-                        {% if selected_department == d %}selected{% endif %}>
-
-                        {{ dept(d) }}
-
-                    </option>
-
-                    {% endfor %}
-
-                </select>
-
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ q or '' }}"
+                    placeholder="{{ tr('Worker name or ID') }}">
             </div>
 
         </div>
+
 
         <div style="margin-top:20px;">
 
@@ -58,19 +46,30 @@
                 {{ tr('Generate Report') }}
             </button>
 
+
             {% if month %}
 
             <a
                 class="btn"
-                href="{{ url_for('report', month=month, department=selected_department, export='excel') }}">
+                href="{{ url_for('report_csv', month=month, q=q or '') }}">
+
+                {{ tr('Export CSV') }}
+
+            </a>
+
+
+            <a
+                class="btn"
+                href="{{ url_for('report_xlsx', month=month, q=q or '') }}">
 
                 {{ tr('Export Excel') }}
 
             </a>
 
+
             <a
                 class="btn"
-                href="{{ url_for('report', month=month, department=selected_department, export='pdf') }}">
+                href="{{ url_for('report_pdf', month=month, q=q or '') }}">
 
                 {{ tr('Export PDF') }}
 
@@ -92,7 +91,7 @@
         <h3>{{ tr('Salary Report') }}</h3>
 
         {% if month %}
-        <strong>{{ month }}</strong>
+            <strong>{{ month }}</strong>
         {% endif %}
 
     </div>
@@ -106,17 +105,28 @@
 
                 <tr>
 
-                    <th>ID</th>
+                    <th>{{ tr('ID') }}</th>
+
                     <th>{{ tr('Worker') }}</th>
+
                     <th>{{ tr('Bangla Name') }}</th>
+
                     <th>{{ tr('Department') }}</th>
+
                     <th>{{ tr('Basic Salary') }}</th>
+
                     <th>{{ tr('Present') }}</th>
+
                     <th>{{ tr('Absent') }}</th>
+
                     <th>{{ tr('OT Hours') }}</th>
+
                     <th>{{ tr('OT Amount') }}</th>
+
                     <th>{{ tr('Refreshment') }}</th>
+
                     <th>{{ tr('Advance') }}</th>
+
                     <th>{{ tr('Net Salary') }}</th>
 
                 </tr>
@@ -126,39 +136,64 @@
 
             <tbody>
 
-                {% for r in report_rows %}
+                {% for r in data %}
 
                 <tr>
 
-                    <td>{{ r['id'] }}</td>
+                    <td>
+                        {{ r['id'] }}
+                    </td>
 
-                    <td>{{ r['name'] }}</td>
 
-                    <td>{{ r['bangla_name'] or '' }}</td>
+                    <td>
+                        {{ r['name'] }}
+                    </td>
 
-                    <td>{{ dept(r['department']) }}</td>
+
+                    <td>
+                        {{ r['bangla_name'] or '' }}
+                    </td>
+
+
+                    <td>
+                        {{ dept(r['department']) }}
+                    </td>
+
 
                     <td>
                         {{ '%.2f'|format(r['basic_salary'] or 0) }}
                     </td>
 
-                    <td>{{ r['present'] or 0 }}</td>
 
-                    <td>{{ r['absent'] or 0 }}</td>
+                    <td>
+                        {{ r['present_days'] or 0 }}
+                    </td>
 
-                    <td>{{ r['ot_hours'] or 0 }}</td>
+
+                    <td>
+                        {{ r['absent_days'] or 0 }}
+                    </td>
+
+
+                    <td>
+                        {{ '%.2f'|format(r['ot_hours'] or 0) }}
+                    </td>
+
 
                     <td>
                         {{ '%.2f'|format(r['ot_amount'] or 0) }}
                     </td>
 
+
                     <td>
                         {{ '%.2f'|format(r['refreshment'] or 0) }}
                     </td>
 
+
                     <td>
                         {{ '%.2f'|format(r['advance'] or 0) }}
                     </td>
+
 
                     <td>
                         <strong>
@@ -167,6 +202,7 @@
                     </td>
 
                 </tr>
+
 
                 {% else %}
 
@@ -187,7 +223,7 @@
             </tbody>
 
 
-            {% if report_rows %}
+            {% if data %}
 
             <tfoot>
 
@@ -197,36 +233,56 @@
                         {{ tr('Total') }}
                     </th>
 
-                    <th>
-                        {{ '%.2f'|format(total_basic or 0) }}
-                    </th>
 
                     <th>
-                        {{ total_present or 0 }}
+                        {{ '%.2f'|format(
+                            data|sum(attribute='basic_salary')
+                        ) }}
                     </th>
 
-                    <th>
-                        {{ total_absent or 0 }}
-                    </th>
 
                     <th>
-                        {{ total_ot_hours or 0 }}
+                        {{ data|sum(attribute='present_days') }}
                     </th>
 
-                    <th>
-                        {{ '%.2f'|format(total_ot_amount or 0) }}
-                    </th>
 
                     <th>
-                        {{ '%.2f'|format(total_refreshment or 0) }}
+                        {{ data|sum(attribute='absent_days') }}
                     </th>
 
-                    <th>
-                        {{ '%.2f'|format(total_advance or 0) }}
-                    </th>
 
                     <th>
-                        {{ '%.2f'|format(total_net or 0) }}
+                        {{ '%.2f'|format(
+                            data|sum(attribute='ot_hours')
+                        ) }}
+                    </th>
+
+
+                    <th>
+                        {{ '%.2f'|format(
+                            data|sum(attribute='ot_amount')
+                        ) }}
+                    </th>
+
+
+                    <th>
+                        {{ '%.2f'|format(
+                            data|sum(attribute='refreshment')
+                        ) }}
+                    </th>
+
+
+                    <th>
+                        {{ '%.2f'|format(
+                            data|sum(attribute='advance')
+                        ) }}
+                    </th>
+
+
+                    <th>
+                        {{ '%.2f'|format(
+                            data|sum(attribute='net_salary')
+                        ) }}
                     </th>
 
                 </tr>
@@ -243,4 +299,3 @@
 
 {% endblock %}
 ```
-
