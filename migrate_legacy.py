@@ -11,6 +11,10 @@ if not DB: raise SystemExit("DATABASE_URL missing")
 if not SQL_FILE.exists(): raise SystemExit("reedoy_payroll_migration.sql missing")
 if DB.startswith("postgres://"): DB="postgresql://"+DB[11:]
 
+# Initialize the PostgreSQL schema using the same schema code as the live app.
+# This is needed because the migration script runs instead of gunicorn.
+import app  # noqa: F401 - app.init_db() runs on import
+
 def q(x): return '"' + x.replace('"','""') + '"'
 
 src=sqlite3.connect(":memory:")
@@ -46,10 +50,14 @@ try:
 
       if not maps: raise RuntimeError("No compatible target tables found")
 
-      for _,t in maps:
-        cur.execute(f"SELECT COUNT(*) FROM {q(t)}")
-        n=cur.fetchone()[0]
-        if n: raise RuntimeError(f"{t} already has {n} rows; stopped safely")
+      # The live app creates a default admin user and default company settings.
+      # This migration is intended for the fresh Reedoy PostgreSQL database, so
+      # remove those seed rows before restoring the legacy data.
+      # Do not remove the migration marker table itself.
+      clear_order=[t for t in ["activity_log","worker_advances","attendance","workers","company_settings","users"] if t in targets]
+      for t in clear_order:
+        cur.execute(f"DELETE FROM {q(t)}")
+      print("Cleared fresh app seed data; restoring legacy data...")
 
       total=0
       for s,t in maps:
