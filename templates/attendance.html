@@ -1,4 +1,3 @@
-```html
 {% extends 'base.html' %}
 
 {% block content %}
@@ -6,183 +5,110 @@
 <div class="page-header">
     <div>
         <h2>{{ tr('Attendance') }}</h2>
-        <p class="muted">Daily worker attendance and overtime</p>
+        <p class="muted">Monthly worker attendance and overtime</p>
     </div>
 </div>
 
 <div class="card">
 
-    <form method="post">
+```
+<form method="post">
 
-        <div class="formgrid">
+    <div class="formgrid">
 
-            <div>
-                <label>{{ tr('Date') }}</label>
-                <input
-                    type="date"
-                    name="date"
-                    value="{{ date }}"
-                    required>
-            </div>
-
-            <div>
-                <label>{{ tr('Worker') }}</label>
-                <select name="worker_id" required>
-
-                    <option value="">
-                        -- {{ tr('Select Worker') }} --
-                    </option>
-
-                    {% for w in workers %}
-
-                    <option
-                        value="{{ w['id'] }}"
-                        {% if selected_worker == w['id'] %}selected{% endif %}>
-
-                        {{ w['name'] }}
-                        {% if w['bangla_name'] %}
-                            - {{ w['bangla_name'] }}
-                        {% endif %}
-
-                    </option>
-
-                    {% endfor %}
-
-                </select>
-            </div>
-
-            <div>
-                <label>{{ tr('Present Days') }}</label>
-                <input
-                    type="number"
-                    name="present"
-                    min="0"
-                    max="31"
-                    step="1"
-                    value="{{ attendance['present'] if attendance else 1 }}">
-            </div>
-
-            <div>
-                <label>{{ tr('Absent Days') }}</label>
-                <input
-                    type="number"
-                    name="absent"
-                    min="0"
-                    max="31"
-                    step="1"
-                    value="{{ attendance['absent'] if attendance else 0 }}">
-            </div>
-
-            <div>
-                <label>{{ tr('OT Hours') }}</label>
-                <input
-                    type="number"
-                    name="ot_hours"
-                    min="0"
-                    step="0.5"
-                    value="{{ attendance['ot_hours'] if attendance else 0 }}">
-            </div>
-
-        </div>
-
-        <div style="margin-top:20px;">
-
-            <button type="submit" class="btn">
-                {{ tr('Save Attendance') }}
-            </button>
-
-        </div>
-
-    </form>
-
-</div>
-
-
-<div class="card">
-
-    <div class="page-header">
-
-        <h3>{{ tr('Attendance Records') }}</h3>
-
-        <form method="get" class="actions">
-
+        <div>
+            <label>{{ tr('Month') }}</label>
             <input
-                type="date"
-                name="date"
-                value="{{ date }}">
-
-            <button type="submit" class="btn">
-                {{ tr('Search') }}
-            </button>
-
-        </form>
+                type="month"
+                name="month"
+                value="{{ month }}"
+                required>
+        </div>
 
     </div>
 
-
-    <div class="table-wrap">
+    <div class="table-wrap" style="margin-top:20px;">
 
         <table>
 
             <thead>
-
                 <tr>
-                    <th>{{ tr('Date') }}</th>
-                    <th>{{ tr('Worker') }}</th>
+                    <th>{{ tr('Worker ID') }}</th>
+                    <th>{{ tr('Name') }}</th>
                     <th>{{ tr('Department') }}</th>
                     <th>{{ tr('Present') }}</th>
                     <th>{{ tr('Absent') }}</th>
                     <th>{{ tr('OT Hours') }}</th>
                 </tr>
-
             </thead>
 
             <tbody>
 
-                {% for a in attendance_rows %}
+            {% for w in data %}
 
                 <tr>
 
-                    <td>{{ a['date'] }}</td>
+                    <td>{{ w['id'] }}</td>
 
                     <td>
-                        {{ a['name'] }}
+                        {{ w['name'] }}
 
-                        {% if a['bangla_name'] %}
+                        {% if w['bangla_name'] %}
                             <br>
                             <span class="muted">
-                                {{ a['bangla_name'] }}
+                                {{ w['bangla_name'] }}
                             </span>
                         {% endif %}
                     </td>
 
                     <td>
-                        {{ dept(a['department']) }}
+                        {{ dept(w['department']) }}
                     </td>
 
-                    <td>{{ a['present'] }}</td>
+                    <td>
+                        <input
+                            type="number"
+                            name="present_{{ w['id'] }}"
+                            min="0"
+                            max="31"
+                            step="1"
+                            value="{{ w['present_days'] or 0 }}"
+                            style="width:80px;">
+                    </td>
 
-                    <td>{{ a['absent'] }}</td>
+                    <td>
+                        <input
+                            type="number"
+                            name="absent_{{ w['id'] }}"
+                            min="0"
+                            max="31"
+                            step="1"
+                            value="{{ w['absent_days'] or 0 }}"
+                            style="width:80px;">
+                    </td>
 
-                    <td>{{ a['ot_hours'] }}</td>
+                    <td>
+                        <input
+                            type="number"
+                            name="ot_{{ w['id'] }}"
+                            min="0"
+                            step="0.5"
+                            value="{{ w['ot_hours'] or 0 }}"
+                            style="width:90px;">
+                    </td>
 
                 </tr>
 
-                {% else %}
+            {% else %}
 
                 <tr>
-
-                    <td
-                        colspan="6"
+                    <td colspan="6"
                         style="text-align:center;padding:30px;">
-
-                        {{ tr('No attendance records found') }}
-
+                        {{ tr('No data') }}
                     </td>
-
                 </tr>
 
-                {% endfor %}
+            {% endfor %}
 
             </tbody>
 
@@ -190,8 +116,21 @@
 
     </div>
 
+    {% if data %}
+
+    <div style="margin-top:20px;">
+
+        <button type="submit" class="btn">
+            {{ tr('Save') }}
+        </button>
+
+    </div>
+
+    {% endif %}
+
+</form>
+```
+
 </div>
 
 {% endblock %}
-```
-
