@@ -1,354 +1,136 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends 'base.html' %}
 
-    <title>Reedoy Payroll</title>
+{% block content %}
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<div class="page-header">
+    <div>
+        <h2>{{ tr('Attendance') }}</h2>
+        <p class="muted">Monthly worker attendance and overtime</p>
+    </div>
+</div>
 
-        body {
-            margin: 0;
-            font-family: "Noto Sans Bengali", "Segoe UI", Arial, sans-serif;
-            background: #f4f7fb;
-            color: #263238;
-        }
+<div class="card">
 
-        /* TOP BAR */
-        .topbar {
-            height: 65px;
-            background: #1565c0;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.15);
-        }
+```
+<form method="post">
 
-        .brand {
-            font-size: 20px;
-            font-weight: bold;
-        }
+    <div class="formgrid">
 
-        .topbar a {
-            color: white;
-            text-decoration: none;
-        }
+        <div>
+            <label>{{ tr('Month') }}</label>
+            <input
+                type="month"
+                name="month"
+                value="{{ month }}"
+                required>
+        </div>
 
-        .logout {
-            background: rgba(255,255,255,.18);
-            padding: 8px 14px;
-            border-radius: 7px;
-        }
-
-        /* LAYOUT */
-        .layout {
-            display: flex;
-            min-height: calc(100vh - 65px);
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            width: 230px;
-            background: #ffffff;
-            border-right: 1px solid #e1e6eb;
-            padding: 18px 12px;
-        }
-
-        .sidebar-title {
-            color: #777;
-            font-size: 12px;
-            margin: 8px 12px 10px;
-            text-transform: uppercase;
-        }
-
-        .sidebar a {
-            display: block;
-            text-decoration: none;
-            color: #37474f;
-            padding: 12px 13px;
-            margin-bottom: 5px;
-            border-radius: 7px;
-            font-weight: 600;
-        }
-
-        .sidebar a:hover {
-            background: #eaf3ff;
-            color: #1565c0;
-        }
-
-        /* CONTENT */
-        .main {
-            flex: 1;
-            padding: 25px;
-            min-width: 0;
-        }
-
-        .main h2 {
-            margin-top: 0;
-            color: #1565c0;
-        }
-
-        /* CARD */
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 9px rgba(0,0,0,.07);
-        }
-
-        /* FORM */
-        .formgrid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: #37474f;
-        }
-
-        input,
-        select,
-        textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #cfd8dc;
-            border-radius: 7px;
-            font-size: 14px;
-            background: white;
-        }
-
-        input:focus,
-        select:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #1976d2;
-            box-shadow: 0 0 0 2px rgba(25,118,210,.10);
-        }
-
-        /* BUTTON */
-        button,
-        .btn {
-            display: inline-block;
-            border: 0;
-            background: #1565c0;
-            color: white;
-            padding: 9px 15px;
-            border-radius: 7px;
-            text-decoration: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        button:hover,
-        .btn:hover {
-            background: #0d47a1;
-        }
-
-        .danger {
-            background: #c62828 !important;
-        }
-
-        .danger:hover {
-            background: #8e0000 !important;
-        }
-
-        /* SEARCH / ACTIONS */
-        .actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        /* TABLE */
-        .table-wrap {
-            width: 100%;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            background: white;
-        }
-
-        th {
-            background: #eaf3ff;
-            color: #1565c0;
-            font-weight: 700;
-        }
-
-        th,
-        td {
-            padding: 10px 9px;
-            border-bottom: 1px solid #e5e9ed;
-            text-align: left;
-            white-space: nowrap;
-        }
-
-        tr:hover td {
-            background: #fafcff;
-        }
-
-        /* FLASH MESSAGES */
-        .flash {
-            padding: 12px 15px;
-            border-radius: 7px;
-            margin-bottom: 18px;
-            background: #e3f2fd;
-            color: #1565c0;
-        }
-
-        /* MOBILE */
-        @media(max-width: 750px) {
-
-            .topbar {
-                padding: 0 15px;
-            }
-
-            .brand {
-                font-size: 16px;
-            }
-
-            .layout {
-                display: block;
-            }
-
-            .sidebar {
-                width: 100%;
-                border-right: 0;
-                border-bottom: 1px solid #ddd;
-                padding: 10px;
-            }
-
-            .sidebar a {
-                display: inline-block;
-                margin-right: 4px;
-                padding: 9px 10px;
-                font-size: 13px;
-            }
-
-            .main {
-                padding: 15px;
-            }
-
-            th,
-            td {
-                font-size: 13px;
-            }
-        }
-    </style>
-</head>
-
-<body>
-
-<!-- TOP BAR -->
-<div class="topbar">
-
-    <div class="brand">
-        REEDOY TEXTILE — Payroll
     </div>
 
-    <a class="logout" href="{{ url_for('logout') }}">
-        Logout
-    </a>
+    <div class="table-wrap" style="margin-top:20px;">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>{{ tr('Worker ID') }}</th>
+                    <th>{{ tr('Name') }}</th>
+                    <th>{{ tr('Department') }}</th>
+                    <th>{{ tr('Present') }}</th>
+                    <th>{{ tr('Absent') }}</th>
+                    <th>{{ tr('OT Hours') }}</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+            {% for w in data %}
+
+                <tr>
+
+                    <td>{{ w['id'] }}</td>
+
+                    <td>
+                        {{ w['name'] }}
+
+                        {% if w['bangla_name'] %}
+                            <br>
+                            <span class="muted">
+                                {{ w['bangla_name'] }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {{ dept(w['department']) }}
+                    </td>
+
+                    <td>
+                        <input
+                            type="number"
+                            name="present_{{ w['id'] }}"
+                            min="0"
+                            max="31"
+                            step="1"
+                            value="{{ w['present_days'] or 0 }}"
+                            style="width:80px;">
+                    </td>
+
+                    <td>
+                        <input
+                            type="number"
+                            name="absent_{{ w['id'] }}"
+                            min="0"
+                            max="31"
+                            step="1"
+                            value="{{ w['absent_days'] or 0 }}"
+                            style="width:80px;">
+                    </td>
+
+                    <td>
+                        <input
+                            type="number"
+                            name="ot_{{ w['id'] }}"
+                            min="0"
+                            step="0.5"
+                            value="{{ w['ot_hours'] or 0 }}"
+                            style="width:90px;">
+                    </td>
+
+                </tr>
+
+            {% else %}
+
+                <tr>
+                    <td colspan="6"
+                        style="text-align:center;padding:30px;">
+                        {{ tr('No data') }}
+                    </td>
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% if data %}
+
+    <div style="margin-top:20px;">
+
+        <button type="submit" class="btn">
+            {{ tr('Save') }}
+        </button>
+
+    </div>
+
+    {% endif %}
+
+</form>
+```
 
 </div>
 
-
-<div class="layout">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-
-        <div class="sidebar-title">
-            Main Menu
-        </div>
-
-        <a href="{{ url_for('dashboard') }}">
-            🏠 Dashboard
-        </a>
-
-        <a href="{{ url_for('workers') }}">
-            👷 Workers
-        </a>
-
-        <a href="{{ url_for('attendance') }}">
-            📅 Attendance
-        </a>
-
-        <a href="{{ url_for('advances') }}">
-            💰 Advance Salary
-        </a>
-
-        <a href="{{ url_for('report') }}">
-            📊 Salary Report
-        </a>
-
-        <a href="{{ url_for('department') }}">
-            🏢 Department
-        </a>
-
-
-        <div class="sidebar-title">
-            Administration
-        </div>
-
-        <a href="{{ url_for('settings') }}">
-            ⚙️ Settings
-        </a>
-
-        <a href="{{ url_for('users') }}">
-            👤 Users
-        </a>
-
-        <a href="{{ url_for('activity') }}">
-            📋 Activity
-        </a>
-
-    </aside>
-
-
-    <!-- MAIN CONTENT -->
-    <main class="main">
-
-        {% with messages = get_flashed_messages() %}
-
-            {% if messages %}
-
-                {% for message in messages %}
-
-                    <div class="flash">
-                        {{ message }}
-                    </div>
-
-                {% endfor %}
-
-            {% endif %}
-
-        {% endwith %}
-
-
-        {% block content %}
-
-        {% endblock %}
-
-    </main>
-
-</div>
-
-</body>
-</html>
+{% endblock %}
