@@ -625,6 +625,10 @@ def department():
     rows=[{**w,**salary_map.get(w["id"],{})} for w in ws]
     return render_template("department.html",rows=rows,month=month,department=dept,departments=[r["department"] for r in fetch_all("SELECT DISTINCT department FROM workers WHERE department IS NOT NULL AND department<>'' ORDER BY department")])
 
+# Compatibility endpoint used by the current dashboard template.
+# The existing Department Salary page is the report view.
+app.add_url_rule("/report", endpoint="report", view_func=department, methods=["GET"])
+
 
 @app.route("/advance")
 @app.route("/advances")
@@ -633,10 +637,11 @@ def advance():
     month=month_name_year(); wid=request.args.get("worker_id")
     return render_template("advance.html",workers=fetch_all("SELECT id,name,department FROM workers ORDER BY id"),rows=advance_rows(month,wid),month=month)
 
-
-# Backward-compatible endpoint name used by older templates.
-# This prevents BuildError for url_for("advances").
+# Compatibility endpoints for older templates.
+# Flask endpoint names come from function names, so the route aliases above
+# do not create an endpoint named "advances".
 app.add_url_rule("/advances", endpoint="advances", view_func=advance, methods=["GET"])
+
 
 
 @app.route("/advance/save", methods=["POST"])
