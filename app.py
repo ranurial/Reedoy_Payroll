@@ -634,6 +634,11 @@ def advance():
     return render_template("advance.html",workers=fetch_all("SELECT id,name,department FROM workers ORDER BY id"),rows=advance_rows(month,wid),month=month)
 
 
+# Backward-compatible endpoint name used by older templates.
+# This prevents BuildError for url_for("advances").
+app.add_url_rule("/advances", endpoint="advances", view_func=advance, methods=["GET"])
+
+
 @app.route("/advance/save", methods=["POST"])
 @app.route("/advances/save", methods=["POST"])
 @login_required
