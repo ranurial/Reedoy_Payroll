@@ -254,6 +254,9 @@ def migrate():
         # ------------------------------------------------------------
         # 3. DAILY ATTENDANCE
         # ------------------------------------------------------------
+        # Use the primary-key id for conflict handling. This works even
+        # when the live table was created earlier without a composite
+        # UNIQUE(worker_id, month_year, day) constraint.
         daily_count = 0
         if table_exists(legacy, 'daily_attendance'):
             rows = legacy.execute('''
@@ -267,8 +270,10 @@ def migrate():
                     INSERT INTO daily_attendance
                         (id, worker_id, month_year, day, status)
                     VALUES (%s,%s,%s,%s,%s)
-                    ON CONFLICT (worker_id, month_year, day) DO UPDATE SET
-                        id=EXCLUDED.id,
+                    ON CONFLICT (id) DO UPDATE SET
+                        worker_id=EXCLUDED.worker_id,
+                        month_year=EXCLUDED.month_year,
+                        day=EXCLUDED.day,
                         status=EXCLUDED.status
                 ''', (
                     r['id'], r['worker_id'], r['month_year'],
