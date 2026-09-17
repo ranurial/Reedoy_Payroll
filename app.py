@@ -47,17 +47,49 @@ def is_postgres():
     return bool(DATABASE_URL and not DATABASE_URL.startswith("sqlite://"))
 
 
+_PG_POOL = None
+
+def _get_pg_pool():
+    global _PG_POOL
+    if _PG_POOL is None:
+        from psycopg2.pool import ThreadedConnectionPool
+        minconn = int(os.environ.get("PG_POOL_MIN", "1"))
+        maxconn = int(os.environ.get("PG_POOL_MAX", "4"))
+        _PG_POOL = ThreadedConnectionPool(
+            minconn, maxconn, DATABASE_URL,
+            sslmode="require", connect_timeout=10,
+            keepalives=1, keepalives_idle=30,
+            keepalives_interval=10, keepalives_count=3
+        )
+    return _PG_POOL
+
+
 def db_connect():
     if is_postgres():
-        try:
-            import psycopg2
-            return psycopg2.connect(DATABASE_URL, sslmode="require")
-        except TypeError:
-            import psycopg2
-            return psycopg2.connect(DATABASE_URL)
+        return _get_pg_pool().getconn()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def db_release(conn):
+    if conn is None:
+        return
+    if is_postgres():
+        try:
+            # Never return a connection to the pool with an open transaction.
+            try:
+                if getattr(conn, "status", None) != 1:  # STATUS_READY = 1
+                    conn.rollback()
+            except Exception:
+                pass
+            _get_pg_pool().putconn(conn)
+        except Exception:
+            try: conn.close()
+            except Exception: pass
+    else:
+        try: conn.close()
+        except Exception: pass
 
 
 def placeholders(sql):
@@ -78,7 +110,7 @@ def execute(sql, params=(), fetch=False, many=False, commit=False):
     finally:
         try: cur.close()
         except Exception: pass
-        conn.close()
+        db_release(conn)
 
 
 def row_dict(cur, row):
@@ -94,7 +126,7 @@ def fetch_all(sql, params=()):
         rows = cur.fetchall()
         return [row_dict(cur, r) for r in rows]
     finally:
-        conn.close()
+        db_release(conn)
 
 
 def fetch_one(sql, params=()):
@@ -122,7 +154,7 @@ def columns(name):
     try:
         cur.execute("PRAGMA table_info(" + name + ")")
         return {r[1] for r in cur.fetchall()}
-    finally: conn.close()
+    finally: db_release(conn)
 
 
 def add_column(name, col, typ):
@@ -162,7 +194,7 @@ def init_db():
         cur.execute(placeholders("""CREATE TABLE IF NOT EXISTS activity_log (
             id INTEGER PRIMARY KEY, username TEXT, action TEXT, log_time TEXT NOT NULL)"""))
         conn.commit()
-    finally: conn.close()
+    finally: db_release(conn)
 
     # Existing migrated tables may lack optional web fields. These are additive only.
     for col, typ in [("phone","TEXT"),("address","TEXT"),("joining_date","TEXT"),("status","TEXT")]:
@@ -323,6 +355,64 @@ def daily_map(worker_id, month):
     return {int(r["day"]): str(r["status"] or "P") for r in rows}
 
 
+def calculate_salary_bulk(workers, month):
+    """Calculate salaries for many workers using a small number of DB queries."""
+    ids=[w["id"] for w in workers]
+    if not ids: return {}
+    att_rows=fetch_all("SELECT * FROM attendance WHERE month_year=? ORDER BY id DESC", (month,))
+    att_by={}
+    for r in att_rows:
+        wid=r.get("worker_id")
+        if wid not in att_by: att_by[wid]=r
+
+    daily_rows=fetch_all("SELECT worker_id,day,status FROM daily_attendance WHERE month_year=?", (month,))
+    daily_by={}
+    for r in daily_rows:
+        try: daily_by.setdefault(r.get("worker_id"), {})[int(r.get("day"))]=str(r.get("status") or "P")
+        except Exception: pass
+
+    advances_by={}
+    t=legacy_advance_source()
+    if t:
+        c=columns(t)
+        try:
+            if t=="worker_advances" and {"worker_id","amount"}.issubset(c):
+                adv_rows=fetch_all("SELECT worker_id,amount,month_year FROM worker_advances WHERE month_year=?", (month,))
+                for r in adv_rows: advances_by[r.get("worker_id")]=advances_by.get(r.get("worker_id"),0)+parse_num(r.get("amount"))
+            elif t in ("advance_salary","advances") and "worker_id" in c and "amount" in c:
+                datecol="date" if "date" in c else ("advance_date" if "advance_date" in c else None)
+                if datecol:
+                    adv_rows=fetch_all(f"SELECT worker_id,{datecol} AS advance_date,amount FROM {t}")
+                    for r in adv_rows:
+                        if month_name_from_date(r.get("advance_date"))==month:
+                            wid=r.get("worker_id"); advances_by[wid]=advances_by.get(wid,0)+parse_num(r.get("amount"))
+        except Exception as e:
+            app.logger.warning("Bulk advance load error: %r", e)
+
+    out={}
+    for w in workers:
+        att=att_by.get(w["id"], {})
+        present=int(att.get("present_days") or 0); absent=int(att.get("absent_days") or 0); ot=parse_num(att.get("ot_hours"),0)
+        try:
+            mon,ys=month.split(); y=int(ys); mi=MONTHS.index(mon)+1; days=calendar.monthrange(y,mi)[1]
+        except Exception:
+            days=30; y=datetime.date.today().year; mi=datetime.date.today().month
+        basic=parse_num(w.get("basic_salary")); ot_rate=parse_num(w.get("ot_rate")); nasta_rate=parse_num(w.get("refreshment_bill"))
+        absent_cut=(basic/days)*absent if days else 0
+        earned_basic=max(0,basic-absent_cut)
+        ot_amt=ot*ot_rate
+        dm=daily_by.get(w["id"],{})
+        if dm:
+            billable=sum(1 for d in range(1,days+1) if dm.get(d,"P")=="P" and datetime.date(y,mi,d).weekday()!=4)
+            nasta=billable*nasta_rate
+        else:
+            non_friday=sum(1 for d in range(1,days+1) if datetime.date(y,mi,d).weekday()!=4) if days else 0
+            nasta=round(present*(non_friday/days)*nasta_rate,2) if days else 0
+        advances=advances_by.get(w["id"],0)
+        gross=earned_basic+ot_amt+nasta
+        out[w["id"]]={"present":present,"absent":absent,"ot":ot,"absent_cut":absent_cut,"earned_basic":earned_basic,"ot_amt":ot_amt,"nasta":nasta,"gross":gross,"advance":advances,"net":gross-advances}
+    return out
+
 def calculate_salary(worker, month, att=None):
     if att is None: att=fetch_one("SELECT * FROM attendance WHERE worker_id=? AND month_year=? ORDER BY id DESC LIMIT 1", (worker["id"],month)) or {}
     present=int(att.get("present_days") or 0); absent=int(att.get("absent_days") or 0); ot=parse_num(att.get("ot_hours"),0)
@@ -413,9 +503,9 @@ def index(): return redirect(url_for("dashboard"))
 @login_required
 def dashboard():
     month=month_name_year(); workers=fetch_all("SELECT * FROM workers ORDER BY id")
-    rows=[]; gross=0; adv=0
-    for w in workers:
-        s=calculate_salary(w,month); gross+=s["gross"]; adv+=s["advance"]
+    salaries=calculate_salary_bulk(workers,month)
+    gross=sum(s["gross"] for s in salaries.values())
+    adv=sum(s["advance"] for s in salaries.values())
     today=datetime.date.today(); tm=f"{MONTHS[today.month-1]} {today.year}"
     today_rows=fetch_all("SELECT status,COUNT(*) AS c FROM daily_attendance WHERE month_year=? AND day=? GROUP BY status",(tm,today.day))
     mp={r["status"]:r["c"] for r in today_rows}
@@ -499,16 +589,22 @@ def save_attendance():
     for d,st in dm.items():
         try:
             day=int(d); st="A" if str(st).upper().startswith("A") else "P"
-            if is_postgres():
-                execute("INSERT INTO daily_attendance(worker_id,month_year,day,status) VALUES(?,?,?,?) ON CONFLICT(worker_id,month_year,day) DO UPDATE SET status=EXCLUDED.status",(wid,month,day,st),commit=True)
+            existing_day = fetch_one("SELECT id FROM daily_attendance WHERE worker_id=? AND month_year=? AND day=? ORDER BY id DESC LIMIT 1", (wid, month, day))
+            if existing_day:
+                execute("UPDATE daily_attendance SET status=? WHERE id=?", (st, existing_day["id"]), commit=True)
             else:
-                execute("INSERT OR REPLACE INTO daily_attendance(worker_id,month_year,day,status) VALUES(?,?,?,?)",(wid,month,day,st),commit=True)
+                execute("INSERT INTO daily_attendance(worker_id,month_year,day,status) VALUES(?,?,?,?)", (wid,month,day,st), commit=True)
         except Exception: pass
     existing=fetch_one("SELECT id FROM attendance WHERE worker_id=? AND month_year=? ORDER BY id DESC LIMIT 1",(wid,month))
     if existing:
         execute("UPDATE attendance SET present_days=?,absent_days=?,ot_hours=? WHERE id=?",(present,absent,ot,existing["id"]),commit=True)
     else:
-        execute("INSERT INTO attendance(worker_id,month_year,present_days,absent_days,ot_hours,advance_deduction) VALUES(?,?,?,?,?,0)",(wid,month,present,absent,ot),commit=True)
+        acols = columns("attendance")
+        names = ["worker_id","month_year","present_days","absent_days","ot_hours"]
+        vals = [wid,month,present,absent,ot]
+        if "advance_deduction" in acols:
+            names.append("advance_deduction"); vals.append(0)
+        execute("INSERT INTO attendance(" + ",".join(names) + ") VALUES(" + ",".join(["?"]*len(vals)) + ")", vals, commit=True)
     flash("Attendance saved.","success"); return redirect(url_for("attendance",worker_id=wid,month=month.split()[0],year=month.split()[1]))
 
 
@@ -525,9 +621,8 @@ def payslip():
 def department():
     month=month_name_year(); dept=request.args.get("department","")
     ws=fetch_all("SELECT * FROM workers" + (" WHERE department=?" if dept else "") + " ORDER BY id",(dept,) if dept else ())
-    rows=[]
-    for w in ws:
-        s=calculate_salary(w,month); rows.append({**w,**s})
+    salary_map=calculate_salary_bulk(ws,month)
+    rows=[{**w,**salary_map.get(w["id"],{})} for w in ws]
     return render_template("department.html",rows=rows,month=month,department=dept,departments=[r["department"] for r in fetch_all("SELECT DISTINCT department FROM workers WHERE department IS NOT NULL AND department<>'' ORDER BY department")])
 
 
@@ -619,8 +714,8 @@ def export_advances(): return export_rows(advance_rows(month_name_year()),"reedo
 @login_required
 def export_department():
     month=month_name_year(); dept=request.args.get("department",""); ws=fetch_all("SELECT * FROM workers"+(" WHERE department=?" if dept else "")+" ORDER BY id",(dept,) if dept else ())
-    rows=[]
-    for w in ws: rows.append({"ID":w["id"],"Worker Name":w["name"],"Department":w.get("department"),"Designation":w.get("designation"),**calculate_salary(w,month)})
+    salary_map=calculate_salary_bulk(ws,month)
+    rows=[{"ID":w["id"],"Worker Name":w["name"],"Department":w.get("department"),"Designation":w.get("designation"),**salary_map.get(w["id"],{})} for w in ws]
     return export_rows(rows,"reedoy_department_salary.xlsx")
 
 @app.route("/export/payslip.pdf")
