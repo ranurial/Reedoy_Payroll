@@ -27,7 +27,7 @@ English বাংলা
 {{ tr('Absent Today') }}
 {{ today_absent|default(0) }}
 {{ tr('Department Summary') }}
-{% for row in dept_rows|default([]) %} {% else %}{% endfor %}
+{% for dept in (dept_rows|default([], true)) %} {% else %} {% endfor %}
 {{ tr('Department') }}	{{ tr('Workers') }}	{{ tr('Total Basic Salary') }}
-{{ display_dept(row.get('department')) }}	{{ row.get('worker_count', 0) }}	৳ {{ '{:,.2f}'.format(row.get('total_basic', 0)|float) }}
+{{ display_dept(dept.get('department', '')) }}	{{ dept.get('worker_count', 0) }}	৳ {{ '{:,.2f}'.format(dept.get('total_basic', 0)|float) }}
 {{ tr('No department data available') }}
