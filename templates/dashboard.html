@@ -1,9 +1,14 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }} - {{ tr('Dashboard') }}</title>
+
+    <title>
+        {{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}
+        - {{ tr('Dashboard') }}
+    </title>
 
     <style>
         * {
@@ -36,14 +41,14 @@
         .nav-links {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 7px;
             align-items: center;
         }
 
         .nav-links a {
             color: white;
             text-decoration: none;
-            padding: 8px 11px;
+            padding: 8px 10px;
             border-radius: 5px;
             font-size: 14px;
         }
@@ -55,7 +60,6 @@
         .language {
             display: inline-flex;
             gap: 5px;
-            align-items: center;
             margin-left: 5px;
         }
 
@@ -115,6 +119,10 @@
             color: #1565c0;
             text-decoration: none;
             font-size: 13px;
+        }
+
+        .card-link:hover {
+            text-decoration: underline;
         }
 
         .summary {
@@ -260,7 +268,7 @@
             {{ tr('Payslip') }}
         </a>
 
-        <a href="{{ url_for('advance_salary') }}">
+        <a href="{{ url_for('advances') }}">
             {{ tr('Advance Salary') }}
         </a>
 
@@ -289,15 +297,26 @@
 <main class="container">
 
     <div class="page-title">
-        <h1>{{ tr('Dashboard') }}</h1>
-        <p>{{ tr('Payroll overview') }} — {{ month }}</p>
+
+        <h1>
+            {{ tr('Dashboard') }}
+        </h1>
+
+        <p>
+            {{ tr('Payroll overview') }} — {{ month }}
+        </p>
+
     </div>
 
 
-    <!-- Dashboard Cards -->
+    <!-- DASHBOARD CARDS -->
+
     <div class="cards">
 
+        <!-- Total Workers -->
+
         <div class="card">
+
             <div class="card-title">
                 {{ tr('Total Workers') }}
             </div>
@@ -309,10 +328,14 @@
             <a class="card-link" href="{{ url_for('workers') }}">
                 {{ tr('View workers') }} →
             </a>
+
         </div>
 
 
+        <!-- Total Advance Salary -->
+
         <div class="card">
+
             <div class="card-title">
                 {{ tr('Total Advance Salary') }}
             </div>
@@ -321,13 +344,17 @@
                 ৳ {{ '{:,.2f}'.format(advance|default(0)|float) }}
             </div>
 
-            <a class="card-link" href="{{ url_for('advance_salary') }}">
+            <a class="card-link" href="{{ url_for('advances') }}">
                 {{ tr('Manage advances') }} →
             </a>
+
         </div>
 
 
+        <!-- Total Departments -->
+
         <div class="card">
+
             <div class="card-title">
                 {{ tr('Total Departments') }}
             </div>
@@ -339,10 +366,14 @@
             <a class="card-link" href="{{ url_for('department') }}">
                 {{ tr('Department report') }} →
             </a>
+
         </div>
 
 
+        <!-- Current Month -->
+
         <div class="card">
+
             <div class="card-title">
                 {{ tr('Current Month') }}
             </div>
@@ -355,19 +386,24 @@
                 {{ tr('Gross salary') }}:
                 ৳ {{ '{:,.2f}'.format(gross|default(0)|float) }}
             </div>
+
         </div>
 
     </div>
 
 
-    <!-- Attendance Summary -->
+    <!-- ATTENDANCE SUMMARY -->
+
     <div class="summary">
 
-        <h2>{{ tr('Attendance') }}</h2>
+        <h2>
+            {{ tr('Attendance') }}
+        </h2>
 
         <div class="summary-grid">
 
             <div class="summary-item">
+
                 <div class="summary-label">
                     {{ tr('Present Today') }}
                 </div>
@@ -375,10 +411,12 @@
                 <div class="summary-value">
                     {{ today_present|default(0) }}
                 </div>
+
             </div>
 
 
             <div class="summary-item">
+
                 <div class="summary-label">
                     {{ tr('Absent Today') }}
                 </div>
@@ -386,10 +424,12 @@
                 <div class="summary-value">
                     {{ today_absent|default(0) }}
                 </div>
+
             </div>
 
 
             <div class="summary-item">
+
                 <div class="summary-label">
                     {{ tr('Gross salary') }}
                 </div>
@@ -397,6 +437,7 @@
                 <div class="summary-value">
                     ৳ {{ '{:,.2f}'.format(gross|default(0)|float) }}
                 </div>
+
             </div>
 
         </div>
@@ -404,20 +445,36 @@
     </div>
 
 
-    <!-- Department Summary -->
+    <!-- DEPARTMENT SUMMARY -->
+
     <div class="table-card">
 
-        <h2>{{ tr('Department Summary') }}</h2>
+        <h2>
+            {{ tr('Department Summary') }}
+        </h2>
 
         <table>
 
             <thead>
+
                 <tr>
-                    <th>{{ tr('Department') }}</th>
-                    <th>{{ tr('Workers') }}</th>
-                    <th>{{ tr('Total Basic Salary') }}</th>
+
+                    <th>
+                        {{ tr('Department') }}
+                    </th>
+
+                    <th>
+                        {{ tr('Workers') }}
+                    </th>
+
+                    <th>
+                        {{ tr('Total Basic Salary') }}
+                    </th>
+
                 </tr>
+
             </thead>
+
 
             <tbody>
 
@@ -446,9 +503,11 @@
                 {% else %}
 
                     <tr>
+
                         <td colspan="3" class="empty">
                             {{ tr('No department data available') }}
                         </td>
+
                     </tr>
 
                 {% endif %}
@@ -463,3 +522,4 @@
 
 </body>
 </html>
+```
