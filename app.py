@@ -636,6 +636,9 @@ def advance():
     month=month_name_year(); wid=request.args.get("worker_id")
     return render_template("advances.html",workers=fetch_all("SELECT id,name,department FROM workers ORDER BY id"),rows=advance_rows(month,wid),month=month)
 
+# Backward-compatible endpoint for older templates that call url_for("advances").
+app.add_url_rule("/advances", endpoint="advances", view_func=advance, methods=["GET"])
+
 
 @app.route("/advance/save", methods=["POST"])
 @app.route("/advances/save", methods=["POST"])
