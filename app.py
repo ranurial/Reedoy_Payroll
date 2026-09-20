@@ -436,13 +436,21 @@ def calculate_salary(worker, month, att=None):
     return {"present":present,"absent":absent,"ot":ot,"absent_cut":absent_cut,"earned_basic":earned_basic,"ot_amt":ot_amt,"nasta":nasta,"gross":gross,"advance":advances,"net":gross-advances}
 
 
+def template_dept(value):
+    lang=session.get("language","en")
+    return DEPT_BN.get(str(value),str(value)) if lang=="bn" else str(value or "")
+
+
+app.jinja_env.globals["dept"] = template_dept
+
+
 @app.context_processor
 def inject_globals():
     settings=get_settings()
     lang=session.get("language","en")
     def tr(s): return LANG.get(s,s) if lang=="bn" else s
     def dept(s): return DEPT_BN.get(str(s),str(s)) if lang=="bn" else str(s or "")
-    return {"current_user":current_user(),"settings":settings,"language":lang,"tr":tr,"display_dept":dept,"months":MONTHS,"years":list(range(2024,2032))}
+    return {"current_user":current_user(),"settings":settings,"language":lang,"tr":tr,"dept":dept,"display_dept":dept,"months":MONTHS,"years":list(range(2024,2032))}
 
 
 @app.route("/health")
@@ -521,7 +529,7 @@ def workers():
     if q:
         l=f"%{q}%"; sql+=" WHERE CAST(id AS TEXT) LIKE ? OR lower(name) LIKE ? OR lower(COALESCE(bangla_name,'')) LIKE ? OR lower(COALESCE(department,'')) LIKE ? OR lower(COALESCE(designation,'')) LIKE ?"; params=[l,l,l,l,l]
     sql+=" ORDER BY id DESC"
-    return render_template("workers.html",workers=fetch_all(sql,params),q=q)
+    return render_template("workers.html",workers=fetch_all(sql,params),q=q,dept=template_dept)
 
 
 WORKER_FORM_HTML = """<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Worker</title><style>body{font:16px Arial;background:#f3f6fb;margin:30px}form{max-width:650px;background:white;padding:24px;border-radius:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}label{display:flex;flex-direction:column;gap:5px}input{padding:10px;border:1px solid #ccd5e1;border-radius:6px}button{padding:12px;background:#1764c0;color:white;border:0;border-radius:6px;cursor:pointer}.wide{grid-column:1/-1}</style></head><body><h2>{{ 'Edit Worker' if worker else 'Add Worker' }}</h2><form method=post><label>Name<input name=name required value=\"{{ worker.get('name','') if worker else '' }}\"></label><label>Bangla Name<input name=bangla_name value=\"{{ worker.get('bangla_name','') if worker else '' }}\"></label><label>Basic Salary<input type=number step=any name=basic_salary value=\"{{ worker.get('basic_salary',0) if worker else 0 }}\"></label><label>OT Rate<input type=number step=any name=ot_rate value=\"{{ worker.get('ot_rate',0) if worker else 0 }}\"></label><label>Department<input name=department value=\"{{ worker.get('department','') if worker else '' }}\"></label><label>Designation<input name=designation value=\"{{ worker.get('designation','') if worker else '' }}\"></label><label>Refreshment/Nasta Bill<input type=number step=any name=refreshment_bill value=\"{{ worker.get('refreshment_bill',0) if worker else 0 }}\"></label><label>Phone<input name=phone value=\"{{ worker.get('phone','') if worker else '' }}\"></label><button class=wide type=submit>Save</button><a class=wide href=\"{{ url_for('workers') }}\">Cancel / Back to Workers</a></form></body></html>"""
@@ -566,49 +574,113 @@ def delete_worker(worker_id):
 @app.route("/attendance")
 @login_required
 def attendance():
-    month=month_name_year(); wid=request.args.get("worker_id",""); w=None; days=[]; summary={}
-    if wid:
-        w=fetch_one("SELECT * FROM workers WHERE id=?",(wid,))
-        if w:
-            dm=daily_map(w["id"],month); mon,ys=month.split(); y=int(ys); mi=MONTHS.index(mon)+1; nd=calendar.monthrange(y,mi)[1]
-            days=[{"day":d,"status":dm.get(d,"P"),"date":datetime.date(y,mi,d)} for d in range(1,nd+1)]
-            summary=calculate_salary(w,month)
-    return render_template("attendance.html",workers=fetch_all("SELECT id,name,department FROM workers ORDER BY id"),worker=w,days=days,summary=summary,month=month)
+    today = datetime.date.today()
+    worker_id_raw = request.args.get("worker_id", "").strip()
+    month = request.args.get("month", "").strip()
+    year_raw = request.args.get("year", "").strip()
+    if month not in MONTHS:
+        month = MONTHS[today.month - 1]
+    try:
+        year = int(year_raw)
+        if not 2000 <= year <= 2100:
+            raise ValueError
+    except (TypeError, ValueError):
+        year = today.year
+    year = str(year)
+    month_year = f"{month} {year}"
+    workers = fetch_all("SELECT id,name,department FROM workers ORDER BY id")
+    worker = None
+    days = []
+    summary = {}
+    try:
+        worker_id = int(worker_id_raw) if worker_id_raw else None
+    except ValueError:
+        worker_id = None
+    if worker_id is not None:
+        worker = fetch_one("SELECT * FROM workers WHERE id=?", (worker_id,))
+    if worker:
+        mi = MONTHS.index(month) + 1
+        count = calendar.monthrange(int(year), mi)[1]
+        dm = daily_map(worker["id"], month_year)
+        days = [{"day": d, "status": "A" if str(dm.get(d, "P")).upper().startswith("A") else "P",
+                 "date": datetime.date(int(year), mi, d)} for d in range(1, count + 1)]
+        summary = calculate_salary(worker, month_year)
+    return render_template("attendance.html", workers=workers, worker=worker, days=days,
+                           summary=summary, month=month, year=year, month_year=month_year, dept=template_dept)
 
 
 @app.route("/attendance/save", methods=["POST"])
 @login_required
 def save_attendance():
-    f=request.form; wid=int(f.get("worker_id")); month=month_name_year(f.get("month"),f.get("year")) if f.get("year") else f.get("month_year") or month_name_year()
-    present=int(f.get("present_days") or 0); absent=int(f.get("absent_days") or 0); ot=parse_num(f.get("ot_hours"))
-    dm={}
-    raw=f.get("statuses_json")
-    if raw:
-        try: import json; dm=json.loads(raw)
-        except Exception: dm={}
-    # Also accept fields day_1=P etc.
-    for k,v in f.items():
-        if k.startswith("day_"): dm[k[4:]]=v
-    for d,st in dm.items():
+    f = request.form
+    try:
+        worker_id = int(f.get("worker_id", ""))
+    except (TypeError, ValueError):
+        flash("Please select a valid worker.", "danger")
+        return redirect(url_for("attendance"))
+    if not fetch_one("SELECT id FROM workers WHERE id=?", (worker_id,)):
+        flash("Selected worker was not found.", "danger")
+        return redirect(url_for("attendance"))
+    month = f.get("month", "").strip()
+    if month not in MONTHS:
+        month = MONTHS[datetime.date.today().month - 1]
+    try:
+        year_int = int(f.get("year", ""))
+        if not 2000 <= year_int <= 2100:
+            raise ValueError
+    except (TypeError, ValueError):
+        year_int = datetime.date.today().year
+    year = str(year_int)
+    month_year = f"{month} {year}"
+    month_days = calendar.monthrange(year_int, MONTHS.index(month) + 1)[1]
+    try:
+        import json
+        dm = json.loads(f.get("statuses_json", "") or "{}")
+        if not isinstance(dm, dict):
+            dm = {}
+    except (ValueError, TypeError):
+        dm = {}
+    for key, value in f.items():
+        if key.startswith("day_"):
+            dm[key[4:]] = value
+    normalized = {}
+    for key, value in dm.items():
         try:
-            day=int(d); st="A" if str(st).upper().startswith("A") else "P"
-            existing_day = fetch_one("SELECT id FROM daily_attendance WHERE worker_id=? AND month_year=? AND day=? ORDER BY id DESC LIMIT 1", (wid, month, day))
-            if existing_day:
-                execute("UPDATE daily_attendance SET status=? WHERE id=?", (st, existing_day["id"]), commit=True)
-            else:
-                execute("INSERT INTO daily_attendance(worker_id,month_year,day,status) VALUES(?,?,?,?)", (wid,month,day,st), commit=True)
-        except Exception: pass
-    existing=fetch_one("SELECT id FROM attendance WHERE worker_id=? AND month_year=? ORDER BY id DESC LIMIT 1",(wid,month))
-    if existing:
-        execute("UPDATE attendance SET present_days=?,absent_days=?,ot_hours=? WHERE id=?",(present,absent,ot,existing["id"]),commit=True)
+            d = int(key)
+        except (TypeError, ValueError):
+            continue
+        if 1 <= d <= month_days:
+            normalized[d] = "A" if str(value).strip().upper().startswith("A") else "P"
+    for d in range(1, month_days + 1):
+        normalized.setdefault(d, "P")
+    present = sum(v == "P" for v in normalized.values())
+    absent = sum(v == "A" for v in normalized.values())
+    ot = parse_num(f.get("ot_hours") or 0)
+    # Transaction-like per-row upsert: preserve existing IDs and update records in place.
+    for d in range(1, month_days + 1):
+        old = fetch_one("SELECT id FROM daily_attendance WHERE worker_id=? AND month_year=? AND day=? ORDER BY id DESC LIMIT 1",
+                        (worker_id, month_year, d))
+        if old:
+            execute("UPDATE daily_attendance SET status=? WHERE id=?", (normalized[d], old["id"]), commit=True)
+        else:
+            execute("INSERT INTO daily_attendance(worker_id,month_year,day,status) VALUES(?,?,?,?)",
+                    (worker_id, month_year, d, normalized[d]), commit=True)
+    old_month = fetch_one("SELECT id FROM attendance WHERE worker_id=? AND month_year=? ORDER BY id DESC LIMIT 1",
+                          (worker_id, month_year))
+    if old_month:
+        execute("UPDATE attendance SET present_days=?,absent_days=?,ot_hours=? WHERE id=?",
+                (present, absent, ot, old_month["id"]), commit=True)
     else:
-        acols = columns("attendance")
-        names = ["worker_id","month_year","present_days","absent_days","ot_hours"]
-        vals = [wid,month,present,absent,ot]
-        if "advance_deduction" in acols:
-            names.append("advance_deduction"); vals.append(0)
-        execute("INSERT INTO attendance(" + ",".join(names) + ") VALUES(" + ",".join(["?"]*len(vals)) + ")", vals, commit=True)
-    flash("Attendance saved.","success"); return redirect(url_for("attendance",worker_id=wid,month=month.split()[0],year=month.split()[1]))
+        cols = columns("attendance")
+        names = ["worker_id", "month_year", "present_days", "absent_days", "ot_hours"]
+        vals = [worker_id, month_year, present, absent, ot]
+        if "advance_deduction" in cols:
+            names.append("advance_deduction")
+            vals.append(0)
+        execute("INSERT INTO attendance(" + ",".join(names) + ") VALUES(" + ",".join(["?"] * len(vals)) + ")",
+                vals, commit=True)
+    flash(f"Attendance saved for Worker {worker_id} - {month_year}.", "success")
+    return redirect(url_for("attendance", worker_id=worker_id, month=month, year=year))
 
 
 @app.route("/payslip")
@@ -635,9 +707,6 @@ def department():
 def advance():
     month=month_name_year(); wid=request.args.get("worker_id")
     return render_template("advances.html",workers=fetch_all("SELECT id,name,department FROM workers ORDER BY id"),rows=advance_rows(month,wid),month=month)
-
-# Backward-compatible endpoint for older templates that call url_for("advances").
-app.add_url_rule("/advances", endpoint="advances", view_func=advance, methods=["GET"])
 
 
 @app.route("/advance/save", methods=["POST"])
