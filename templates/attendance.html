@@ -2,470 +2,386 @@
 <!doctype html>
 <html lang="{{ 'bn' if language == 'bn' else 'en' }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ tr('Attendance') }} | Reedoy Payroll</title>
-
-    <style>
-        :root{
-            font-family:Inter,"Noto Sans Bengali","Nirmala UI",Arial,sans-serif;
-            color:#1e293b;
-            background:#f3f6fb;
-        }
-
-        *{box-sizing:border-box}
-
-        body{
-            margin:0;
-            background:#f3f6fb;
-        }
-
-        .topbar{
-            background:#fff;
-            border-bottom:1px solid #e5eaf2;
-            padding:15px 4%;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:15px;
-            flex-wrap:wrap;
-        }
-
-        .brand{
-            font-weight:800;
-            font-size:20px;
-            color:#1764c0;
-        }
-
-        .nav{
-            display:flex;
-            gap:8px;
-            flex-wrap:wrap;
-        }
-
-        .nav a,
-        .lang a{
-            color:#334155;
-            text-decoration:none;
-            padding:9px 12px;
-            border-radius:8px;
-            background:#f1f5f9;
-            font-size:14px;
-        }
-
-        .nav a:hover,
-        .lang a:hover{
-            background:#dbeafe;
-            color:#1d4ed8;
-        }
-
-        .wrap{
-            max-width:1280px;
-            margin:28px auto;
-            padding:0 20px;
-        }
-
-        .heading{
-            margin-bottom:22px;
-        }
-
-        .heading h1{
-            margin:0;
-            font-size:28px;
-        }
-
-        .muted{
-            color:#64748b;
-            font-size:14px;
-            margin-top:7px;
-        }
-
-        .section{
-            background:#fff;
-            border:1px solid #e7edf5;
-            border-radius:16px;
-            padding:22px;
-            margin-bottom:20px;
-            box-shadow:0 5px 18px rgba(15,23,42,.04);
-        }
-
-        .section h2{
-            margin:0 0 16px;
-            font-size:20px;
-        }
-
-        .form-grid{
-            display:grid;
-            grid-template-columns:2fr 1fr 1fr auto;
-            gap:14px;
-            align-items:end;
-        }
-
-        .field label{
-            display:block;
-            font-size:13px;
-            font-weight:700;
-            color:#475569;
-            margin-bottom:7px;
-        }
-
-        select,
-        input{
-            width:100%;
-            padding:11px 12px;
-            border:1px solid #cbd5e1;
-            border-radius:9px;
-            background:#fff;
-            font-size:14px;
-            outline:none;
-        }
-
-        select:focus,
-        input:focus{
-            border-color:#3b82f6;
-            box-shadow:0 0 0 3px rgba(59,130,246,.10);
-        }
-
-        button,
-        .btn{
-            border:0;
-            border-radius:9px;
-            padding:11px 16px;
-            font-size:14px;
-            font-weight:700;
-            cursor:pointer;
-            text-decoration:none;
-            display:inline-block;
-        }
-
-        .btn-primary{
-            background:#1764c0;
-            color:#fff;
-        }
-
-        .btn-primary:hover{
-            background:#1253a0;
-        }
-
-        .btn-success{
-            background:#16a34a;
-            color:#fff;
-        }
-
-        .btn-success:hover{
-            background:#15803d;
-        }
-
-        .btn-secondary{
-            background:#e2e8f0;
-            color:#334155;
-        }
-
-        .btn-secondary:hover{
-            background:#cbd5e1;
-        }
-
-        .worker-info{
-            display:grid;
-            grid-template-columns:repeat(4,1fr);
-            gap:15px;
-        }
-
-        .info-card{
-            background:#f8fafc;
-            border:1px solid #e2e8f0;
-            border-radius:12px;
-            padding:16px;
-        }
-
-        .info-label{
-            color:#64748b;
-            font-size:12px;
-            margin-bottom:6px;
-        }
-
-        .info-value{
-            font-weight:800;
-            font-size:16px;
-        }
-
-        .summary-grid{
-            display:grid;
-            grid-template-columns:repeat(5,1fr);
-            gap:14px;
-            margin-bottom:20px;
-        }
-
-        .summary-card{
-            border:1px solid #e2e8f0;
-            background:#f8fafc;
-            border-radius:12px;
-            padding:15px;
-        }
-
-        .summary-title{
-            color:#64748b;
-            font-size:12px;
-            margin-bottom:7px;
-        }
-
-        .summary-value{
-            font-size:22px;
-            font-weight:800;
-        }
-
-        .calendar-head{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:10px;
-            flex-wrap:wrap;
-            margin-bottom:15px;
-        }
-
-        .calendar-actions{
-            display:flex;
-            gap:8px;
-            flex-wrap:wrap;
-        }
-
-        .calendar{
-            display:grid;
-            grid-template-columns:repeat(7,1fr);
-            gap:9px;
-        }
-
-        .day{
-            border:1px solid #dbe3ec;
-            border-radius:10px;
-            min-height:78px;
-            padding:8px;
-            text-align:center;
-            background:#f8fafc;
-            cursor:pointer;
-            transition:.15s;
-        }
-
-        .day:hover{
-            transform:translateY(-1px);
-            box-shadow:0 4px 12px rgba(15,23,42,.08);
-        }
-
-        .day-number{
-            font-weight:800;
-            font-size:17px;
-        }
-
-        .day-date{
-            font-size:11px;
-            color:#64748b;
-            margin-top:2px;
-        }
-
-        .day-status{
-            margin-top:8px;
-            font-weight:800;
-            font-size:14px;
-        }
-
-        .present{
-            background:#ecfdf5;
-            border-color:#86efac;
-        }
-
-        .present .day-status{
-            color:#15803d;
-        }
-
-        .absent{
-            background:#fef2f2;
-            border-color:#fca5a5;
-        }
-
-        .absent .day-status{
-            color:#dc2626;
-        }
-
-        .save-area{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:15px;
-            flex-wrap:wrap;
-            margin-top:20px;
-        }
-
-        .legend{
-            display:flex;
-            gap:15px;
-            font-size:13px;
-            color:#475569;
-        }
-
-        .legend span{
-            display:flex;
-            align-items:center;
-            gap:6px;
-        }
-
-        .dot{
-            width:12px;
-            height:12px;
-            border-radius:50%;
-            display:inline-block;
-        }
-
-        .dot-p{
-            background:#22c55e;
-        }
-
-        .dot-a{
-            background:#ef4444;
-        }
-
-        .empty{
-            text-align:center;
-            padding:35px;
-            color:#64748b;
-        }
-
-        .flash{
-            padding:12px 15px;
-            background:#ecfdf5;
-            border:1px solid #86efac;
-            color:#166534;
-            border-radius:10px;
-            margin-bottom:18px;
-        }
-
-        @media(max-width:1000px){
-            .form-grid{
-                grid-template-columns:1fr 1fr;
-            }
-
-            .worker-info{
-                grid-template-columns:repeat(2,1fr);
-            }
-
-            .summary-grid{
-                grid-template-columns:repeat(3,1fr);
-            }
-        }
-
-        @media(max-width:650px){
-            .form-grid{
-                grid-template-columns:1fr;
-            }
-
-            .worker-info{
-                grid-template-columns:1fr;
-            }
-
-            .summary-grid{
-                grid-template-columns:repeat(2,1fr);
-            }
-
-            .calendar{
-                gap:5px;
-            }
-
-            .day{
-                min-height:65px;
-                padding:5px;
-            }
-
-            .day-date{
-                display:none;
-            }
-
-            .nav{
-                width:100%;
-            }
-
-            .nav a{
-                font-size:12px;
-                padding:7px 9px;
-            }
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Attendance | Reedoy Payroll</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:Arial,"Noto Sans Bengali",sans-serif;
+    background:#f4f7fb;
+    color:#1e293b;
+}
+
+.topbar{
+    background:#fff;
+    border-bottom:1px solid #ddd;
+    padding:14px 4%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.brand{
+    font-size:20px;
+    font-weight:800;
+    color:#1764c0;
+}
+
+.nav{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+}
+
+.nav a{
+    text-decoration:none;
+    color:#334155;
+    background:#f1f5f9;
+    padding:8px 11px;
+    border-radius:7px;
+    font-size:13px;
+}
+
+.nav a:hover{
+    background:#dbeafe;
+}
+
+.wrap{
+    max-width:1250px;
+    margin:25px auto;
+    padding:0 18px;
+}
+
+h1{
+    margin:0 0 5px;
+    font-size:28px;
+}
+
+h2{
+    margin:0 0 16px;
+    font-size:20px;
+}
+
+.muted{
+    color:#64748b;
+    font-size:13px;
+}
+
+.card{
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:20px;
+}
+
+.form-row{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:12px;
+    align-items:end;
+}
+
+label{
+    display:block;
+    font-weight:700;
+    font-size:13px;
+    margin-bottom:7px;
+}
+
+select,
+input{
+    width:100%;
+    padding:11px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#fff;
+    font-size:14px;
+}
+
+button,
+.btn{
+    border:0;
+    border-radius:8px;
+    padding:11px 17px;
+    cursor:pointer;
+    font-weight:700;
+    text-decoration:none;
+    display:inline-block;
+}
+
+.btn-primary{
+    background:#1764c0;
+    color:white;
+}
+
+.btn-primary:hover{
+    background:#0f4f9a;
+}
+
+.btn-success{
+    background:#16a34a;
+    color:white;
+}
+
+.btn-danger{
+    background:#dc2626;
+    color:white;
+}
+
+.btn-gray{
+    background:#e2e8f0;
+    color:#334155;
+}
+
+.info-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+}
+
+.info{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    padding:14px;
+    border-radius:10px;
+}
+
+.info small{
+    color:#64748b;
+}
+
+.info strong{
+    display:block;
+    margin-top:5px;
+    font-size:16px;
+}
+
+.summary{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+}
+
+.summary-box{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    padding:14px;
+    border-radius:10px;
+}
+
+.summary-box small{
+    color:#64748b;
+}
+
+.summary-box input{
+    margin-top:8px;
+    font-size:18px;
+    font-weight:700;
+}
+
+.calendar-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:15px;
+}
+
+.calendar{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:8px;
+}
+
+.day{
+    min-height:78px;
+    border:2px solid #86efac;
+    border-radius:10px;
+    background:#ecfdf5;
+    text-align:center;
+    padding:8px;
+    cursor:pointer;
+}
+
+.day:hover{
+    transform:translateY(-1px);
+}
+
+.day.absent{
+    background:#fef2f2;
+    border-color:#fca5a5;
+}
+
+.day-number{
+    font-size:18px;
+    font-weight:800;
+}
+
+.day-name{
+    font-size:11px;
+    color:#64748b;
+    margin-top:3px;
+}
+
+.status{
+    margin-top:8px;
+    font-weight:900;
+    color:#15803d;
+}
+
+.day.absent .status{
+    color:#dc2626;
+}
+
+.bottom{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:20px;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.empty{
+    text-align:center;
+    padding:35px;
+    color:#64748b;
+}
+
+.alert{
+    background:#fff7ed;
+    border:1px solid #fed7aa;
+    color:#9a3412;
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:15px;
+}
+
+@media(max-width:800px){
+
+    .info-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .summary{
+        grid-template-columns:1fr;
+    }
+
+    .calendar{
+        gap:5px;
+    }
+
+    .day{
+        min-height:65px;
+        padding:5px;
+    }
+}
+
+@media(max-width:550px){
+
+    .form-row{
+        grid-template-columns:1fr;
+    }
+
+    .info-grid{
+        grid-template-columns:1fr;
+    }
+
+    .calendar{
+        grid-template-columns:repeat(7,1fr);
+    }
+
+    .day-number{
+        font-size:14px;
+    }
+
+    .status{
+        font-size:12px;
+    }
+
+    .day-name{
+        display:none;
+    }
+}
+</style>
 </head>
 
 <body>
 
-<header class="topbar">
+<div class="topbar">
 
     <div class="brand">
-        {{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}
+        Reedoy Payroll
     </div>
 
-    <nav class="nav">
-        <a href="{{ url_for('dashboard') }}">{{ tr('Dashboard') }}</a>
-        <a href="{{ url_for('workers') }}">{{ tr('Workers') }}</a>
-        <a href="{{ url_for('attendance') }}">{{ tr('Attendance') }}</a>
-        <a href="{{ url_for('payslip') }}">{{ tr('Payslip') }}</a>
-        <a href="{{ url_for('advance') }}">{{ tr('Advance Salary') }}</a>
-        <a href="{{ url_for('department') }}">{{ tr('Department') }}</a>
-        <a href="{{ url_for('settings') }}">{{ tr('Settings') }}</a>
-        <a href="{{ url_for('logout') }}">{{ tr('Logout') }}</a>
-    </nav>
-
-    <div class="lang">
-        <a href="{{ url_for('language', lang='en') }}">English</a>
-        <a href="{{ url_for('language', lang='bn') }}">বাংলা</a>
+    <div class="nav">
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('workers') }}">Workers</a>
+        <a href="{{ url_for('attendance') }}">Attendance</a>
+        <a href="{{ url_for('payslip') }}">Payslip</a>
+        <a href="{{ url_for('advance') }}">Advance</a>
+        <a href="{{ url_for('department') }}">Department</a>
+        <a href="{{ url_for('settings') }}">Settings</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
     </div>
 
-</header>
+</div>
 
 
-<main class="wrap">
+<div class="wrap">
 
-    <div class="heading">
-        <h1>{{ tr('Attendance') }}</h1>
-        <div class="muted">
-            {{ tr('Monthly attendance and overtime') }} — {{ month }}
-        </div>
+    <h1>Attendance</h1>
+
+    <div class="muted">
+        Monthly attendance and overtime
     </div>
 
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-                <div class="flash">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <br>
 
 
-    <!-- Worker Selection -->
-    <section class="section">
+    <!-- WORKER SELECT -->
+    <div class="card">
 
-        <h2>{{ tr('Select Worker') }}</h2>
+        <h2>Select Worker</h2>
 
         <form method="GET" action="{{ url_for('attendance') }}">
 
-            <div class="form-grid">
+            <div class="form-row">
 
-                <div class="field">
+                <div>
 
-                    <label>{{ tr('Worker') }}</label>
+                    <label>Worker</label>
 
-                    <select name="worker_id" onchange="this.form.submit()">
+                    <select name="worker_id" required>
 
                         <option value="">
-                            -- {{ tr('Select Worker') }} --
+                            -- Select Worker --
                         </option>
 
                         {% for w in workers %}
 
-                            <option
-                                value="{{ w['id'] }}"
-                                {% if worker and worker['id'] == w['id'] %}selected{% endif %}
-                            >
-                                {{ w['id'] }} - {{ w['name'] }}
-                                {% if w['department'] %}
-                                    [{{ dept(w['department']) }}]
-                                {% endif %}
-                            </option>
+                        <option
+                            value="{{ w['id'] }}"
+                            {% if worker and worker['id']|string == w['id']|string %}
+                                selected
+                            {% endif %}
+                        >
+
+                            {{ w['id'] }} - {{ w['name'] }}
+
+                            {% if w['department'] %}
+                                [{{ dept(w['department']) }}]
+                            {% endif %}
+
+                        </option>
 
                         {% endfor %}
 
@@ -473,36 +389,15 @@
 
                 </div>
 
-                <div class="field">
 
-                    <label>{{ tr('Month') }}</label>
+                <div>
 
-                    <input type="text"
-                           value="{{ month }}"
-                           readonly>
-
-                </div>
-
-                {% if worker %}
-                <div class="field">
-
-                    <label>{{ tr('Worker ID') }}</label>
-
-                    <input type="text"
-                           value="{{ worker['id'] }}"
-                           readonly>
-
-                </div>
-                {% endif %}
-
-                <div class="field">
-
-                    {% if worker %}
-                    <a class="btn btn-secondary"
-                       href="{{ url_for('attendance') }}">
-                        {{ tr('Clear') }}
-                    </a>
-                    {% endif %}
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Load Worker
+                    </button>
 
                 </div>
 
@@ -510,425 +405,357 @@
 
         </form>
 
-    </section>
+    </div>
 
 
     {% if worker %}
 
-    <!-- Worker Information -->
-    <section class="section">
 
-        <h2>{{ tr('Worker Information') }}</h2>
+    <!-- WORKER INFORMATION -->
+    <div class="card">
 
-        <div class="worker-info">
+        <h2>Worker Information</h2>
 
-            <div class="info-card">
-                <div class="info-label">{{ tr('ID') }}</div>
-                <div class="info-value">{{ worker['id'] }}</div>
+        <div class="info-grid">
+
+            <div class="info">
+                <small>Worker ID</small>
+                <strong>{{ worker['id'] }}</strong>
             </div>
 
-            <div class="info-card">
-                <div class="info-label">{{ tr('Name') }}</div>
-                <div class="info-value">{{ worker['name'] }}</div>
+            <div class="info">
+                <small>Name</small>
+                <strong>{{ worker['name'] }}</strong>
             </div>
 
-            <div class="info-card">
-                <div class="info-label">{{ tr('Department') }}</div>
-                <div class="info-value">
+            <div class="info">
+                <small>Department</small>
+                <strong>
                     {{ dept(worker['department']) }}
-                </div>
+                </strong>
             </div>
 
-            <div class="info-card">
-                <div class="info-label">{{ tr('Designation') }}</div>
-                <div class="info-value">
-                    {{ worker['designation'] or '-' }}
-                </div>
+            <div class="info">
+                <small>Month</small>
+                <strong>{{ month }}</strong>
             </div>
 
         </div>
 
-    </section>
+    </div>
 
 
-    <!-- Attendance Form -->
-    <form method="POST"
-          action="{{ url_for('save_attendance') }}"
-          id="attendanceForm">
+    <!-- ATTENDANCE SAVE FORM -->
+    <form
+        method="POST"
+        action="{{ url_for('save_attendance') }}"
+        id="attendanceForm"
+    >
 
-        <input type="hidden"
-               name="worker_id"
-               value="{{ worker['id'] }}">
+        <input
+            type="hidden"
+            name="worker_id"
+            value="{{ worker['id'] }}"
+        >
 
-        <input type="hidden"
-               name="month_year"
-               value="{{ month }}">
+        <input
+            type="hidden"
+            name="month_year"
+            value="{{ month }}"
+        >
 
-        <input type="hidden"
-               name="statuses_json"
-               id="statuses_json">
-
-
-        <!-- Summary -->
-        <section class="section">
-
-            <h2>{{ tr('Attendance Summary') }}</h2>
-
-            <div class="summary-grid">
-
-                <div class="summary-card">
-                    <div class="summary-title">
-                        {{ tr('Present Days') }}
-                    </div>
-
-                    <input type="number"
-                           min="0"
-                           name="present_days"
-                           id="present_days"
-                           value="{{ summary.get('present', 0) if summary else 0 }}"
-                           style="font-size:20px;font-weight:800;">
-                </div>
+        <input
+            type="hidden"
+            name="statuses_json"
+            id="statuses_json"
+        >
 
 
-                <div class="summary-card">
-                    <div class="summary-title">
-                        {{ tr('Absent Days') }}
-                    </div>
+        <!-- SUMMARY -->
+        <div class="card">
 
-                    <input type="number"
-                           min="0"
-                           name="absent_days"
-                           id="absent_days"
-                           value="{{ summary.get('absent', 0) if summary else 0 }}"
-                           style="font-size:20px;font-weight:800;">
-                </div>
+            <h2>Attendance Summary</h2>
 
+            <div class="summary">
 
-                <div class="summary-card">
+                <div class="summary-box">
 
-                    <div class="summary-title">
-                        {{ tr('OT Hours') }}
-                    </div>
+                    <small>Present Days</small>
 
-                    <input type="number"
-                           step="0.01"
-                           min="0"
-                           name="ot_hours"
-                           value="{{ summary.get('ot_hours', 0) if summary else 0 }}"
-                           style="font-size:20px;font-weight:800;">
+                    <input
+                        type="number"
+                        name="present_days"
+                        id="present_days"
+                        min="0"
+                        value="{{ summary.get('present',0) if summary else 0 }}"
+                    >
 
                 </div>
 
 
-                <div class="summary-card">
+                <div class="summary-box">
 
-                    <div class="summary-title">
-                        {{ tr('Basic Salary') }}
-                    </div>
+                    <small>Absent Days</small>
 
-                    <div class="summary-value">
-                        ৳ {{ "{:,.2f}".format(summary.get('basic_salary', 0)|float) if summary else "0.00" }}
-                    </div>
+                    <input
+                        type="number"
+                        name="absent_days"
+                        id="absent_days"
+                        min="0"
+                        value="{{ summary.get('absent',0) if summary else 0 }}"
+                    >
 
                 </div>
 
 
-                <div class="summary-card">
+                <div class="summary-box">
 
-                    <div class="summary-title">
-                        {{ tr('OT Amount') }}
-                    </div>
+                    <small>OT Hours</small>
 
-                    <div class="summary-value">
-                        ৳ {{ "{:,.2f}".format(summary.get('ot_amount', 0)|float) if summary else "0.00" }}
-                    </div>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="ot_hours"
+                        value="{{ summary.get('ot_hours',0) if summary else 0 }}"
+                    >
 
                 </div>
 
             </div>
 
-        </section>
+        </div>
 
 
-        <!-- Calendar -->
-        <section class="section">
+        <!-- CALENDAR -->
+        <div class="card">
 
-            <div class="calendar-head">
-
-                <div>
-                    <h2 style="margin-bottom:4px;">
-                        {{ tr('Daily Attendance Calendar') }}
-                    </h2>
-
-                    <div class="muted">
-                        {{ month }}
-                    </div>
-                </div>
+            <h2>
+                Daily Attendance — {{ month }}
+            </h2>
 
 
-                <div class="calendar-actions">
+            <div class="calendar-actions">
 
-                    <button type="button"
-                            class="btn btn-success"
-                            onclick="markAll('P')">
-                        {{ tr('Mark All Present') }}
-                    </button>
-
-                    <button type="button"
-                            class="btn btn-secondary"
-                            onclick="markAll('A')">
-                        {{ tr('Mark All Absent') }}
-                    </button>
-
-                </div>
-
-            </div>
+                <button
+                    type="button"
+                    class="btn btn-success"
+                    onclick="markAll('P')"
+                >
+                    Mark All Present
+                </button>
 
 
-            <div class="legend">
-
-                <span>
-                    <i class="dot dot-p"></i>
-                    {{ tr('Present') }}
-                </span>
-
-                <span>
-                    <i class="dot dot-a"></i>
-                    {{ tr('Absent') }}
-                </span>
-
-                <span>
-                    {{ tr('Click a day to change status') }}
-                </span>
-
-            </div>
-
-            <br>
-
-
-            <div class="calendar" id="calendar">
-
-                {% if days %}
-
-                    {% for d in days %}
-
-                    <div class="day {% if d.status == 'A' %}absent{% else %}present{% endif %}"
-                         data-day="{{ d.day }}"
-                         onclick="toggleDay({{ d.day }})">
-
-                        <div class="day-number">
-                            {{ d.day }}
-                        </div>
-
-                        <div class="day-date">
-                            {{ d.date.strftime('%a') }}
-                        </div>
-
-                        <div class="day-status"
-                             id="status_{{ d.day }}">
-                            {{ d.status }}
-                        </div>
-
-                    </div>
-
-                    {% endfor %}
-
-                {% else %}
-
-                    <div class="empty" style="grid-column:1/-1;">
-                        {{ tr('Select a worker to view attendance calendar.') }}
-                    </div>
-
-                {% endif %}
-
-            </div>
-
-
-            <div class="save-area">
-
-                <div class="muted">
-                    {{ tr('P = Present, A = Absent') }}
-                </div>
-
-                <button type="submit"
-                        class="btn btn-primary">
-                    {{ tr('Save Attendance') }}
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    onclick="markAll('A')"
+                >
+                    Mark All Absent
                 </button>
 
             </div>
 
-        </section>
+
+            <div class="calendar">
+
+                {% for d in days %}
+
+                <div
+                    class="day {% if d['status'] == 'A' %}absent{% endif %}"
+                    data-day="{{ d['day'] }}"
+                    onclick="toggleDay({{ d['day'] }})"
+                >
+
+                    <div class="day-number">
+                        {{ d['day'] }}
+                    </div>
+
+                    <div class="day-name">
+                        {{ d['date'].strftime('%a') }}
+                    </div>
+
+                    <div
+                        class="status"
+                        id="status_{{ d['day'] }}"
+                    >
+                        {{ d['status'] }}
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+
+            <div class="bottom">
+
+                <div class="muted">
+                    Click any date to change P / A
+                </div>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    Save Attendance
+                </button>
+
+            </div>
+
+        </div>
 
     </form>
 
 
     {% else %}
 
-    <section class="section">
+
+    <div class="card">
 
         <div class="empty">
-            <h2>{{ tr('Select a worker') }}</h2>
+
+            <h2>No Worker Selected</h2>
 
             <p>
-                {{ tr('Please select a worker above to view and manage attendance.') }}
+                Select a worker from the dropdown and click
+                <b>Load Worker</b>.
             </p>
+
         </div>
 
-    </section>
+    </div>
+
 
     {% endif %}
 
-</main>
+</div>
 
 
 <script>
 
-    /*
-     * Existing attendance status
-     */
-    const statusMap = {};
-
-    {% if days %}
-        {% for d in days %}
-            statusMap[{{ d.day }}] = "{{ d.status }}";
-        {% endfor %}
-    {% endif %}
+const statusMap = {};
 
 
-    /*
-     * Change one day
-     */
-    function toggleDay(day){
+{% for d in days %}
 
-        const current = statusMap[day] || "P";
+statusMap[{{ d['day'] }}] = "{{ d['status'] }}";
 
-        statusMap[day] = current === "P" ? "A" : "P";
+{% endfor %}
+
+
+/* Change one day */
+function toggleDay(day){
+
+    if(statusMap[day] === "A"){
+        statusMap[day] = "P";
+    }
+    else{
+        statusMap[day] = "A";
+    }
+
+    updateDay(day);
+    calculateCounts();
+}
+
+
+/* Update day display */
+function updateDay(day){
+
+    const box =
+        document.querySelector('[data-day="' + day + '"]');
+
+    const status =
+        document.getElementById("status_" + day);
+
+    if(!box || !status){
+        return;
+    }
+
+    if(statusMap[day] === "A"){
+
+        box.classList.add("absent");
+        status.innerText = "A";
+
+    }
+    else{
+
+        box.classList.remove("absent");
+        status.innerText = "P";
+
+    }
+}
+
+
+/* Mark whole month */
+function markAll(value){
+
+    Object.keys(statusMap).forEach(function(day){
+
+        statusMap[day] = value;
 
         updateDay(day);
 
-        recalculate();
+    });
 
+    calculateCounts();
+}
+
+
+/* Calculate present/absent */
+function calculateCounts(){
+
+    let present = 0;
+    let absent = 0;
+
+    Object.keys(statusMap).forEach(function(day){
+
+        if(statusMap[day] === "A"){
+            absent++;
+        }
+        else{
+            present++;
+        }
+
+    });
+
+
+    const p =
+        document.getElementById("present_days");
+
+    const a =
+        document.getElementById("absent_days");
+
+
+    if(p){
+        p.value = present;
     }
 
-
-    /*
-     * Update visual appearance
-     */
-    function updateDay(day){
-
-        const element = document.querySelector(
-            '[data-day="' + day + '"]'
-        );
-
-        const statusElement = document.getElementById(
-            'status_' + day
-        );
-
-        if(!element || !statusElement){
-            return;
-        }
-
-        const status = statusMap[day] || "P";
-
-        statusElement.textContent = status;
-
-        element.classList.remove(
-            "present",
-            "absent"
-        );
-
-        if(status === "A"){
-            element.classList.add("absent");
-        }else{
-            element.classList.add("present");
-        }
+    if(a){
+        a.value = absent;
     }
+}
 
 
-    /*
-     * Mark all days
-     */
-    function markAll(status){
+/* Send calendar data to Flask */
+const form =
+    document.getElementById("attendanceForm");
 
-        Object.keys(statusMap).forEach(function(day){
+if(form){
 
-            statusMap[day] = status;
+    form.addEventListener("submit", function(){
 
-            updateDay(day);
+        document.getElementById("statuses_json").value =
+            JSON.stringify(statusMap);
 
-        });
+    });
 
-        recalculate();
-
-    }
+}
 
 
-    /*
-     * Recalculate present / absent
-     */
-    function recalculate(){
-
-        let present = 0;
-        let absent = 0;
-
-        Object.keys(statusMap).forEach(function(day){
-
-            if(statusMap[day] === "A"){
-                absent++;
-            }else{
-                present++;
-            }
-
-        });
-
-        const presentInput =
-            document.getElementById("present_days");
-
-        const absentInput =
-            document.getElementById("absent_days");
-
-        if(presentInput){
-            presentInput.value = present;
-        }
-
-        if(absentInput){
-            absentInput.value = absent;
-        }
-
-    }
-
-
-    /*
-     * Before submitting, convert calendar
-     * data into JSON.
-     */
-    document.getElementById("attendanceForm")?.addEventListener(
-        "submit",
-        function(){
-
-            const field =
-                document.getElementById("statuses_json");
-
-            field.value =
-                JSON.stringify(statusMap);
-
-        }
-    );
-
-
-    /*
-     * Initialize counts
-     */
-    document.addEventListener(
-        "DOMContentLoaded",
-        function(){
-
-            {% if days %}
-                recalculate();
-            {% endif %}
-
-        }
-    );
+/* Initial count */
+calculateCounts();
 
 </script>
 
