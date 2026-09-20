@@ -1,6 +1,6 @@
 import os, csv, io, sqlite3, hashlib, calendar, datetime
 from functools import wraps
-from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, abort, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, abort, jsonify
 
 # Optional exports
 try:
@@ -436,14 +436,6 @@ def calculate_salary(worker, month, att=None):
     return {"present":present,"absent":absent,"ot":ot,"absent_cut":absent_cut,"earned_basic":earned_basic,"ot_amt":ot_amt,"nasta":nasta,"gross":gross,"advance":advances,"net":gross-advances}
 
 
-def template_dept(value):
-    lang=session.get("language","en")
-    return DEPT_BN.get(str(value),str(value)) if lang=="bn" else str(value or "")
-
-
-app.jinja_env.globals["dept"] = template_dept
-
-
 @app.context_processor
 def inject_globals():
     settings=get_settings()
@@ -470,7 +462,7 @@ def db_check():
     for t in ["workers","attendance","daily_attendance","company_settings","users","activity_log","worker_advances","advance_salary","advances"]:
         try: info[t]={"exists":table_exists(t),"columns":sorted(columns(t)) if table_exists(t) else []}
         except Exception as e: info[t]={"error":repr(e)}
-    return render_template_string("""<!doctype html><html><head><meta charset=\"utf-8\"><title>Database Check</title></head><body><h1>Database Check</h1><pre>{{ info|tojson(indent=2) }}</pre><p><a href=\"{{ url_for('dashboard') }}\">Back</a></p></body></html>""",info=info)
+    return render_template("db_check.html",info=info)
 
 
 @app.route("/login", methods=["GET","POST"])
@@ -529,22 +521,19 @@ def workers():
     if q:
         l=f"%{q}%"; sql+=" WHERE CAST(id AS TEXT) LIKE ? OR lower(name) LIKE ? OR lower(COALESCE(bangla_name,'')) LIKE ? OR lower(COALESCE(department,'')) LIKE ? OR lower(COALESCE(designation,'')) LIKE ?"; params=[l,l,l,l,l]
     sql+=" ORDER BY id DESC"
-    return render_template("workers.html",workers=fetch_all(sql,params),q=q,dept=template_dept)
+    return render_template("workers.html",workers=fetch_all(sql,params),q=q)
 
-
-WORKER_FORM_HTML = """<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Worker</title><style>body{font:16px Arial;background:#f3f6fb;margin:30px}form{max-width:650px;background:white;padding:24px;border-radius:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}label{display:flex;flex-direction:column;gap:5px}input{padding:10px;border:1px solid #ccd5e1;border-radius:6px}button{padding:12px;background:#1764c0;color:white;border:0;border-radius:6px;cursor:pointer}.wide{grid-column:1/-1}</style></head><body><h2>{{ 'Edit Worker' if worker else 'Add Worker' }}</h2><form method=post><label>Name<input name=name required value=\"{{ worker.get('name','') if worker else '' }}\"></label><label>Bangla Name<input name=bangla_name value=\"{{ worker.get('bangla_name','') if worker else '' }}\"></label><label>Basic Salary<input type=number step=any name=basic_salary value=\"{{ worker.get('basic_salary',0) if worker else 0 }}\"></label><label>OT Rate<input type=number step=any name=ot_rate value=\"{{ worker.get('ot_rate',0) if worker else 0 }}\"></label><label>Department<input name=department value=\"{{ worker.get('department','') if worker else '' }}\"></label><label>Designation<input name=designation value=\"{{ worker.get('designation','') if worker else '' }}\"></label><label>Refreshment/Nasta Bill<input type=number step=any name=refreshment_bill value=\"{{ worker.get('refreshment_bill',0) if worker else 0 }}\"></label><label>Phone<input name=phone value=\"{{ worker.get('phone','') if worker else '' }}\"></label><button class=wide type=submit>Save</button><a class=wide href=\"{{ url_for('workers') }}\">Cancel / Back to Workers</a></form></body></html>"""
-USER_FORM_HTML = """<!doctype html><html><head><meta charset=\"utf-8\"><title>User</title></head><body><h2>Add User</h2><form method=post><p>Username <input name=username required value=\"{{ user.get('username','') if user else '' }}\"></p><p>Full name <input name=full_name value=\"{{ user.get('full_name','') if user else '' }}\"></p><p>Password <input type=password name=password required></p><p>Role <select name=role><option>Operator</option><option>Administrator</option></select></p><button type=submit>Create</button></form><p><a href=\"{{ url_for('users') }}\">Back</a></p></body></html>"""
 
 @app.route("/workers/add", methods=["GET","POST"])
 @login_required
 def add_worker():
     if request.method=="POST":
         f=request.form; name=f.get("name","").strip()
-        if not name: flash("Worker name is required.","danger"); return render_template_string(WORKER_FORM_HTML, worker=f)
+        if not name: flash("Worker name is required.","danger"); return render_template("worker_form.html",worker=f)
         vals=(name,parse_num(f.get("basic_salary")),parse_num(f.get("ot_rate")),f.get("department","").strip(),f.get("designation","").strip(),parse_num(f.get("refreshment_bill")),f.get("bangla_name","").strip())
         execute("INSERT INTO workers(name,basic_salary,ot_rate,department,designation,refreshment_bill,bangla_name) VALUES(?,?,?,?,?,?,?)",vals,commit=True)
         flash("Worker saved.","success"); return redirect(url_for("workers"))
-    return render_template_string(WORKER_FORM_HTML, worker=None)
+    return render_template("worker_form.html",worker=None)
 
 
 @app.route("/workers/edit/<int:worker_id>", methods=["GET","POST"])
@@ -556,7 +545,7 @@ def edit_worker(worker_id):
         f=request.form
         execute("UPDATE workers SET name=?,basic_salary=?,ot_rate=?,department=?,designation=?,refreshment_bill=?,bangla_name=? WHERE id=?",(f.get("name",""),parse_num(f.get("basic_salary")),parse_num(f.get("ot_rate")),f.get("department",""),f.get("designation",""),parse_num(f.get("refreshment_bill")),f.get("bangla_name",""),worker_id),commit=True)
         flash("Worker updated.","success"); return redirect(url_for("workers"))
-    return render_template_string(WORKER_FORM_HTML, worker=w)
+    return render_template("worker_form.html",worker=w)
 
 
 @app.route("/workers/delete/<int:worker_id>", methods=["POST","GET"])
@@ -574,113 +563,49 @@ def delete_worker(worker_id):
 @app.route("/attendance")
 @login_required
 def attendance():
-    today = datetime.date.today()
-    worker_id_raw = request.args.get("worker_id", "").strip()
-    month = request.args.get("month", "").strip()
-    year_raw = request.args.get("year", "").strip()
-    if month not in MONTHS:
-        month = MONTHS[today.month - 1]
-    try:
-        year = int(year_raw)
-        if not 2000 <= year <= 2100:
-            raise ValueError
-    except (TypeError, ValueError):
-        year = today.year
-    year = str(year)
-    month_year = f"{month} {year}"
-    workers = fetch_all("SELECT id,name,department FROM workers ORDER BY id")
-    worker = None
-    days = []
-    summary = {}
-    try:
-        worker_id = int(worker_id_raw) if worker_id_raw else None
-    except ValueError:
-        worker_id = None
-    if worker_id is not None:
-        worker = fetch_one("SELECT * FROM workers WHERE id=?", (worker_id,))
-    if worker:
-        mi = MONTHS.index(month) + 1
-        count = calendar.monthrange(int(year), mi)[1]
-        dm = daily_map(worker["id"], month_year)
-        days = [{"day": d, "status": "A" if str(dm.get(d, "P")).upper().startswith("A") else "P",
-                 "date": datetime.date(int(year), mi, d)} for d in range(1, count + 1)]
-        summary = calculate_salary(worker, month_year)
-    return render_template("attendance.html", workers=workers, worker=worker, days=days,
-                           summary=summary, month=month, year=year, month_year=month_year, dept=template_dept)
+    month=month_name_year(); wid=request.args.get("worker_id",""); w=None; days=[]; summary={}
+    if wid:
+        w=fetch_one("SELECT * FROM workers WHERE id=?",(wid,))
+        if w:
+            dm=daily_map(w["id"],month); mon,ys=month.split(); y=int(ys); mi=MONTHS.index(mon)+1; nd=calendar.monthrange(y,mi)[1]
+            days=[{"day":d,"status":dm.get(d,"P"),"date":datetime.date(y,mi,d)} for d in range(1,nd+1)]
+            summary=calculate_salary(w,month)
+    return render_template("attendance.html",workers=fetch_all("SELECT id,name,department FROM workers ORDER BY id"),worker=w,days=days,summary=summary,month=month)
 
 
 @app.route("/attendance/save", methods=["POST"])
 @login_required
 def save_attendance():
-    f = request.form
-    try:
-        worker_id = int(f.get("worker_id", ""))
-    except (TypeError, ValueError):
-        flash("Please select a valid worker.", "danger")
-        return redirect(url_for("attendance"))
-    if not fetch_one("SELECT id FROM workers WHERE id=?", (worker_id,)):
-        flash("Selected worker was not found.", "danger")
-        return redirect(url_for("attendance"))
-    month = f.get("month", "").strip()
-    if month not in MONTHS:
-        month = MONTHS[datetime.date.today().month - 1]
-    try:
-        year_int = int(f.get("year", ""))
-        if not 2000 <= year_int <= 2100:
-            raise ValueError
-    except (TypeError, ValueError):
-        year_int = datetime.date.today().year
-    year = str(year_int)
-    month_year = f"{month} {year}"
-    month_days = calendar.monthrange(year_int, MONTHS.index(month) + 1)[1]
-    try:
-        import json
-        dm = json.loads(f.get("statuses_json", "") or "{}")
-        if not isinstance(dm, dict):
-            dm = {}
-    except (ValueError, TypeError):
-        dm = {}
-    for key, value in f.items():
-        if key.startswith("day_"):
-            dm[key[4:]] = value
-    normalized = {}
-    for key, value in dm.items():
+    f=request.form; wid=int(f.get("worker_id")); month=month_name_year(f.get("month"),f.get("year")) if f.get("year") else f.get("month_year") or month_name_year()
+    present=int(f.get("present_days") or 0); absent=int(f.get("absent_days") or 0); ot=parse_num(f.get("ot_hours"))
+    dm={}
+    raw=f.get("statuses_json")
+    if raw:
+        try: import json; dm=json.loads(raw)
+        except Exception: dm={}
+    # Also accept fields day_1=P etc.
+    for k,v in f.items():
+        if k.startswith("day_"): dm[k[4:]]=v
+    for d,st in dm.items():
         try:
-            d = int(key)
-        except (TypeError, ValueError):
-            continue
-        if 1 <= d <= month_days:
-            normalized[d] = "A" if str(value).strip().upper().startswith("A") else "P"
-    for d in range(1, month_days + 1):
-        normalized.setdefault(d, "P")
-    present = sum(v == "P" for v in normalized.values())
-    absent = sum(v == "A" for v in normalized.values())
-    ot = parse_num(f.get("ot_hours") or 0)
-    # Transaction-like per-row upsert: preserve existing IDs and update records in place.
-    for d in range(1, month_days + 1):
-        old = fetch_one("SELECT id FROM daily_attendance WHERE worker_id=? AND month_year=? AND day=? ORDER BY id DESC LIMIT 1",
-                        (worker_id, month_year, d))
-        if old:
-            execute("UPDATE daily_attendance SET status=? WHERE id=?", (normalized[d], old["id"]), commit=True)
-        else:
-            execute("INSERT INTO daily_attendance(worker_id,month_year,day,status) VALUES(?,?,?,?)",
-                    (worker_id, month_year, d, normalized[d]), commit=True)
-    old_month = fetch_one("SELECT id FROM attendance WHERE worker_id=? AND month_year=? ORDER BY id DESC LIMIT 1",
-                          (worker_id, month_year))
-    if old_month:
-        execute("UPDATE attendance SET present_days=?,absent_days=?,ot_hours=? WHERE id=?",
-                (present, absent, ot, old_month["id"]), commit=True)
+            day=int(d); st="A" if str(st).upper().startswith("A") else "P"
+            existing_day = fetch_one("SELECT id FROM daily_attendance WHERE worker_id=? AND month_year=? AND day=? ORDER BY id DESC LIMIT 1", (wid, month, day))
+            if existing_day:
+                execute("UPDATE daily_attendance SET status=? WHERE id=?", (st, existing_day["id"]), commit=True)
+            else:
+                execute("INSERT INTO daily_attendance(worker_id,month_year,day,status) VALUES(?,?,?,?)", (wid,month,day,st), commit=True)
+        except Exception: pass
+    existing=fetch_one("SELECT id FROM attendance WHERE worker_id=? AND month_year=? ORDER BY id DESC LIMIT 1",(wid,month))
+    if existing:
+        execute("UPDATE attendance SET present_days=?,absent_days=?,ot_hours=? WHERE id=?",(present,absent,ot,existing["id"]),commit=True)
     else:
-        cols = columns("attendance")
-        names = ["worker_id", "month_year", "present_days", "absent_days", "ot_hours"]
-        vals = [worker_id, month_year, present, absent, ot]
-        if "advance_deduction" in cols:
-            names.append("advance_deduction")
-            vals.append(0)
-        execute("INSERT INTO attendance(" + ",".join(names) + ") VALUES(" + ",".join(["?"] * len(vals)) + ")",
-                vals, commit=True)
-    flash(f"Attendance saved for Worker {worker_id} - {month_year}.", "success")
-    return redirect(url_for("attendance", worker_id=worker_id, month=month, year=year))
+        acols = columns("attendance")
+        names = ["worker_id","month_year","present_days","absent_days","ot_hours"]
+        vals = [wid,month,present,absent,ot]
+        if "advance_deduction" in acols:
+            names.append("advance_deduction"); vals.append(0)
+        execute("INSERT INTO attendance(" + ",".join(names) + ") VALUES(" + ",".join(["?"]*len(vals)) + ")", vals, commit=True)
+    flash("Attendance saved.","success"); return redirect(url_for("attendance",worker_id=wid,month=month.split()[0],year=month.split()[1]))
 
 
 @app.route("/payslip")
@@ -698,7 +623,11 @@ def department():
     ws=fetch_all("SELECT * FROM workers" + (" WHERE department=?" if dept else "") + " ORDER BY id",(dept,) if dept else ())
     salary_map=calculate_salary_bulk(ws,month)
     rows=[{**w,**salary_map.get(w["id"],{})} for w in ws]
-    return render_template("department.html",rows=rows,month=month,department=dept,dept=dept,selected_department=dept,departments=[r["department"] for r in fetch_all("SELECT DISTINCT department FROM workers WHERE department IS NOT NULL AND department<>'' ORDER BY department")])
+    return render_template("department.html",rows=rows,month=month,department=dept,departments=[r["department"] for r in fetch_all("SELECT DISTINCT department FROM workers WHERE department IS NOT NULL AND department<>'' ORDER BY department")])
+
+# Compatibility endpoint used by the current dashboard template.
+# The existing Department Salary page is the report view.
+app.add_url_rule("/report", endpoint="report", view_func=department, methods=["GET"])
 
 
 @app.route("/advance")
@@ -706,7 +635,13 @@ def department():
 @login_required
 def advance():
     month=month_name_year(); wid=request.args.get("worker_id")
-    return render_template("advances.html",workers=fetch_all("SELECT id,name,department FROM workers ORDER BY id"),rows=advance_rows(month,wid),month=month)
+    return render_template("advance.html",workers=fetch_all("SELECT id,name,department FROM workers ORDER BY id"),rows=advance_rows(month,wid),month=month)
+
+# Compatibility endpoints for older templates.
+# Flask endpoint names come from function names, so the route aliases above
+# do not create an endpoint named "advances".
+app.add_url_rule("/advances", endpoint="advances", view_func=advance, methods=["GET"])
+
 
 
 @app.route("/advance/save", methods=["POST"])
@@ -746,14 +681,14 @@ def users(): return render_template("users.html",users=fetch_all("SELECT id,user
 def add_user():
     if request.method=="POST":
         f=request.form; username=f.get("username","").strip(); pw=f.get("password","")
-        if not username or not pw: flash("Username and password are required.","danger"); return render_template_string(USER_FORM_HTML, user=f)
+        if not username or not pw: flash("Username and password are required.","danger"); return render_template("user_form.html",user=f)
         ph=hash_password(pw); cols=columns("users")
         names=[]; vals=[]
         for n,v in [("username",username),("password_hash",ph),("password",ph),("full_name",f.get("full_name","")),("role",f.get("role","Operator")),("active",1),("created_at",nowstr())]:
             if n in cols:names.append(n);vals.append(v)
         try: execute("INSERT INTO users("+",".join(names)+") VALUES("+",".join(["?"]*len(vals))+")",vals,commit=True); flash("User created.","success"); return redirect(url_for("users"))
         except Exception as e: flash(f"Could not create user: {e}","danger")
-    return render_template_string(USER_FORM_HTML, user=None)
+    return render_template("user_form.html",user=None)
 
 @app.route("/users/delete/<int:user_id>")
 @admin_required
