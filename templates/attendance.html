@@ -1,358 +1,71 @@
-@app.route("/attendance")
-@login_required
-def attendance():
-    # Selected values
-    selected_worker_id = request.args.get("worker_id", "").strip()
-    selected_month = request.args.get("month", "").strip()
-    selected_year = request.args.get("year", "").strip()
-
-    # Default to current month/year
-    today = datetime.date.today()
-
-    if not selected_month:
-        selected_month = MONTHS[today.month - 1]
-
-    if not selected_year:
-        selected_year = str(today.year)
-
-    # Validate month
-    if selected_month not in MONTHS:
-        selected_month = MONTHS[today.month - 1]
-
-    # Validate year
-    try:
-        selected_year_int = int(selected_year)
-    except Exception:
-        selected_year_int = today.year
-
-    selected_year = str(selected_year_int)
-
-    month_year = f"{selected_month} {selected_year}"
-
-    # All workers
-    workers = fetch_all(
-        """
-        SELECT id, name, department
-        FROM workers
-        ORDER BY id
-        """
-    )
-
-    worker = None
-    days = []
-    summary = {}
-
-    # Selected worker
-    if selected_worker_id:
-        try:
-            worker_id = int(selected_worker_id)
-        except Exception:
-            worker_id = None
-
-        if worker_id:
-            worker = fetch_one(
-                "SELECT * FROM workers WHERE id=?",
-                (worker_id,)
-            )
-
-    # Build calendar
-    if worker:
-        month_number = MONTHS.index(selected_month) + 1
-
-        number_of_days = calendar.monthrange(
-            selected_year_int,
-            month_number
-        )[1]
-
-        # Existing daily attendance
-        dm = daily_map(
-            worker["id"],
-            month_year
-        )
-
-        for day_number in range(1, number_of_days + 1):
-
-            status = dm.get(day_number, "P")
-
-            status = (
-                "A"
-                if str(status).upper().startswith("A")
-                else "P"
-            )
-
-            day_date = datetime.date(
-                selected_year_int,
-                month_number,
-                day_number
-            )
-
-            days.append({
-                "day": day_number,
-                "status": status,
-                "date": day_date
-            })
-
-        # Salary summary
-        summary = calculate_salary(
-            worker,
-            month_year
-        )
-
-    return render_template(
-        "attendance.html",
-        workers=workers,
-        worker=worker,
-        days=days,
-        summary=summary,
-        month=selected_month,
-        year=selected_year,
-        month_year=month_year
-    )
-
-
-@app.route("/attendance/save", methods=["POST"])
-@login_required
-def save_attendance():
-
-    f = request.form
-
-    # Worker
-    worker_id_raw = f.get("worker_id", "").strip()
-
-    if not worker_id_raw:
-        flash("Please select a worker.", "danger")
-        return redirect(url_for("attendance"))
-
-    try:
-        worker_id = int(worker_id_raw)
-    except Exception:
-        flash("Invalid worker.", "danger")
-        return redirect(url_for("attendance"))
-
-    # Month / Year
-    month = f.get("month", "").strip()
-    year = f.get("year", "").strip()
-
-    if month not in MONTHS:
-        month = MONTHS[datetime.date.today().month - 1]
-
-    try:
-        year_int = int(year)
-    except Exception:
-        year_int = datetime.date.today().year
-
-    year = str(year_int)
-
-    month_year = f"{month} {year}"
-
-    # Present / absent
-    try:
-        present = int(f.get("present_days") or 0)
-    except Exception:
-        present = 0
-
-    try:
-        absent = int(f.get("absent_days") or 0)
-    except Exception:
-        absent = 0
-
-    # OT
-    ot = parse_num(
-        f.get("ot_hours")
-        or 0
-    )
-
-    # -------------------------------------------------
-    # DAILY ATTENDANCE
-    # -------------------------------------------------
-
-    dm = {}
-
-    raw = f.get("statuses_json", "")
-
-    if raw:
-        try:
-            import json
-            dm = json.loads(raw)
-        except Exception:
-            dm = {}
-
-    # Also accept day_1=P style fields
-    for key, value in f.items():
-        if key.startswith("day_"):
-            day_key = key[4:]
-            dm[day_key] = value
-
-    # Save every day
-    for day, status in dm.items():
-
-        try:
-            day_number = int(day)
-
-            status = (
-                "A"
-                if str(status).upper().startswith("A")
-                else "P"
-            )
-
-            existing = fetch_one(
-                """
-                SELECT id
-                FROM daily_attendance
-                WHERE worker_id=?
-                  AND month_year=?
-                  AND day=?
-                ORDER BY id DESC
-                LIMIT 1
-                """,
-                (
-                    worker_id,
-                    month_year,
-                    day_number
-                )
-            )
-
-            if existing:
-
-                execute(
-                    """
-                    UPDATE daily_attendance
-                    SET status=?
-                    WHERE id=?
-                    """,
-                    (
-                        status,
-                        existing["id"]
-                    ),
-                    commit=True
-                )
-
-            else:
-
-                execute(
-                    """
-                    INSERT INTO daily_attendance
-                    (
-                        worker_id,
-                        month_year,
-                        day,
-                        status
-                    )
-                    VALUES
-                    (?,?,?,?)
-                    """,
-                    (
-                        worker_id,
-                        month_year,
-                        day_number,
-                        status
-                    ),
-                    commit=True
-                )
-
-        except Exception:
-            # One bad day must not stop the whole save
-            continue
-
-    # -------------------------------------------------
-    # MONTHLY ATTENDANCE SUMMARY
-    # -------------------------------------------------
-
-    existing = fetch_one(
-        """
-        SELECT id
-        FROM attendance
-        WHERE worker_id=?
-          AND month_year=?
-        ORDER BY id DESC
-        LIMIT 1
-        """,
-        (
-            worker_id,
-            month_year
-        )
-    )
-
-    if existing:
-
-        execute(
-            """
-            UPDATE attendance
-            SET
-                present_days=?,
-                absent_days=?,
-                ot_hours=?
-            WHERE id=?
-            """,
-            (
-                present,
-                absent,
-                ot,
-                existing["id"]
-            ),
-            commit=True
-        )
-
-    else:
-
-        acols = columns("attendance")
-
-        names = [
-            "worker_id",
-            "month_year",
-            "present_days",
-            "absent_days",
-            "ot_hours"
-        ]
-
-        values = [
-            worker_id,
-            month_year,
-            present,
-            absent,
-            ot
-        ]
-
-        # Old database may have this column
-        if "advance_deduction" in acols:
-            names.append("advance_deduction")
-            values.append(0)
-
-        placeholders = ",".join(
-            ["?"] * len(values)
-        )
-
-        execute(
-            """
-            INSERT INTO attendance
-            (
-                %s
-            )
-            VALUES
-            (
-                %s
-            )
-            """
-            % (
-                ",".join(names),
-                placeholders
-            ),
-            values,
-            commit=True
-        )
-
-    flash(
-        f"Attendance saved for Worker {worker_id} - {month_year}.",
-        "success"
-    )
-
-    # IMPORTANT:
-    # Return to the same worker/month/year
-    return redirect(
-        url_for(
-            "attendance",
-            worker_id=worker_id,
-            month=month,
-            year=year
-        )
-    )
+<!doctype html>
+<html lang="{{ 'bn' if language == 'bn' else 'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ tr('Dashboard') }} | {{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}</title>
+  <style>
+    :root{font-family:Inter,"Noto Sans Bengali","Nirmala UI",Arial,sans-serif;color:#1e293b;background:#f3f6fb}
+    *{box-sizing:border-box}body{margin:0;background:#f3f6fb}.topbar{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+    .brand{font-weight:800;font-size:20px;color:#1764c0}.nav{display:flex;gap:8px;flex-wrap:wrap}.nav a,.lang a{color:#334155;text-decoration:none;padding:9px 12px;border-radius:8px;background:#f1f5f9;font-size:14px}.nav a:hover,.lang a:hover{background:#dbeafe;color:#1d4ed8}
+    .wrap{max-width:1280px;margin:28px auto;padding:0 20px}.heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}.heading h1{margin:0;font-size:28px}.muted{color:#64748b;font-size:14px;margin-top:7px}
+    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.card{background:#fff;border:1px solid #e7edf5;border-radius:16px;padding:22px;box-shadow:0 5px 18px rgba(15,23,42,.04);min-height:132px;overflow-wrap:anywhere}.label{font-size:14px;color:#64748b;margin-bottom:14px}.value{font-size:30px;line-height:1.2;font-weight:800;color:#1764c0}.sub{font-size:13px;color:#64748b;margin-top:10px}
+    .section{background:#fff;border:1px solid #e7edf5;border-radius:16px;padding:22px;margin-top:22px;box-shadow:0 5px 18px rgba(15,23,42,.04)}.section h2{font-size:20px;margin:0 0 16px}.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:500px}th,td{text-align:left;padding:12px 14px;border-bottom:1px solid #edf1f6;font-size:14px}th{background:#f8fafc;color:#475569;font-weight:700}tr:last-child td{border-bottom:0}.empty{color:#64748b;text-align:center;padding:20px}
+    @media(max-width:900px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.cards{grid-template-columns:1fr}.value{font-size:26px}.wrap{padding:0 12px}.card,.section{padding:18px}}
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">{{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}</div>
+  <nav class="nav" aria-label="Main navigation">
+    <a href="{{ url_for('dashboard') }}">{{ tr('Dashboard') }}</a>
+    <a href="{{ url_for('workers') }}">{{ tr('Workers') }}</a>
+    <a href="{{ url_for('attendance') }}">{{ tr('Attendance') }}</a>
+    <a href="{{ url_for('payslip') }}">{{ tr('Payslip') }}</a>
+    <a href="{{ url_for('advance') }}">{{ tr('Advance Salary') }}</a>
+    <a href="{{ url_for('department') }}">{{ tr('Department') }}</a>
+    <a href="{{ url_for('settings') }}">{{ tr('Settings') }}</a>
+    <a href="{{ url_for('logout') }}">{{ tr('Logout') }}</a>
+  </nav>
+  <div class="lang"><a href="{{ url_for('language', lang='en') }}">English</a> <a href="{{ url_for('language', lang='bn') }}">বাংলা</a></div>
+</header>
+<main class="wrap">
+  <div class="heading">
+    <div><h1>{{ tr('Dashboard') }}</h1><div class="muted">{{ tr('Payroll overview') }} — {{ month }}</div></div>
+  </div>
+  <section class="cards">
+    <article class="card"><div class="label">{{ tr('Total Workers') }}</div><div class="value">{{ total_workers|default(0) }}</div><div class="sub"><a href="{{ url_for('workers') }}">{{ tr('View workers') }} →</a></div></article>
+    <article class="card"><div class="label">{{ tr('Total Advance Salary') }}</div><div class="value">৳ {{ '{:,.2f}'.format(advance|default(0)|float) }}</div><div class="sub"><a href="{{ url_for('advance') }}">{{ tr('Manage advances') }} →</a></div></article>
+    <article class="card"><div class="label">{{ tr('Total Departments') }}</div><div class="value">{{ dept_rows|length if dept_rows else 0 }}</div><div class="sub"><a href="{{ url_for('department') }}">{{ tr('Department report') }} →</a></div></article>
+    <article class="card"><div class="label">{{ tr('Current Month') }}</div><div class="value">{{ month }}</div><div class="sub">{{ tr('Gross salary') }}: ৳ {{ '{:,.2f}'.format(gross|default(0)|float) }}</div></article>
+    <article class="card"><div class="label">{{ tr('Present Today') }}</div><div class="value">{{ today_present|default(0) }}</div></article>
+    <article class="card"><div class="label">{{ tr('Absent Today') }}</div><div class="value">{{ today_absent|default(0) }}</div></article>
+  </section>
+  <section class="section">
+    <h2>{{ tr('Department Summary') }}</h2>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ tr('Department') }}</th>
+            <th>{{ tr('Workers') }}</th>
+            <th>{{ tr('Total Basic Salary') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in dept_rows|default([], true) %}
+          <tr>
+            <td>{{ display_dept(item.get('department', '')) }}</td>
+            <td>{{ item.get('worker_count', 0)|int }}</td>
+            <td>৳ {{ '{:,.2f}'.format(item.get('total_basic', 0)|float) }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="empty">{{ tr('No department data available') }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+</body>
+</html>
