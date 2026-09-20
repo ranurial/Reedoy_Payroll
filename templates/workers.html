@@ -1,216 +1,626 @@
-```html
-{% extends 'base.html' %}
+<!doctype html>
+<html lang="{{ 'bn' if language == 'bn' else 'en' }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-{% block content %}
+    <title>
+        {{ tr('Workers') }} |
+        {{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}
+    </title>
 
-<div class="page-header">
-    <div>
-        <h2>{{ tr('Workers') }}</h2>
-        <p class="muted">Worker information and salary settings</p>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f3f6fb;
+            color: #1e293b;
+            font-family:
+                Inter,
+                "Noto Sans Bengali",
+                "Nirmala UI",
+                Arial,
+                sans-serif;
+        }
+
+        .topbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e5eaf2;
+            padding: 15px 4%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1764c0;
+        }
+
+        .nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nav a,
+        .lang a {
+            color: #334155;
+            text-decoration: none;
+            padding: 9px 12px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            font-size: 14px;
+        }
+
+        .nav a:hover,
+        .lang a:hover {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .wrap {
+            max-width: 1400px;
+            margin: 28px auto;
+            padding: 0 20px;
+        }
+
+        .heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .muted {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 15px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #1764c0;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #12549f;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #e7edf5;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-form input {
+            flex: 1;
+            min-width: 250px;
+            padding: 11px 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .search-form input:focus {
+            border-color: #1764c0;
+            box-shadow: 0 0 0 3px rgba(23, 100, 192, 0.10);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            min-width: 950px;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #edf1f6;
+            text-align: left;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        tr:hover td {
+            background: #f8fbff;
+        }
+
+        .worker-id {
+            font-weight: 700;
+            color: #1764c0;
+        }
+
+        .salary {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .actions-cell {
+            white-space: nowrap;
+        }
+
+        .small-btn {
+            display: inline-block;
+            padding: 6px 9px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 4px;
+            margin-bottom: 3px;
+        }
+
+        .edit {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .delete {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 35px;
+            color: #64748b;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        @media (max-width: 700px) {
+            .wrap {
+                padding: 0 12px;
+            }
+
+            .topbar {
+                padding: 12px;
+            }
+
+            .nav {
+                width: 100%;
+            }
+
+            .nav a {
+                font-size: 13px;
+                padding: 8px 9px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .search-form input {
+                min-width: 100%;
+            }
+
+            .search-form .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+        {{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}
     </div>
-</div>
 
-<div class="card">
-    <h3>{{ tr('Add / Edit Worker') }}</h3>
+    <nav class="nav">
 
-    <form method="post">
+        <a href="{{ url_for('dashboard') }}">
+            {{ tr('Dashboard') }}
+        </a>
 
-        <input type="hidden"
-               name="id"
-               value="{{ edit['id'] if edit else '' }}">
+        <a href="{{ url_for('workers') }}">
+            {{ tr('Workers') }}
+        </a>
 
-        <div class="formgrid">
+        <a href="{{ url_for('attendance') }}">
+            {{ tr('Attendance') }}
+        </a>
 
-            <div>
-                <label>{{ tr('Name') }}</label>
-                <input
-                    type="text"
-                    name="name"
-                    required
-                    value="{{ edit['name'] if edit else '' }}"
-                    placeholder="{{ tr('Worker Name') }}">
+        <a href="{{ url_for('payslip') }}">
+            {{ tr('Payslip') }}
+        </a>
+
+        <a href="{{ url_for('advance') }}">
+            {{ tr('Advance Salary') }}
+        </a>
+
+        <a href="{{ url_for('department') }}">
+            {{ tr('Department') }}
+        </a>
+
+        <a href="{{ url_for('settings') }}">
+            {{ tr('Settings') }}
+        </a>
+
+        <a href="{{ url_for('logout') }}">
+            {{ tr('Logout') }}
+        </a>
+
+    </nav>
+
+    <div class="lang">
+        <a href="{{ url_for('language', lang='en') }}">English</a>
+        <a href="{{ url_for('language', lang='bn') }}">বাংলা</a>
+    </div>
+
+</header>
+
+
+<main class="wrap">
+
+    <div class="heading">
+
+        <div>
+            <h1>{{ tr('Workers') }}</h1>
+
+            <div class="muted">
+                {{ tr('Worker Management') }}
             </div>
-
-            <div>
-                <label>{{ tr('Bangla Name') }}</label>
-                <input
-                    type="text"
-                    name="bangla_name"
-                    value="{{ edit['bangla_name'] if edit else '' }}"
-                    placeholder="কর্মীর নাম">
-            </div>
-
-            <div>
-                <label>{{ tr('Department') }}</label>
-                <select name="department" required>
-                    {% for d in departments %}
-                    <option
-                        value="{{ d }}"
-                        {% if edit and edit['department'] == d %}selected{% endif %}>
-                        {{ dept(d) }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div>
-                <label>{{ tr('Designation') }}</label>
-                <input
-                    type="text"
-                    name="designation"
-                    value="{{ edit['designation'] if edit else '' }}"
-                    placeholder="{{ tr('Designation') }}">
-            </div>
-
-            <div>
-                <label>{{ tr('Basic Salary') }}</label>
-                <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    name="basic_salary"
-                    value="{{ edit['basic_salary'] if edit else 0 }}"
-                    placeholder="0.00">
-            </div>
-
-            <div>
-                <label>{{ tr('OT Rate/Hour') }}</label>
-                <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    name="ot_rate"
-                    value="{{ edit['ot_rate'] if edit else 0 }}"
-                    placeholder="0.00">
-            </div>
-
-            <div>
-                <label>{{ tr('Refreshment') }}</label>
-                <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    name="refreshment_bill"
-                    value="{{ edit['refreshment_bill'] if edit else 0 }}"
-                    placeholder="0.00">
-            </div>
-
         </div>
 
-        <div style="margin-top:20px;">
+        <div class="actions">
 
-            <button type="submit" class="btn">
-                {{ tr('Save') }}
-            </button>
-
-            {% if edit %}
-            <a class="btn"
-               href="{{ url_for('workers') }}">
-                {{ tr('Cancel') }}
+            <a
+                href="{{ url_for('add_worker') }}"
+                class="btn btn-primary"
+            >
+                + {{ tr('Add Worker') }}
             </a>
-            {% endif %}
+
+            <a
+                href="{{ url_for('export_workers') }}"
+                class="btn btn-secondary"
+            >
+                {{ tr('Export Excel') }}
+            </a>
 
         </div>
 
-    </form>
-</div>
+    </div>
 
 
-<div class="card">
+    {% with messages = get_flashed_messages(with_categories=true) %}
 
-    <div class="page-header">
-        <h3>{{ tr('Worker List') }}</h3>
+        {% if messages %}
 
-        <form method="get" class="actions">
+            {% for category, message in messages %}
+
+                <div class="alert">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <div class="card">
+
+        <form
+            method="get"
+            action="{{ url_for('workers') }}"
+            class="search-form"
+        >
 
             <input
                 type="text"
                 name="q"
-                value="{{ q }}"
-                placeholder="{{ tr('Search') }}">
+                value="{{ q or '' }}"
+                placeholder="{{ tr('Search by ID, name, department or designation') }}"
+            >
 
-            <button type="submit" class="btn">
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
                 {{ tr('Search') }}
             </button>
 
+            {% if q %}
+
+                <a
+                    href="{{ url_for('workers') }}"
+                    class="btn btn-secondary"
+                >
+                    {{ tr('Clear') }}
+                </a>
+
+            {% endif %}
+
         </form>
+
     </div>
 
 
-    <div class="table-wrap">
+    <div class="card">
 
-        <table>
+        <div class="table-wrap">
 
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>{{ tr('Name') }}</th>
-                    <th>{{ tr('Bangla Name') }}</th>
-                    <th>{{ tr('Department') }}</th>
-                    <th>{{ tr('Designation') }}</th>
-                    <th>{{ tr('Basic Salary') }}</th>
-                    <th>{{ tr('Action') }}</th>
-                </tr>
-            </thead>
+            <table>
 
-            <tbody>
+                <thead>
 
-                {% for w in workers %}
+                    <tr>
 
-                <tr>
+                        <th>
+                            {{ tr('ID') }}
+                        </th>
 
-                    <td>{{ w['id'] }}</td>
+                        <th>
+                            {{ tr('Name') }}
+                        </th>
 
-                    <td>{{ w['name'] }}</td>
+                        <th>
+                            {{ tr('Bangla Name') }}
+                        </th>
 
-                    <td>{{ w['bangla_name'] or '' }}</td>
+                        <th>
+                            {{ tr('Department') }}
+                        </th>
 
-                    <td>{{ dept(w['department']) }}</td>
+                        <th>
+                            {{ tr('Designation') }}
+                        </th>
 
-                    <td>{{ w['designation'] or '' }}</td>
+                        <th class="salary">
+                            {{ tr('Basic Salary') }}
+                        </th>
 
-                    <td>
-                        {{ '%.2f'|format(w['basic_salary'] or 0) }}
-                    </td>
+                        <th class="salary">
+                            {{ tr('OT Rate') }}
+                        </th>
 
-                    <td class="actions">
+                        <th class="salary">
+                            {{ tr('Nasta / Refreshment') }}
+                        </th>
 
-                        <a
-                            class="btn"
-                            href="{{ url_for('workers', edit=w['id']) }}">
-                            {{ tr('Edit') }}
-                        </a>
+                        <th>
+                            {{ tr('Action') }}
+                        </th>
 
-                        <a
-                            class="btn danger"
-                            href="{{ url_for('delete_worker', wid=w['id']) }}"
-                            onclick="return confirm('Delete this worker?');">
-                            {{ tr('Delete') }}
-                        </a>
+                    </tr>
 
-                    </td>
+                </thead>
 
-                </tr>
+
+                <tbody>
+
+                {% if workers %}
+
+                    {% for w in workers %}
+
+                    <tr>
+
+                        <td class="worker-id">
+                            {{ w['id'] }}
+                        </td>
+
+
+                        <td>
+                            {{ w['name'] or '' }}
+                        </td>
+
+
+                        <td>
+                            {{ w['bangla_name'] or '' }}
+                        </td>
+
+
+                        <td>
+                            {{ dept(w['department']) }}
+                        </td>
+
+
+                        <td>
+                            {{ w['designation'] or '' }}
+                        </td>
+
+
+                        <td class="salary">
+
+                            ৳ {{
+                                "{:,.2f}".format(
+                                    (w['basic_salary'] or 0)|float
+                                )
+                            }}
+
+                        </td>
+
+
+                        <td class="salary">
+
+                            ৳ {{
+                                "{:,.2f}".format(
+                                    (w['ot_rate'] or 0)|float
+                                )
+                            }}
+
+                        </td>
+
+
+                        <td class="salary">
+
+                            ৳ {{
+                                "{:,.2f}".format(
+                                    (w['refreshment_bill'] or 0)|float
+                                )
+                            }}
+
+                        </td>
+
+
+                        <td class="actions-cell">
+
+                            <a
+                                href="{{ url_for('edit_worker', worker_id=w['id']) }}"
+                                class="small-btn edit"
+                            >
+                                {{ tr('Edit') }}
+                            </a>
+
+
+                            <a
+                                href="{{ url_for('attendance', worker_id=w['id']) }}"
+                                class="small-btn"
+                                style="background:#dbeafe;color:#1e40af;"
+                            >
+                                {{ tr('Attendance') }}
+                            </a>
+
+
+                            <a
+                                href="{{ url_for('payslip', worker_id=w['id']) }}"
+                                class="small-btn"
+                                style="background:#dcfce7;color:#166534;"
+                            >
+                                {{ tr('Payslip') }}
+                            </a>
+
+
+                            <form
+                                method="post"
+                                action="{{ url_for('delete_worker', worker_id=w['id']) }}"
+                                style="display:inline;"
+                                onsubmit="return confirm('{{ tr('Are you sure you want to delete this worker?') }}');"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="small-btn delete"
+                                    style="border:0;cursor:pointer;"
+                                >
+                                    {{ tr('Delete') }}
+                                </button>
+
+                            </form>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
 
                 {% else %}
 
-                <tr>
-                    <td colspan="7"
-                        style="text-align:center;padding:30px;">
-                        {{ tr('No workers found') }}
-                    </td>
-                </tr>
+                    <tr>
 
-                {% endfor %}
+                        <td
+                            colspan="9"
+                            class="empty"
+                        >
+                            {{ tr('No workers found.') }}
+                        </td>
 
-            </tbody>
+                    </tr>
 
-        </table>
+                {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
 
     </div>
 
-</div>
+</main>
 
-{% endblock %}
-```
-
+</body>
+</html>
