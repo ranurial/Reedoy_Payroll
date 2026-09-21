@@ -1,243 +1,36 @@
-```html
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
 {% block content %}
-
-<div class="page-header">
-    <div>
-        <h2>{{ tr('Payslip') }}</h2>
-        <p class="muted">Individual worker salary statement</p>
+<div class="container mt-4">
+  <h2>Generate Payslip</h2>
+  <form method="get" action="{{ url_for('payslip') }}" class="row g-3 mb-4">
+    <div class="col-md-6"><label class="form-label">Worker</label><select name="worker_id" class="form-select" required>
+      <option value="">Select worker</option>
+      {% for w in workers %}<option value="{{ w.id }}" {% if worker and worker.id|string == w.id|string %}selected{% endif %}>{{ w.id }} - {{ w.name }}{% if w.department %} ({{ w.department }}){% endif %}</option>{% endfor %}
+    </select></div>
+    <div class="col-md-3 align-self-end"><button class="btn btn-primary" type="submit">Generate Payslip</button></div>
+  </form>
+  {% if worker %}
+  <div class="card"><div class="card-header"><h4>{{ settings.company_name if settings and settings.company_name else 'Reedoy Textile Dyeing Printing & Finishing' }}</h4><strong>Salary Payslip — {{ month }}</strong></div>
+    <div class="card-body">
+      <p><strong>Worker ID:</strong> {{ worker.id }} &nbsp; <strong>Name:</strong> {{ worker.name }} &nbsp; <strong>Department:</strong> {{ worker.department or '-' }}</p>
+      <table class="table table-bordered">
+        <thead><tr><th>Description</th><th class="text-end">Amount (BDT)</th></tr></thead>
+        <tbody>
+          <tr><td>Monthly Basic Salary</td><td class="text-end">{{ "%.2f"|format(worker.basic_salary|float) }}</td></tr>
+          <tr><td>Present Days</td><td class="text-end">{{ summary.present }}</td></tr>
+          <tr><td>Absent Days</td><td class="text-end">{{ summary.absent }}</td></tr>
+          <tr><td>Absent Deduction</td><td class="text-end">{{ "%.2f"|format(summary.absent_cut) }}</td></tr>
+          <tr><td>Earned Basic</td><td class="text-end">{{ "%.2f"|format(summary.earned_basic) }}</td></tr>
+          <tr><td>Overtime (hours: {{ summary.ot }})</td><td class="text-end">{{ "%.2f"|format(summary.ot_amt) }}</td></tr>
+          <tr><td>Refreshment / Nasta</td><td class="text-end">{{ "%.2f"|format(summary.nasta) }}</td></tr>
+          <tr><td>Gross Salary</td><td class="text-end">{{ "%.2f"|format(summary.gross) }}</td></tr>
+          <tr><td>Advance Deduction</td><td class="text-end">{{ "%.2f"|format(summary.advance) }}</td></tr>
+          <tr class="table-success"><th>Net Payable</th><th class="text-end">{{ "%.2f"|format(summary.net) }}</th></tr>
+        </tbody>
+      </table>
+      <button class="btn btn-secondary" onclick="window.print()">Print Payslip</button>
     </div>
+  </div>
+  {% else %}<div class="alert alert-info">Select a worker and click Generate Payslip.</div>{% endif %}
 </div>
-
-<div class="card">
-
-    <form method="get">
-
-        <div class="formgrid">
-
-            <div>
-                <label>{{ tr('Worker') }}</label>
-
-                <select name="wid" required>
-
-                    <option value="">
-                        -- {{ tr('Select Worker') }} --
-                    </option>
-
-                    {% for w in workers %}
-
-                    <option
-                        value="{{ w['id'] }}"
-                        {% if worker and worker['id'] == w['id'] %}selected{% endif %}>
-
-                        {{ w['name'] }}
-
-                        {% if w['bangla_name'] %}
-                            - {{ w['bangla_name'] }}
-                        {% endif %}
-
-                    </option>
-
-                    {% endfor %}
-
-                </select>
-            </div>
-
-            <div>
-                <label>{{ tr('Month') }}</label>
-
-                <input
-                    type="month"
-                    name="month"
-                    value="{{ month }}"
-                    required>
-            </div>
-
-        </div>
-
-        <div style="margin-top:20px;">
-
-            <button type="submit" class="btn">
-                {{ tr('Generate Payslip') }}
-            </button>
-
-        </div>
-
-    </form>
-
-</div>
-
-
-{% if worker %}
-
-<div class="card">
-
-    <div class="page-header">
-
-        <div>
-            <h3>{{ tr('Salary Payslip') }}</h3>
-
-            <p>
-                <strong>{{ worker['name'] }}</strong>
-
-                {% if worker['bangla_name'] %}
-                    — {{ worker['bangla_name'] }}
-                {% endif %}
-            </p>
-        </div>
-
-        <strong>{{ month }}</strong>
-
-    </div>
-
-
-    <div class="formgrid">
-
-        <div>
-            <label>{{ tr('Worker ID') }}</label>
-            <div class="value-box">
-                {{ worker['id'] }}
-            </div>
-        </div>
-
-        <div>
-            <label>{{ tr('Department') }}</label>
-            <div class="value-box">
-                {{ dept(worker['department']) }}
-            </div>
-        </div>
-
-        <div>
-            <label>{{ tr('Designation') }}</label>
-            <div class="value-box">
-                {{ worker['designation'] or '' }}
-            </div>
-        </div>
-
-        <div>
-            <label>{{ tr('Basic Salary') }}</label>
-            <div class="value-box">
-                {{ '%.2f'|format(worker['basic_salary'] or 0) }}
-            </div>
-        </div>
-
-        <div>
-            <label>{{ tr('Present') }}</label>
-            <div class="value-box">
-                {{ salary['present'] or 0 }}
-            </div>
-        </div>
-
-        <div>
-            <label>{{ tr('Absent') }}</label>
-            <div class="value-box">
-                {{ salary['absent'] or 0 }}
-            </div>
-        </div>
-
-        <div>
-            <label>{{ tr('OT Hours') }}</label>
-            <div class="value-box">
-                {{ salary['ot_hours'] or 0 }}
-            </div>
-        </div>
-
-        <div>
-            <label>{{ tr('OT Amount') }}</label>
-            <div class="value-box">
-                {{ '%.2f'|format(salary['ot_amount'] or 0) }}
-            </div>
-        </div>
-
-        <div>
-            <label>{{ tr('Refreshment') }}</label>
-            <div class="value-box">
-                {{ '%.2f'|format(salary['refreshment'] or 0) }}
-            </div>
-        </div>
-
-        <div>
-            <label>{{ tr('Advance') }}</label>
-            <div class="value-box">
-                {{ '%.2f'|format(salary['advance'] or 0) }}
-            </div>
-        </div>
-
-    </div>
-
-
-    <div class="card" style="margin-top:20px;">
-
-        <div class="page-header">
-
-            <h3>{{ tr('Salary Calculation') }}</h3>
-
-        </div>
-
-        <table>
-
-            <tbody>
-
-                <tr>
-                    <th>{{ tr('Basic Salary') }}</th>
-                    <td>
-                        {{ '%.2f'|format(worker['basic_salary'] or 0) }}
-                    </td>
-                </tr>
-
-                <tr>
-                    <th>{{ tr('Absent Deduction') }}</th>
-                    <td>
-                        - {{ '%.2f'|format(salary['absent_amount'] or 0) }}
-                    </td>
-                </tr>
-
-                <tr>
-                    <th>{{ tr('OT Amount') }}</th>
-                    <td>
-                        + {{ '%.2f'|format(salary['ot_amount'] or 0) }}
-                    </td>
-                </tr>
-
-                <tr>
-                    <th>{{ tr('Refreshment') }}</th>
-                    <td>
-                        + {{ '%.2f'|format(salary['refreshment'] or 0) }}
-                    </td>
-                </tr>
-
-                <tr>
-                    <th>{{ tr('Advance') }}</th>
-                    <td>
-                        - {{ '%.2f'|format(salary['advance'] or 0) }}
-                    </td>
-                </tr>
-
-                <tr>
-
-                    <th>
-                        <strong>{{ tr('Net Salary') }}</strong>
-                    </th>
-
-                    <td>
-                        <strong>
-                            {{ '%.2f'|format(salary['net_salary'] or 0) }}
-                        </strong>
-                    </td>
-
-                </tr>
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-</div>
-
-{% endif %}
-
 {% endblock %}
-```
-
