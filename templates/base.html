@@ -1,60 +1,40 @@
-{% extends 'base.html' %}
-{% block title %}{{ tr('Attendance') }} | {{ settings.get('company_name','Reedoy Payroll') if settings else 'Reedoy Payroll' }}{% endblock %}
-{% block head %}
-<style>
-.att-head{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:18px}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px;font-size:13px;color:#475569}.worker-info{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.info-box,.summary-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:13px}.info-label{font-size:12px;color:#64748b}.info-value{font-weight:700;margin-top:4px}.att-table select{min-width:105px}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}.summary-box.net{background:#dcfce7;border-color:#86efac}.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px}.empty{padding:35px;text-align:center;color:#64748b;border:1px dashed #cbd5e1;border-radius:12px}.countbar{display:flex;gap:18px;margin:10px 0;font-weight:700}.present-count{color:#166534}.absent-count{color:#b91c1c}@media(max-width:900px){.worker-info,.summary-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.worker-info,.summary-grid{grid-template-columns:1fr}.filters{align-items:stretch}.filters .field,.filters select,.filters button{width:100%}}
-</style>
-{% endblock %}
-{% block content %}
-<div class="page-card">
-  <div class="att-head">
-    <div><h1>{{ tr('Attendance') }}</h1><div class="muted">{{ tr('Daily attendance and salary calculation') }}</div></div>
-    <form method="get" action="{{ url_for('attendance') }}" class="filters">
-      <label class="field">{{ tr('Worker') }}
-        <select name="worker_id" required onchange="this.form.submit()"><option value="">-- {{ tr('Select Worker') }} --</option>{% for w in workers %}<option value="{{ w['id'] }}" {% if worker and worker['id']|string==w['id']|string %}selected{% endif %}>{{ w['id'] }} - {{ w['name'] }}{% if w['department'] %} ({{ dept(w['department']) }}){% endif %}</option>{% endfor %}</select>
-      </label>
-      <label class="field">{{ tr('Month') }}
-        <select name="month">{% for m in months %}<option value="{{ m }}" {% if month and month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select>
-      </label>
-      <label class="field">{{ tr('Year') }}
-        <select name="year">{% for y in years %}<option value="{{ y }}" {% if month and month.split()[1]|int==y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select>
-      </label>
-      <button type="submit">{{ tr('Load') }}</button>
-    </form>
-  </div>
-
-  {% if worker %}
-  <div class="worker-info">
-    <div class="info-box"><div class="info-label">{{ tr('Worker ID') }}</div><div class="info-value">{{ worker['id'] }}</div></div>
-    <div class="info-box"><div class="info-label">{{ tr('Name') }}</div><div class="info-value">{{ worker['name'] }}</div></div>
-    <div class="info-box"><div class="info-label">{{ tr('Department') }}</div><div class="info-value">{{ dept(worker['department']) }}</div></div>
-    <div class="info-box"><div class="info-label">{{ tr('Month') }}</div><div class="info-value">{{ month }}</div></div>
-  </div>
-
-  <form method="post" action="{{ url_for('save_attendance') }}" id="attendanceForm">
-    <input type="hidden" name="worker_id" value="{{ worker['id'] }}"><input type="hidden" name="month_year" value="{{ month }}">
-    <div class="countbar"><span class="present-count">{{ tr('Present') }}: <span id="presentCount">0</span></span><span class="absent-count">{{ tr('Absent') }}: <span id="absentCount">0</span></span></div>
-    <input type="hidden" name="present_days" id="presentDays" value="0"><input type="hidden" name="absent_days" id="absentDays" value="0">
-    <div class="tablewrap"><table class="att-table"><thead><tr><th>{{ tr('Day') }}</th><th>{{ tr('Date') }}</th><th>{{ tr('Status') }}</th></tr></thead><tbody>
-      {% for d in days %}<tr><td>{{ d['day'] }}</td><td>{{ d['date'].strftime('%d-%m-%Y') }}</td><td><select name="day_{{ d['day'] }}" class="day-status"><option value="P" {% if d['status']=='P' %}selected{% endif %}>{{ tr('Present') }}</option><option value="A" {% if d['status']=='A' %}selected{% endif %}>{{ tr('Absent') }}</option></select></td></tr>{% endfor %}
-    </tbody></table></div>
-    <div class="actions"><label class="field">{{ tr('OT Hours') }}<input type="number" step="0.01" min="0" name="ot_hours" value="{{ summary.get('ot',0) if summary else 0 }}"></label><button type="submit">{{ tr('Save Attendance') }}</button></div>
-  </form>
-
-  {% if summary %}<div class="summary-grid">
-    <div class="summary-box"><div class="info-label">{{ tr('Basic Salary') }}</div><div class="info-value">৳ {{ '%.2f'|format((worker['basic_salary'] or 0)|float) }}</div></div>
-    <div class="summary-box"><div class="info-label">{{ tr('Absent Deduction') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('absent_cut',0)|float) }}</div></div>
-    <div class="summary-box"><div class="info-label">{{ tr('Earned Basic') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('earned_basic',0)|float) }}</div></div>
-    <div class="summary-box"><div class="info-label">{{ tr('OT Amount') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('ot_amt',0)|float) }}</div></div>
-    <div class="summary-box"><div class="info-label">{{ tr('Nasta') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('nasta',0)|float) }}</div></div>
-    <div class="summary-box"><div class="info-label">{{ tr('Gross Salary') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('gross',0)|float) }}</div></div>
-    <div class="summary-box"><div class="info-label">{{ tr('Advance') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('advance',0)|float) }}</div></div>
-    <div class="summary-box net"><div class="info-label">{{ tr('Net Payable') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('net',0)|float) }}</div></div>
-  </div>{% endif %}
-  {% else %}<div class="empty">{{ tr('Select a worker to view and enter attendance.') }}</div>{% endif %}
-</div>
-{% endblock %}
-{% block scripts %}<script>
-function calc(){let p=0,a=0;document.querySelectorAll('.day-status').forEach(x=>x.value==='A'?a++:p++);document.getElementById('presentCount').textContent=p;document.getElementById('absentCount').textContent=a;document.getElementById('presentDays').value=p;document.getElementById('absentDays').value=a}
-document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.day-status').forEach(x=>x.addEventListener('change',calc));calc();});
-</script>{% endblock %}
+<!doctype html>
+<html lang="{{ 'bn' if language == 'bn' else 'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ settings.get('company_name','Reedoy Payroll') if settings else 'Reedoy Payroll' }}{% endblock %}</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Inter,"Noto Sans Bengali","Nirmala UI",Arial,sans-serif}
+    .topbar{background:#fff;border-bottom:1px solid #e5eaf2;padding:14px 4%;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+    .brand{font-weight:800;font-size:20px;color:#1764c0;margin-right:auto}.nav{display:flex;gap:7px;flex-wrap:wrap}.nav a,.lang a{color:#334155;text-decoration:none;padding:8px 11px;border-radius:8px;background:#f1f5f9;font-size:14px}.nav a:hover,.nav a.active{background:#dbeafe;color:#1d4ed8}.lang{display:flex;gap:5px}
+    .wrap{max-width:1280px;margin:28px auto;padding:0 20px}.page-card{background:#fff;border:1px solid #e7edf5;border-radius:16px;padding:22px;box-shadow:0 5px 18px rgba(15,23,42,.04)}
+    h1{margin:0 0 18px;font-size:28px}h2{margin:0 0 14px}.muted{color:#64748b;font-size:14px}.flash{padding:11px 14px;border-radius:8px;background:#dcfce7;color:#166534;margin-bottom:14px}.flash.danger{background:#fee2e2;color:#991b1b}
+    input,select,button{font:inherit}input,select{padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff}button,.btn{border:0;border-radius:8px;padding:10px 15px;background:#1764c0;color:#fff;text-decoration:none;cursor:pointer}.btn.secondary{background:#64748b}
+    table{width:100%;border-collapse:collapse}th,td{padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px}th{background:#f8fafc}.tablewrap{overflow:auto}
+    @media(max-width:900px){.brand{width:100%}.wrap{padding:0 12px}}@media(max-width:600px){.nav a{font-size:12px;padding:7px}.page-card{padding:14px}}
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">{{ settings.get('company_name','Reedoy Payroll') if settings else 'Reedoy Payroll' }}</div>
+  <nav class="nav" aria-label="Main navigation">
+    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint=='dashboard' else '' }}">{{ tr('Dashboard') }}</a>
+    <a href="{{ url_for('workers') }}" class="{{ 'active' if request.endpoint=='workers' else '' }}">{{ tr('Workers') }}</a>
+    <a href="{{ url_for('attendance') }}" class="{{ 'active' if request.endpoint in ['attendance','save_attendance'] else '' }}">{{ tr('Attendance') }}</a>
+    <a href="{{ url_for('payslip') }}" class="{{ 'active' if request.endpoint=='payslip' else '' }}">{{ tr('Payslip') }}</a>
+    <a href="{{ url_for('advance') }}" class="{{ 'active' if request.endpoint=='advance' else '' }}">{{ tr('Advance Salary') }}</a>
+    <a href="{{ url_for('department') }}" class="{{ 'active' if request.endpoint=='department' else '' }}">{{ tr('Department') }}</a>
+    <a href="{{ url_for('settings') }}" class="{{ 'active' if request.endpoint=='settings' else '' }}">{{ tr('Settings') }}</a>
+    <a href="{{ url_for('logout') }}">{{ tr('Logout') }}</a>
+  </nav>
+  <div class="lang"><a href="{{ url_for('language',lang='en') }}">English</a><a href="{{ url_for('language',lang='bn') }}">বাংলা</a></div>
+</header>
+<main class="wrap">
+  {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="flash {{ category if category else '' }}">{{ message }}</div>{% endfor %}{% endwith %}
+  {% block content %}{% endblock %}
+</main>
+{% block scripts %}{% endblock %}
+</body>
+</html>
