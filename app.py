@@ -563,7 +563,10 @@ def delete_worker(worker_id):
 @app.route("/attendance")
 @login_required
 def attendance():
-    month=month_name_year(); wid=request.args.get("worker_id",""); w=None; days=[]; summary={}
+    req_month=request.args.get("month")
+    req_year=request.args.get("year")
+    month=month_name_year(req_month, req_year) if req_month and req_year else month_name_year()
+    wid=request.args.get("worker_id",""); w=None; days=[]; summary={}
     if wid:
         w=fetch_one("SELECT * FROM workers WHERE id=?",(wid,))
         if w:
