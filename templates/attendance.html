@@ -1,71 +1,60 @@
-<!doctype html>
-<html lang="{{ 'bn' if language == 'bn' else 'en' }}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ tr('Dashboard') }} | {{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}</title>
-  <style>
-    :root{font-family:Inter,"Noto Sans Bengali","Nirmala UI",Arial,sans-serif;color:#1e293b;background:#f3f6fb}
-    *{box-sizing:border-box}body{margin:0;background:#f3f6fb}.topbar{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
-    .brand{font-weight:800;font-size:20px;color:#1764c0}.nav{display:flex;gap:8px;flex-wrap:wrap}.nav a,.lang a{color:#334155;text-decoration:none;padding:9px 12px;border-radius:8px;background:#f1f5f9;font-size:14px}.nav a:hover,.lang a:hover{background:#dbeafe;color:#1d4ed8}
-    .wrap{max-width:1280px;margin:28px auto;padding:0 20px}.heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}.heading h1{margin:0;font-size:28px}.muted{color:#64748b;font-size:14px;margin-top:7px}
-    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.card{background:#fff;border:1px solid #e7edf5;border-radius:16px;padding:22px;box-shadow:0 5px 18px rgba(15,23,42,.04);min-height:132px;overflow-wrap:anywhere}.label{font-size:14px;color:#64748b;margin-bottom:14px}.value{font-size:30px;line-height:1.2;font-weight:800;color:#1764c0}.sub{font-size:13px;color:#64748b;margin-top:10px}
-    .section{background:#fff;border:1px solid #e7edf5;border-radius:16px;padding:22px;margin-top:22px;box-shadow:0 5px 18px rgba(15,23,42,.04)}.section h2{font-size:20px;margin:0 0 16px}.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:500px}th,td{text-align:left;padding:12px 14px;border-bottom:1px solid #edf1f6;font-size:14px}th{background:#f8fafc;color:#475569;font-weight:700}tr:last-child td{border-bottom:0}.empty{color:#64748b;text-align:center;padding:20px}
-    @media(max-width:900px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.cards{grid-template-columns:1fr}.value{font-size:26px}.wrap{padding:0 12px}.card,.section{padding:18px}}
-  </style>
-</head>
-<body>
-<header class="topbar">
-  <div class="brand">{{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}</div>
-  <nav class="nav" aria-label="Main navigation">
-    <a href="{{ url_for('dashboard') }}">{{ tr('Dashboard') }}</a>
-    <a href="{{ url_for('workers') }}">{{ tr('Workers') }}</a>
-    <a href="{{ url_for('attendance') }}">{{ tr('Attendance') }}</a>
-    <a href="{{ url_for('payslip') }}">{{ tr('Payslip') }}</a>
-    <a href="{{ url_for('advance') }}">{{ tr('Advance Salary') }}</a>
-    <a href="{{ url_for('department') }}">{{ tr('Department') }}</a>
-    <a href="{{ url_for('settings') }}">{{ tr('Settings') }}</a>
-    <a href="{{ url_for('logout') }}">{{ tr('Logout') }}</a>
-  </nav>
-  <div class="lang"><a href="{{ url_for('language', lang='en') }}">English</a> <a href="{{ url_for('language', lang='bn') }}">বাংলা</a></div>
-</header>
-<main class="wrap">
-  <div class="heading">
-    <div><h1>{{ tr('Dashboard') }}</h1><div class="muted">{{ tr('Payroll overview') }} — {{ month }}</div></div>
+{% extends 'base.html' %}
+{% block title %}{{ tr('Attendance') }} | {{ settings.get('company_name','Reedoy Payroll') if settings else 'Reedoy Payroll' }}{% endblock %}
+{% block head %}
+<style>
+.att-head{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:18px}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px;font-size:13px;color:#475569}.worker-info{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.info-box,.summary-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:13px}.info-label{font-size:12px;color:#64748b}.info-value{font-weight:700;margin-top:4px}.att-table select{min-width:105px}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}.summary-box.net{background:#dcfce7;border-color:#86efac}.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px}.empty{padding:35px;text-align:center;color:#64748b;border:1px dashed #cbd5e1;border-radius:12px}.countbar{display:flex;gap:18px;margin:10px 0;font-weight:700}.present-count{color:#166534}.absent-count{color:#b91c1c}@media(max-width:900px){.worker-info,.summary-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.worker-info,.summary-grid{grid-template-columns:1fr}.filters{align-items:stretch}.filters .field,.filters select,.filters button{width:100%}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-card">
+  <div class="att-head">
+    <div><h1>{{ tr('Attendance') }}</h1><div class="muted">{{ tr('Daily attendance and salary calculation') }}</div></div>
+    <form method="get" action="{{ url_for('attendance') }}" class="filters">
+      <label class="field">{{ tr('Worker') }}
+        <select name="worker_id" required onchange="this.form.submit()"><option value="">-- {{ tr('Select Worker') }} --</option>{% for w in workers %}<option value="{{ w['id'] }}" {% if worker and worker['id']|string==w['id']|string %}selected{% endif %}>{{ w['id'] }} - {{ w['name'] }}{% if w['department'] %} ({{ dept(w['department']) }}){% endif %}</option>{% endfor %}</select>
+      </label>
+      <label class="field">{{ tr('Month') }}
+        <select name="month">{% for m in months %}<option value="{{ m }}" {% if month and month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select>
+      </label>
+      <label class="field">{{ tr('Year') }}
+        <select name="year">{% for y in years %}<option value="{{ y }}" {% if month and month.split()[1]|int==y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select>
+      </label>
+      <button type="submit">{{ tr('Load') }}</button>
+    </form>
   </div>
-  <section class="cards">
-    <article class="card"><div class="label">{{ tr('Total Workers') }}</div><div class="value">{{ total_workers|default(0) }}</div><div class="sub"><a href="{{ url_for('workers') }}">{{ tr('View workers') }} →</a></div></article>
-    <article class="card"><div class="label">{{ tr('Total Advance Salary') }}</div><div class="value">৳ {{ '{:,.2f}'.format(advance|default(0)|float) }}</div><div class="sub"><a href="{{ url_for('advance') }}">{{ tr('Manage advances') }} →</a></div></article>
-    <article class="card"><div class="label">{{ tr('Total Departments') }}</div><div class="value">{{ dept_rows|length if dept_rows else 0 }}</div><div class="sub"><a href="{{ url_for('department') }}">{{ tr('Department report') }} →</a></div></article>
-    <article class="card"><div class="label">{{ tr('Current Month') }}</div><div class="value">{{ month }}</div><div class="sub">{{ tr('Gross salary') }}: ৳ {{ '{:,.2f}'.format(gross|default(0)|float) }}</div></article>
-    <article class="card"><div class="label">{{ tr('Present Today') }}</div><div class="value">{{ today_present|default(0) }}</div></article>
-    <article class="card"><div class="label">{{ tr('Absent Today') }}</div><div class="value">{{ today_absent|default(0) }}</div></article>
-  </section>
-  <section class="section">
-    <h2>{{ tr('Department Summary') }}</h2>
-    <div class="tablewrap">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ tr('Department') }}</th>
-            <th>{{ tr('Workers') }}</th>
-            <th>{{ tr('Total Basic Salary') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in dept_rows|default([], true) %}
-          <tr>
-            <td>{{ display_dept(item.get('department', '')) }}</td>
-            <td>{{ item.get('worker_count', 0)|int }}</td>
-            <td>৳ {{ '{:,.2f}'.format(item.get('total_basic', 0)|float) }}</td>
-          </tr>
-          {% else %}
-          <tr><td colspan="3" class="empty">{{ tr('No department data available') }}</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
-</main>
-</body>
-</html>
+
+  {% if worker %}
+  <div class="worker-info">
+    <div class="info-box"><div class="info-label">{{ tr('Worker ID') }}</div><div class="info-value">{{ worker['id'] }}</div></div>
+    <div class="info-box"><div class="info-label">{{ tr('Name') }}</div><div class="info-value">{{ worker['name'] }}</div></div>
+    <div class="info-box"><div class="info-label">{{ tr('Department') }}</div><div class="info-value">{{ dept(worker['department']) }}</div></div>
+    <div class="info-box"><div class="info-label">{{ tr('Month') }}</div><div class="info-value">{{ month }}</div></div>
+  </div>
+
+  <form method="post" action="{{ url_for('save_attendance') }}" id="attendanceForm">
+    <input type="hidden" name="worker_id" value="{{ worker['id'] }}"><input type="hidden" name="month_year" value="{{ month }}">
+    <div class="countbar"><span class="present-count">{{ tr('Present') }}: <span id="presentCount">0</span></span><span class="absent-count">{{ tr('Absent') }}: <span id="absentCount">0</span></span></div>
+    <input type="hidden" name="present_days" id="presentDays" value="0"><input type="hidden" name="absent_days" id="absentDays" value="0">
+    <div class="tablewrap"><table class="att-table"><thead><tr><th>{{ tr('Day') }}</th><th>{{ tr('Date') }}</th><th>{{ tr('Status') }}</th></tr></thead><tbody>
+      {% for d in days %}<tr><td>{{ d['day'] }}</td><td>{{ d['date'].strftime('%d-%m-%Y') }}</td><td><select name="day_{{ d['day'] }}" class="day-status"><option value="P" {% if d['status']=='P' %}selected{% endif %}>{{ tr('Present') }}</option><option value="A" {% if d['status']=='A' %}selected{% endif %}>{{ tr('Absent') }}</option></select></td></tr>{% endfor %}
+    </tbody></table></div>
+    <div class="actions"><label class="field">{{ tr('OT Hours') }}<input type="number" step="0.01" min="0" name="ot_hours" value="{{ summary.get('ot',0) if summary else 0 }}"></label><button type="submit">{{ tr('Save Attendance') }}</button></div>
+  </form>
+
+  {% if summary %}<div class="summary-grid">
+    <div class="summary-box"><div class="info-label">{{ tr('Basic Salary') }}</div><div class="info-value">৳ {{ '%.2f'|format((worker['basic_salary'] or 0)|float) }}</div></div>
+    <div class="summary-box"><div class="info-label">{{ tr('Absent Deduction') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('absent_cut',0)|float) }}</div></div>
+    <div class="summary-box"><div class="info-label">{{ tr('Earned Basic') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('earned_basic',0)|float) }}</div></div>
+    <div class="summary-box"><div class="info-label">{{ tr('OT Amount') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('ot_amt',0)|float) }}</div></div>
+    <div class="summary-box"><div class="info-label">{{ tr('Nasta') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('nasta',0)|float) }}</div></div>
+    <div class="summary-box"><div class="info-label">{{ tr('Gross Salary') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('gross',0)|float) }}</div></div>
+    <div class="summary-box"><div class="info-label">{{ tr('Advance') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('advance',0)|float) }}</div></div>
+    <div class="summary-box net"><div class="info-label">{{ tr('Net Payable') }}</div><div class="info-value">৳ {{ '%.2f'|format(summary.get('net',0)|float) }}</div></div>
+  </div>{% endif %}
+  {% else %}<div class="empty">{{ tr('Select a worker to view and enter attendance.') }}</div>{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script>
+function calc(){let p=0,a=0;document.querySelectorAll('.day-status').forEach(x=>x.value==='A'?a++:p++);document.getElementById('presentCount').textContent=p;document.getElementById('absentCount').textContent=a;document.getElementById('presentDays').value=p;document.getElementById('absentDays').value=a}
+document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.day-status').forEach(x=>x.addEventListener('change',calc));calc();});
+</script>{% endblock %}
