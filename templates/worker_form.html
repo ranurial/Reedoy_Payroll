@@ -1,0 +1,563 @@
+```html
+<!doctype html>
+<html lang="{{ 'bn' if language == 'bn' else 'en' }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>
+        {{ tr('Edit Worker') if worker else tr('Add Worker') }} |
+        {{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}
+    </title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f3f6fb;
+            color: #1e293b;
+            font-family:
+                Inter,
+                "Noto Sans Bengali",
+                "Nirmala UI",
+                Arial,
+                sans-serif;
+        }
+
+        .topbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e5eaf2;
+            padding: 15px 4%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1764c0;
+        }
+
+        .nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nav a,
+        .lang a {
+            color: #334155;
+            text-decoration: none;
+            padding: 9px 12px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            font-size: 14px;
+        }
+
+        .nav a:hover,
+        .lang a:hover {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .wrap {
+            max-width: 1000px;
+            margin: 28px auto;
+            padding: 0 20px;
+        }
+
+        .heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .muted {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #e7edf5;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 11px 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+            color: #1e293b;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #1764c0;
+            box-shadow: 0 0 0 3px rgba(23, 100, 192, 0.10);
+        }
+
+        input[readonly] {
+            background: #f8fafc;
+            color: #64748b;
+        }
+
+        .hint {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #edf1f6;
+        }
+
+        .btn {
+            display: inline-block;
+            border: 0;
+            border-radius: 8px;
+            padding: 11px 17px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #1764c0;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #12549f;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 800;
+            color: #1764c0;
+            margin: 0 0 18px;
+        }
+
+        @media (max-width: 700px) {
+            .wrap {
+                padding: 0 12px;
+            }
+
+            .topbar {
+                padding: 12px;
+            }
+
+            .nav {
+                width: 100%;
+            }
+
+            .nav a {
+                font-size: 13px;
+                padding: 8px 9px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .field.full {
+                grid-column: auto;
+            }
+
+            .actions .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+        {{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}
+    </div>
+
+    <nav class="nav">
+
+        <a href="{{ url_for('dashboard') }}">
+            {{ tr('Dashboard') }}
+        </a>
+
+        <a href="{{ url_for('workers') }}">
+            {{ tr('Workers') }}
+        </a>
+
+        <a href="{{ url_for('attendance') }}">
+            {{ tr('Attendance') }}
+        </a>
+
+        <a href="{{ url_for('payslip') }}">
+            {{ tr('Payslip') }}
+        </a>
+
+        <a href="{{ url_for('advance') }}">
+            {{ tr('Advance Salary') }}
+        </a>
+
+        <a href="{{ url_for('department') }}">
+            {{ tr('Department') }}
+        </a>
+
+        <a href="{{ url_for('settings') }}">
+            {{ tr('Settings') }}
+        </a>
+
+        <a href="{{ url_for('logout') }}">
+            {{ tr('Logout') }}
+        </a>
+
+    </nav>
+
+    <div class="lang">
+        <a href="{{ url_for('language', lang='en') }}">English</a>
+        <a href="{{ url_for('language', lang='bn') }}">বাংলা</a>
+    </div>
+
+</header>
+
+
+<main class="wrap">
+
+    <div class="heading">
+
+        <div>
+            <h1>
+                {% if worker %}
+                    {{ tr('Edit Worker') }}
+                {% else %}
+                    {{ tr('Add Worker') }}
+                {% endif %}
+            </h1>
+
+            <div class="muted">
+                {{ tr('Worker Information') }}
+            </div>
+        </div>
+
+    </div>
+
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% if messages %}
+
+            {% for category, message in messages %}
+
+                <div class="alert">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <div class="card">
+
+        <div class="section-title">
+            {{ tr('Worker Information') }}
+        </div>
+
+
+        <form method="post">
+
+            <div class="grid">
+
+                <!-- Worker ID -->
+
+                <div class="field">
+
+                    <label for="id">
+                        {{ tr('Worker ID') }}
+                    </label>
+
+                    <input
+                        type="number"
+                        id="id"
+                        name="id"
+                        value="{{ worker['id'] if worker else '' }}"
+                        {% if worker %}readonly{% endif %}
+                        required
+                    >
+
+                    {% if worker %}
+                    <div class="hint">
+                        {{ tr('Worker ID cannot be changed while editing.') }}
+                    </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- Name -->
+
+                <div class="field">
+
+                    <label for="name">
+                        {{ tr('Name') }}
+                    </label>
+
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value="{{ worker['name'] if worker else '' }}"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Bangla Name -->
+
+                <div class="field">
+
+                    <label for="bangla_name">
+                        {{ tr('Bangla Name') }}
+                    </label>
+
+                    <input
+                        type="text"
+                        id="bangla_name"
+                        name="bangla_name"
+                        value="{{ worker['bangla_name'] if worker else '' }}"
+                    >
+
+                </div>
+
+
+                <!-- Department -->
+
+                <div class="field">
+
+                    <label for="department">
+                        {{ tr('Department') }}
+                    </label>
+
+                    <select
+                        id="department"
+                        name="department"
+                        required
+                    >
+
+                        <option value="">
+                            {{ tr('Select Department') }}
+                        </option>
+
+                        {% if departments %}
+
+                            {% for d in departments %}
+
+                                <option
+                                    value="{{ d }}"
+                                    {% if worker and worker['department'] == d %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ dept(d) }}
+                                </option>
+
+                            {% endfor %}
+
+                        {% endif %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- Designation -->
+
+                <div class="field">
+
+                    <label for="designation">
+                        {{ tr('Designation') }}
+                    </label>
+
+                    <input
+                        type="text"
+                        id="designation"
+                        name="designation"
+                        value="{{ worker['designation'] if worker else '' }}"
+                    >
+
+                </div>
+
+
+                <!-- Basic Salary -->
+
+                <div class="field">
+
+                    <label for="basic_salary">
+                        {{ tr('Basic Salary') }}
+                    </label>
+
+                    <input
+                        type="number"
+                        id="basic_salary"
+                        name="basic_salary"
+                        value="{{ worker['basic_salary'] if worker else '0' }}"
+                        min="0"
+                        step="0.01"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- OT Rate -->
+
+                <div class="field">
+
+                    <label for="ot_rate">
+                        {{ tr('OT Rate') }}
+                    </label>
+
+                    <input
+                        type="number"
+                        id="ot_rate"
+                        name="ot_rate"
+                        value="{{ worker['ot_rate'] if worker else '0' }}"
+                        min="0"
+                        step="0.01"
+                    >
+
+                </div>
+
+
+                <!-- Refreshment -->
+
+                <div class="field">
+
+                    <label for="refreshment_bill">
+                        {{ tr('Nasta / Refreshment') }}
+                    </label>
+
+                    <input
+                        type="number"
+                        id="refreshment_bill"
+                        name="refreshment_bill"
+                        value="{{ worker['refreshment_bill'] if worker else '0' }}"
+                        min="0"
+                        step="0.01"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="actions">
+
+                <a
+                    href="{{ url_for('workers') }}"
+                    class="btn btn-secondary"
+                >
+                    {{ tr('Cancel') }}
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    {% if worker %}
+                        {{ tr('Update Worker') }}
+                    {% else %}
+                        {{ tr('Save Worker') }}
+                    {% endif %}
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</main>
+
+</body>
+</html>
+```
