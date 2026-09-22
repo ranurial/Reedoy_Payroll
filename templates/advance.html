@@ -2,14 +2,14 @@
 
 {% block content %}
 
-<div class="container-fluid mt-4 mb-5">
+<div class="container-fluid mt-4">
 
     <!-- Page Header -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h2 class="mb-1">Advance Salary</h2>
             <p class="text-muted mb-0">
-                Selected Month:
+                Month:
                 <strong>{{ month }}</strong>
             </p>
         </div>
@@ -21,8 +21,11 @@
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"
-                            aria-label="Close"></button>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert"
+                            aria-label="Close">
+                    </button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -32,36 +35,36 @@
     <!-- Add Advance Form -->
     <div class="card shadow-sm mb-4">
 
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Add Advance Salary</h5>
+        <div class="card-header">
+            <h5 class="mb-0">Add New Advance</h5>
         </div>
 
         <div class="card-body">
 
-            <form method="post" action="{{ url_for('save_advance') }}">
+            <form method="POST" action="{{ url_for('save_advance') }}">
 
-                <input type="hidden" name="month_year" value="{{ month }}">
-
-                <!-- First Row -->
-                <div class="row g-3 mb-3">
+                <div class="row g-2 align-items-end">
 
                     <!-- Worker -->
-                    <div class="col-12 col-md-6">
-                        <label for="worker_id" class="form-label fw-semibold">
+                    <div class="col-12 col-lg-3">
+                        <label for="worker_id" class="form-label">
                             Worker <span class="text-danger">*</span>
                         </label>
 
                         <select
-                            id="worker_id"
                             name="worker_id"
+                            id="worker_id"
                             class="form-select"
                             required
                         >
                             <option value="">-- Select Worker --</option>
 
-                            {% for w in workers %}
-                                <option value="{{ w.id }}">
-                                    {{ w.id }} - {{ w.name }}{% if w.department %} ({{ w.department }}){% endif %}
+                            {% for worker in workers %}
+                                <option value="{{ worker.id }}">
+                                    {{ worker.name }}
+                                    {% if worker.department %}
+                                        - {{ worker.department }}
+                                    {% endif %}
                                 </option>
                             {% endfor %}
 
@@ -70,71 +73,73 @@
 
 
                     <!-- Advance Date -->
-                    <div class="col-12 col-md-6">
-                        <label for="advance_date" class="form-label fw-semibold">
+                    <div class="col-12 col-lg-2">
+                        <label for="advance_date" class="form-label">
                             Advance Date <span class="text-danger">*</span>
                         </label>
 
                         <input
                             type="date"
-                            id="advance_date"
                             name="advance_date"
+                            id="advance_date"
                             class="form-control"
+                            value="{{ today if today is defined else '' }}"
                             required
                         >
                     </div>
 
-                </div>
-
-
-                <!-- Second Row -->
-                <div class="row g-3 mb-3">
 
                     <!-- Amount -->
-                    <div class="col-12 col-md-6">
-                        <label for="amount" class="form-label fw-semibold">
-                            Amount (BDT) <span class="text-danger">*</span>
+                    <div class="col-12 col-lg-2">
+                        <label for="amount" class="form-label">
+                            Amount (৳) <span class="text-danger">*</span>
                         </label>
 
-                        <div class="input-group">
-                            <span class="input-group-text">৳</span>
-                            <input
-                                type="number"
-                                id="amount"
-                                name="amount"
-                                min="1"
-                                step="0.01"
-                                class="form-control"
-                                placeholder="Enter advance amount"
-                                required
-                            >
-                        </div>
+                        <input
+                            type="number"
+                            name="amount"
+                            id="amount"
+                            class="form-control"
+                            min="1"
+                            step="0.01"
+                            placeholder="Enter amount"
+                            required
+                        >
                     </div>
 
 
                     <!-- Note -->
-                    <div class="col-12 col-md-6">
-                        <label for="note" class="form-label fw-semibold">
-                            Note / Reason
+                    <div class="col-12 col-lg-3">
+                        <label for="note" class="form-label">
+                            Note
                         </label>
 
                         <input
                             type="text"
-                            id="note"
                             name="note"
+                            id="note"
                             class="form-control"
-                            placeholder="Enter note or reason (optional)"
+                            placeholder="Optional note"
                         >
                     </div>
 
-                </div>
 
+                    <!-- Save Button -->
+                    <div class="col-12 col-lg-2">
+                        <input
+                            type="hidden"
+                            name="month_year"
+                            value="{{ month }}"
+                        >
 
-                <!-- Submit Button -->
-                <div class="d-flex justify-content-end mt-4">
-                    <button type="submit" class="btn btn-primary px-4">
-                        Save Advance
-                    </button>
+                        <button
+                            type="submit"
+                            class="btn btn-primary w-100"
+                        >
+                            Save Advance
+                        </button>
+                    </div>
+
                 </div>
 
             </form>
@@ -143,63 +148,74 @@
     </div>
 
 
-
     <!-- Advance Records -->
     <div class="card shadow-sm">
 
-        <div class="card-header bg-light">
-            <h5 class="mb-0">Advance Salary Records</h5>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Advance Records</h5>
+            <span class="badge bg-secondary">
+                {{ advances|length if advances is defined else (records|length if records is defined else 0) }}
+                Records
+            </span>
         </div>
 
         <div class="card-body">
 
             <div class="table-responsive">
 
-                <table class="table table-striped table-bordered table-hover align-middle mb-0">
+                <table class="table table-bordered table-striped table-hover align-middle mb-0">
 
                     <thead class="table-dark">
                         <tr>
                             <th style="width: 80px;">ID</th>
                             <th>Worker</th>
-                            <th style="width: 160px;">Advance Date</th>
-                            <th style="width: 180px;" class="text-end">Amount (BDT)</th>
+                            <th style="width: 150px;">Date</th>
+                            <th style="width: 160px;" class="text-end">Amount (৳)</th>
                             <th>Note</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                        {% for r in rows %}
+                        {% set rows = advances if advances is defined else (records if records is defined else []) %}
 
-                            <tr>
-                                <td>{{ r.id }}</td>
+                        {% if rows %}
 
-                                <td>
-                                    {{ r.worker_name or r.worker_id }}
-                                </td>
+                            {% for r in rows %}
+                                <tr>
 
-                                <td>
-                                    {{ r.advance_date or r.date or '' }}
-                                </td>
+                                    <td>
+                                        {{ r.id }}
+                                    </td>
 
-                                <td class="text-end">
-                                    {{ "%.2f"|format(r.amount|float) }}
-                                </td>
+                                    <td>
+                                        {{ r.worker_name or r.worker_id }}
+                                    </td>
 
-                                <td>
-                                    {{ r.note or '' }}
-                                </td>
-                            </tr>
+                                    <td>
+                                        {{ r.advance_date or r.date or '' }}
+                                    </td>
+
+                                    <td class="text-end">
+                                        {{ "%.2f"|format((r.amount or 0)|float) }}
+                                    </td>
+
+                                    <td>
+                                        {{ r.note or '' }}
+                                    </td>
+
+                                </tr>
+                            {% endfor %}
 
                         {% else %}
 
                             <tr>
                                 <td colspan="5" class="text-center text-muted py-4">
-                                    No advance records found for this month.
+                                    No advance salary records found.
                                 </td>
                             </tr>
 
-                        {% endfor %}
+                        {% endif %}
 
                     </tbody>
 
