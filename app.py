@@ -3939,12 +3939,10 @@ def department():
 # REPORT COMPATIBILITY
 # ============================================================
 
-@app.add_url_rule(
-    "/report",
-    endpoint="report",
-    view_func=department,
-    methods=["GET"]
-)
+@app.route("/report", methods=["GET"])
+@login_required
+def report():
+    return department()
 
 
 # ============================================================
