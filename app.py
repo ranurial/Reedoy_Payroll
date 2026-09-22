@@ -530,15 +530,57 @@ def dashboard():
     return render_template("dashboard.html",workers=workers,month=month,month_name=month.split()[0],year=month.split()[1],gross=gross,advance=adv,today_present=mp.get("P",0),today_absent=mp.get("A",0),dept_rows=depts,total_workers=len(workers))
 
 
+# ============================================================
+# WORKER LIST
+# ============================================================
+
 @app.route("/workers")
 @login_required
 def workers():
-    q=request.args.get("q","").strip().lower(); params=[]
-    sql="SELECT * FROM workers"
+    q = request.args.get("q", "").strip().lower()
+    params = []
+
+    sql = "SELECT * FROM workers"
+
     if q:
-        l=f"%{q}%"; sql+=" WHERE CAST(id AS TEXT) LIKE ? OR lower(name) LIKE ? OR lower(COALESCE(bangla_name,'')) LIKE ? OR lower(COALESCE(department,'')) LIKE ? OR lower(COALESCE(designation,'')) LIKE ?"; params=[l,l,l,l,l]
-    sql+=" ORDER BY id DESC"
-    return render_template("workers.html",workers=fetch_all(sql,params),q=q)
+        like_value = f"%{q}%"
+
+        sql += """
+            WHERE
+                CAST(id AS TEXT) LIKE ?
+                OR lower(COALESCE(name, '')) LIKE ?
+                OR lower(COALESCE(bangla_name, '')) LIKE ?
+                OR lower(COALESCE(department, '')) LIKE ?
+                OR lower(COALESCE(designation, '')) LIKE ?
+        """
+
+        params = [
+            like_value,
+            like_value,
+            like_value,
+            like_value,
+            like_value
+        ]
+
+    sql += " ORDER BY id DESC"
+
+    worker_rows = fetch_all(sql, params)
+
+    return render_template(
+        "worker.html",
+        workers=worker_rows,
+        q=q
+    )
+
+
+# ============================================================
+# ADD WORKER
+# ============================================================
+
+@app.route("/workers/add", methods=["GET", "POST"])
+@login_required
+def add_worker():
+    ...
 
 
 @app.route("/workers/add", methods=["GET","POST"])
