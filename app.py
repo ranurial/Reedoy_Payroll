@@ -1,31 +1,108 @@
-import os, csv, io, sqlite3, hashlib, calendar, datetime
+import os
+import csv
+import io
+import sqlite3
+import hashlib
+import calendar
+import datetime
 from functools import wraps
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, abort, jsonify
 
-# Optional exports
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    send_file,
+    abort,
+    jsonify,
+)
+
+
+# ============================================================
+# OPTIONAL EXPORT LIBRARIES
+# ============================================================
+
 try:
     import openpyxl
     from openpyxl import Workbook
 except Exception:
     openpyxl = None
+    Workbook = None
+
+
 try:
     from reportlab.lib.pagesizes import A4, landscape
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Paragraph,
+        Spacer,
+        Table,
+        TableStyle,
+    )
     from reportlab.lib import colors
     from reportlab.lib.styles import getSampleStyleSheet
 except Exception:
-    SimpleDocTemplate = Paragraph = Spacer = Table = TableStyle = None
-    A4 = landscape = None
+    SimpleDocTemplate = None
+    Paragraph = None
+    Spacer = None
+    Table = None
+    TableStyle = None
+    colors = None
+    getSampleStyleSheet = None
+    A4 = None
+    landscape = None
+
+
+# ============================================================
+# APPLICATION
+# ============================================================
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "CHANGE-ME-IN-RENDER")
-DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
-DB_PATH = os.environ.get("SQLITE_DB", "reedoy_payroll.db")
-DEFAULT_COMPANY_NAME = "REEDOY TEXTILE DYEING PRINTING & FINISHING"
 
-MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"]
-DEPT_BN = # ============================================================
-# REEDOY FIXED DEPARTMENTS
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "CHANGE-ME-IN-RENDER"
+)
+
+
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    ""
+).strip()
+
+
+DB_PATH = os.environ.get(
+    "SQLITE_DB",
+    "reedoy_payroll.db"
+)
+
+
+DEFAULT_COMPANY_NAME = (
+    "REEDOY TEXTILE DYEING PRINTING & FINISHING"
+)
+
+
+MONTHS = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
+
+
+# ============================================================
+# FIXED DEPARTMENTS
 # ============================================================
 
 DEPARTMENTS = [
@@ -42,492 +119,2808 @@ DEPARTMENTS = [
 ]
 
 
-def get_worker_departments():
-    """
-    Fixed department list for Worker Add/Edit.
-    Existing worker/database data is NOT modified.
-    """
-    return DEPARTMENTS.copy()
-LANG = {
-    "Dashboard":"ড্যাশবোর্ড", "Workers Management":"কর্মী ব্যবস্থাপনা", "Attendance & Calendar":"উপস্থিতি ও ক্যালেন্ডার",
-    "Single Payslip":"একক পে-স্লিপ", "Advance Salary":"অগ্রিম বেতন", "Department Salary Sheet":"বিভাগভিত্তিক বেতন শীট",
-    "Settings":"সেটিংস", "Worker Name":"কর্মীর নাম", "Department":"বিভাগ", "Designation":"পদবি",
-    "Basic Salary":"মূল বেতন", "OT Rate":"OT হার", "Nasta Rate":"নাস্তা হার", "Present":"উপস্থিত", "Absent":"অনুপস্থিত",
-    "Absent Deduction":"অনুপস্থিতির কর্তন", "OT Amt":"OT টাকা", "Nasta":"নাস্তা", "Gross Salary":"মোট বেতন",
-    "Advance":"অগ্রিম", "Net Payable":"নেট প্রদেয়", "Payroll Month":"বেতন মাস", "Advance Date":"অগ্রিমের তারিখ",
-    "Amount (BDT)":"পরিমাণ (টাকা)", "Note":"নোট", "Save":"সংরক্ষণ", "Update":"আপডেট", "Delete":"মুছুন",
-    "Search":"অনুসন্ধান", "Refresh":"রিফ্রেশ", "Generate":"তৈরি করুন", "Export Excel":"এক্সেল রপ্তানি", "Export PDF":"PDF রপ্তানি"
+DEPT_BN = {
+    "All Departments": "সকল বিভাগ",
+    "General": "সাধারণ",
+    "Printing": "প্রিন্টিং",
+    "Jigar": "জিগার",
+    "Wash": "ওয়াশ",
+    "Loop": "লুপ",
+    "Stanter": "স্ট্যান্টার",
+    "Electrical": "ইলেকট্রিক্যাল",
+    "Accounts": "অ্যাকাউন্টস",
+    "Design": "ডিজাইন",
 }
 
 
-def is_postgres():
-    return bool(DATABASE_URL and not DATABASE_URL.startswith("sqlite://"))
+def get_worker_departments():
+    """
+    Return fixed department list.
 
+    This function does not modify the database.
+    """
+    return DEPARTMENTS.copy()
+
+
+# ============================================================
+# TRANSLATIONS
+# ============================================================
+
+LANG = {
+    "Dashboard": "ড্যাশবোর্ড",
+    "Workers Management": "কর্মী ব্যবস্থাপনা",
+    "Attendance & Calendar": "উপস্থিতি ও ক্যালেন্ডার",
+    "Single Payslip": "একক পে-স্লিপ",
+    "Advance Salary": "অগ্রিম বেতন",
+    "Department Salary Sheet": "বিভাগভিত্তিক বেতন শীট",
+    "Settings": "সেটিংস",
+    "Worker Name": "কর্মীর নাম",
+    "Department": "বিভাগ",
+    "Designation": "পদবি",
+    "Basic Salary": "মূল বেতন",
+    "OT Rate": "OT হার",
+    "Nasta Rate": "নাস্তা হার",
+    "Present": "উপস্থিত",
+    "Absent": "অনুপস্থিত",
+    "Absent Deduction": "অনুপস্থিতির কর্তন",
+    "OT Amt": "OT টাকা",
+    "Nasta": "নাস্তা",
+    "Gross Salary": "মোট বেতন",
+    "Advance": "অগ্রিম",
+    "Net Payable": "নেট প্রদেয়",
+    "Payroll Month": "বেতন মাস",
+    "Advance Date": "অগ্রিমের তারিখ",
+    "Amount (BDT)": "পরিমাণ (টাকা)",
+    "Note": "নোট",
+    "Save": "সংরক্ষণ",
+    "Update": "আপডেট",
+    "Delete": "মুছুন",
+    "Search": "অনুসন্ধান",
+    "Refresh": "রিফ্রেশ",
+    "Generate": "তৈরি করুন",
+    "Export Excel": "এক্সেল রপ্তানি",
+    "Export PDF": "PDF রপ্তানি",
+}
+
+
+# ============================================================
+# DATABASE TYPE
+# ============================================================
+
+def is_postgres():
+    return bool(
+        DATABASE_URL
+        and not DATABASE_URL.startswith("sqlite://")
+    )
+
+
+# ============================================================
+# POSTGRES CONNECTION POOL
+# ============================================================
 
 _PG_POOL = None
 
+
 def _get_pg_pool():
     global _PG_POOL
+
     if _PG_POOL is None:
-        from psycopg2.pool import ThreadedConnectionPool
-        minconn = int(os.environ.get("PG_POOL_MIN", "1"))
-        maxconn = int(os.environ.get("PG_POOL_MAX", "4"))
-        _PG_POOL = ThreadedConnectionPool(
-            minconn, maxconn, DATABASE_URL,
-            sslmode="require", connect_timeout=10,
-            keepalives=1, keepalives_idle=30,
-            keepalives_interval=10, keepalives_count=3
+
+        try:
+            import psycopg2
+            from psycopg2.pool import ThreadedConnectionPool
+        except Exception as e:
+            raise RuntimeError(
+                "psycopg2 is required for PostgreSQL. "
+                "Add psycopg2-binary to requirements.txt."
+            ) from e
+
+        minconn = int(
+            os.environ.get("PG_POOL_MIN", "1")
         )
+
+        maxconn = int(
+            os.environ.get("PG_POOL_MAX", "4")
+        )
+
+        _PG_POOL = ThreadedConnectionPool(
+            minconn,
+            maxconn,
+            DATABASE_URL,
+            sslmode="require",
+            connect_timeout=10,
+            keepalives=1,
+            keepalives_idle=30,
+            keepalives_interval=10,
+            keepalives_count=3,
+        )
+
     return _PG_POOL
 
 
+# ============================================================
+# DATABASE CONNECTION
+# ============================================================
+
 def db_connect():
+
     if is_postgres():
         return _get_pg_pool().getconn()
-    conn = sqlite3.connect(DB_PATH)
+
+    conn = sqlite3.connect(
+        DB_PATH,
+        timeout=30,
+        check_same_thread=False,
+    )
+
     conn.row_factory = sqlite3.Row
+
     return conn
 
 
 def db_release(conn):
+
     if conn is None:
         return
+
     if is_postgres():
+
         try:
-            # Never return a connection to the pool with an open transaction.
+
             try:
-                if getattr(conn, "status", None) != 1:  # STATUS_READY = 1
+                if getattr(conn, "status", None) != 1:
                     conn.rollback()
             except Exception:
                 pass
-            _get_pg_pool().putconn(conn)
-        except Exception:
-            try: conn.close()
-            except Exception: pass
-    else:
-        try: conn.close()
-        except Exception: pass
 
+            _get_pg_pool().putconn(conn)
+
+        except Exception:
+
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+    else:
+
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+# ============================================================
+# SQL PLACEHOLDER
+# ============================================================
 
 def placeholders(sql):
+
     if is_postgres():
         return sql.replace("?", "%s")
+
     return sql
 
 
-def execute(sql, params=(), fetch=False, many=False, commit=False):
-    conn = db_connect(); cur = conn.cursor()
+# ============================================================
+# GENERIC EXECUTE
+# ============================================================
+
+def execute(
+    sql,
+    params=(),
+    fetch=False,
+    many=False,
+    commit=False,
+):
+
+    conn = db_connect()
+    cur = conn.cursor()
+
     try:
+
         sql2 = placeholders(sql)
-        if many: cur.executemany(sql2, params)
-        else: cur.execute(sql2, params)
-        rows = cur.fetchall() if fetch else None
-        if commit: conn.commit()
+
+        if many:
+            cur.executemany(
+                sql2,
+                params
+            )
+        else:
+            cur.execute(
+                sql2,
+                params
+            )
+
+        rows = (
+            cur.fetchall()
+            if fetch
+            else None
+        )
+
+        if commit:
+            conn.commit()
+
         return rows
+
+    except Exception:
+
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+
+        raise
+
     finally:
-        try: cur.close()
-        except Exception: pass
+
+        try:
+            cur.close()
+        except Exception:
+            pass
+
         db_release(conn)
 
+
+# ============================================================
+# ROW CONVERSION
+# ============================================================
 
 def row_dict(cur, row):
-    if row is None: return None
-    if hasattr(row, "keys"): return dict(row)
-    return {d[0]: row[i] for i, d in enumerate(cur.description)}
 
+    if row is None:
+        return None
+
+    if hasattr(row, "keys"):
+        return dict(row)
+
+    return {
+        description[0]: row[index]
+        for index, description
+        in enumerate(cur.description)
+    }
+
+
+# ============================================================
+# FETCH ALL
+# ============================================================
 
 def fetch_all(sql, params=()):
-    conn = db_connect(); cur = conn.cursor()
+
+    conn = db_connect()
+    cur = conn.cursor()
+
     try:
-        cur.execute(placeholders(sql), params)
+
+        cur.execute(
+            placeholders(sql),
+            params
+        )
+
         rows = cur.fetchall()
-        return [row_dict(cur, r) for r in rows]
+
+        return [
+            row_dict(cur, row)
+            for row in rows
+        ]
+
     finally:
+
+        try:
+            cur.close()
+        except Exception:
+            pass
+
         db_release(conn)
 
 
+# ============================================================
+# FETCH ONE
+# ============================================================
+
 def fetch_one(sql, params=()):
-    rows = fetch_all(sql, params)
+
+    rows = fetch_all(
+        sql,
+        params
+    )
+
     return rows[0] if rows else None
 
 
-def scalar(sql, params=(), default=0):
-    r = fetch_one(sql, params)
-    if not r: return default
-    return next(iter(r.values()))
+# ============================================================
+# SCALAR
+# ============================================================
 
+def scalar(
+    sql,
+    params=(),
+    default=0,
+):
+
+    row = fetch_one(
+        sql,
+        params
+    )
+
+    if not row:
+        return default
+
+    return next(
+        iter(row.values())
+    )
+
+
+# ============================================================
+# TABLE EXISTS
+# ============================================================
 
 def table_exists(name):
-    if is_postgres():
-        return bool(scalar("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name=?)", (name,), False))
-    return bool(scalar("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?", (name,), 0))
 
+    if is_postgres():
+
+        return bool(
+            scalar(
+                """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.tables
+                    WHERE table_schema='public'
+                    AND table_name=?
+                )
+                """,
+                (name,),
+                False,
+            )
+        )
+
+    return bool(
+        scalar(
+            """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type='table'
+            AND name=?
+            """,
+            (name,),
+            0,
+        )
+    )
+
+
+# ============================================================
+# TABLE COLUMNS
+# ============================================================
 
 def columns(name):
-    if not table_exists(name): return set()
+
+    if not table_exists(name):
+        return set()
+
     if is_postgres():
-        return {r["column_name"] for r in fetch_all("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=?", (name,))}
-    conn=db_connect(); cur=conn.cursor()
+
+        rows = fetch_all(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema='public'
+            AND table_name=?
+            """,
+            (name,),
+        )
+
+        return {
+            row["column_name"]
+            for row in rows
+        }
+
+    conn = db_connect()
+    cur = conn.cursor()
+
     try:
-        cur.execute("PRAGMA table_info(" + name + ")")
-        return {r[1] for r in cur.fetchall()}
-    finally: db_release(conn)
+
+        cur.execute(
+            "PRAGMA table_info(" + name + ")"
+        )
+
+        return {
+            row[1]
+            for row in cur.fetchall()
+        }
+
+    finally:
+
+        try:
+            cur.close()
+        except Exception:
+            pass
+
+        db_release(conn)
 
 
-def add_column(name, col, typ):
-    if col in columns(name): return
-    execute(f"ALTER TABLE {name} ADD COLUMN {col} {typ}", commit=True)
+# ============================================================
+# ADD COLUMN
+# ============================================================
+
+def add_column(
+    name,
+    col,
+    typ,
+):
+
+    if not table_exists(name):
+        return
+
+    if col in columns(name):
+        return
+
+    execute(
+        f"ALTER TABLE {name} ADD COLUMN {col} {typ}",
+        commit=True,
+    )
 
 
-def hash_password(p):
-    return hashlib.sha256(str(p).encode("utf-8")).hexdigest()
+# ============================================================
+# PASSWORD
+# ============================================================
+
+def hash_password(password):
+
+    return hashlib.sha256(
+        str(password).encode("utf-8")
+    ).hexdigest()
 
 
-def nowstr(): return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# ============================================================
+# CURRENT DATETIME
+# ============================================================
 
+def nowstr():
+
+    return datetime.datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+
+# ============================================================
+# DATABASE INITIALIZATION
+# ============================================================
 
 def init_db():
-    """Create only missing structures. Never drop, truncate, or re-import legacy data."""
-    conn=db_connect(); cur=conn.cursor()
+    """
+    Create only missing structures.
+
+    IMPORTANT:
+    - Never DROP tables.
+    - Never TRUNCATE tables.
+    - Never delete migrated workers.
+    - Never re-import worker records.
+    - Existing worker IDs remain untouched.
+    """
+
+    conn = db_connect()
+    cur = conn.cursor()
+
     try:
-        # Legacy-compatible core schemas.
-        cur.execute(placeholders("""CREATE TABLE IF NOT EXISTS workers (
-            id INTEGER PRIMARY KEY, name TEXT NOT NULL, basic_salary REAL NOT NULL DEFAULT 0,
-            ot_rate REAL NOT NULL DEFAULT 0, department TEXT, designation TEXT,
-            refreshment_bill REAL NOT NULL DEFAULT 0, bangla_name TEXT)"""))
-        cur.execute(placeholders("""CREATE TABLE IF NOT EXISTS attendance (
-            id INTEGER PRIMARY KEY, worker_id INTEGER, month_year TEXT NOT NULL,
-            present_days INTEGER DEFAULT 0, absent_days INTEGER DEFAULT 0,
-            ot_hours REAL DEFAULT 0, advance_deduction REAL DEFAULT 0)"""))
-        cur.execute(placeholders("""CREATE TABLE IF NOT EXISTS daily_attendance (
-            id INTEGER PRIMARY KEY, worker_id INTEGER, month_year TEXT NOT NULL,
-            day INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'P')"""))
-        cur.execute(placeholders("""CREATE TABLE IF NOT EXISTS company_settings (
-            key TEXT PRIMARY KEY, value TEXT)"""))
-        cur.execute(placeholders("""CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY, username TEXT UNIQUE NOT NULL, password_hash TEXT,
-            full_name TEXT, role TEXT DEFAULT 'Operator', active INTEGER DEFAULT 1,
-            created_at TEXT, last_login TEXT, password TEXT)"""))
-        cur.execute(placeholders("""CREATE TABLE IF NOT EXISTS activity_log (
-            id INTEGER PRIMARY KEY, username TEXT, action TEXT, log_time TEXT NOT NULL)"""))
+
+        # ----------------------------------------------------
+        # Workers
+        # ----------------------------------------------------
+
+        if is_postgres():
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS workers (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    basic_salary DOUBLE PRECISION NOT NULL DEFAULT 0,
+                    ot_rate DOUBLE PRECISION NOT NULL DEFAULT 0,
+                    department TEXT,
+                    designation TEXT,
+                    refreshment_bill DOUBLE PRECISION NOT NULL DEFAULT 0,
+                    bangla_name TEXT
+                )
+                """
+            )
+
+        else:
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS workers (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    basic_salary REAL NOT NULL DEFAULT 0,
+                    ot_rate REAL NOT NULL DEFAULT 0,
+                    department TEXT,
+                    designation TEXT,
+                    refreshment_bill REAL NOT NULL DEFAULT 0,
+                    bangla_name TEXT
+                )
+                """
+            )
+
+        # ----------------------------------------------------
+        # Attendance
+        # ----------------------------------------------------
+
+        if is_postgres():
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS attendance (
+                    id SERIAL PRIMARY KEY,
+                    worker_id INTEGER,
+                    month_year TEXT NOT NULL,
+                    present_days INTEGER DEFAULT 0,
+                    absent_days INTEGER DEFAULT 0,
+                    ot_hours DOUBLE PRECISION DEFAULT 0,
+                    advance_deduction DOUBLE PRECISION DEFAULT 0
+                )
+                """
+            )
+
+        else:
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS attendance (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    worker_id INTEGER,
+                    month_year TEXT NOT NULL,
+                    present_days INTEGER DEFAULT 0,
+                    absent_days INTEGER DEFAULT 0,
+                    ot_hours REAL DEFAULT 0,
+                    advance_deduction REAL DEFAULT 0
+                )
+                """
+            )
+
+        # ----------------------------------------------------
+        # Daily Attendance
+        # ----------------------------------------------------
+
+        if is_postgres():
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS daily_attendance (
+                    id SERIAL PRIMARY KEY,
+                    worker_id INTEGER,
+                    month_year TEXT NOT NULL,
+                    day INTEGER NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'P'
+                )
+                """
+            )
+
+        else:
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS daily_attendance (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    worker_id INTEGER,
+                    month_year TEXT NOT NULL,
+                    day INTEGER NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'P'
+                )
+                """
+            )
+
+        # ----------------------------------------------------
+        # Company Settings
+        # ----------------------------------------------------
+
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS company_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+            """
+        )
+
+        # ----------------------------------------------------
+        # Users
+        # ----------------------------------------------------
+
+        if is_postgres():
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT,
+                    full_name TEXT,
+                    role TEXT DEFAULT 'Operator',
+                    active INTEGER DEFAULT 1,
+                    created_at TEXT,
+                    last_login TEXT,
+                    password TEXT
+                )
+                """
+            )
+
+        else:
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT,
+                    full_name TEXT,
+                    role TEXT DEFAULT 'Operator',
+                    active INTEGER DEFAULT 1,
+                    created_at TEXT,
+                    last_login TEXT,
+                    password TEXT
+                )
+                """
+            )
+
+        # ----------------------------------------------------
+        # Activity Log
+        # ----------------------------------------------------
+
+        if is_postgres():
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS activity_log (
+                    id SERIAL PRIMARY KEY,
+                    username TEXT,
+                    action TEXT,
+                    log_time TEXT NOT NULL
+                )
+                """
+            )
+
+        else:
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS activity_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT,
+                    action TEXT,
+                    log_time TEXT NOT NULL
+                )
+                """
+            )
+
         conn.commit()
-    finally: db_release(conn)
 
-    # Existing migrated tables may lack optional web fields. These are additive only.
-    for col, typ in [("phone","TEXT"),("address","TEXT"),("joining_date","TEXT"),("status","TEXT")]:
-        try: add_column("workers", col, typ)
-        except Exception: pass
-    try: add_column("users", "password_hash", "TEXT")
-    except Exception: pass
-    try: add_column("users", "password", "TEXT")
-    except Exception: pass
+    finally:
 
-    # Do not overwrite an existing administrator or any migrated record.
+        try:
+            cur.close()
+        except Exception:
+            pass
+
+        db_release(conn)
+
+    # ========================================================
+    # ADDITIVE MIGRATION ONLY
+    # ========================================================
+
+    worker_columns = [
+        ("phone", "TEXT"),
+        ("address", "TEXT"),
+        ("joining_date", "TEXT"),
+        ("status", "TEXT"),
+    ]
+
+    for col, typ in worker_columns:
+
+        try:
+            add_column(
+                "workers",
+                col,
+                typ
+            )
+        except Exception as e:
+            app.logger.warning(
+                "Worker column migration %s: %r",
+                col,
+                e
+            )
+
     try:
-        if not fetch_one("SELECT id FROM users WHERE lower(username)=? LIMIT 1", ("admin",)):
-            cols=columns("users")
-            vals=[]; names=[]
-            for n,v in [("username","admin"),("password_hash",hash_password("admin123")),("password",hash_password("admin123")),("full_name","System Administrator"),("role","Administrator"),("active",1),("created_at",nowstr())]:
-                if n in cols: names.append(n); vals.append(v)
-            execute("INSERT INTO users("+",".join(names)+") VALUES("+",".join(["?"]*len(vals))+")", vals, commit=True)
+        add_column(
+            "users",
+            "password_hash",
+            "TEXT"
+        )
+    except Exception:
+        pass
+
+    try:
+        add_column(
+            "users",
+            "password",
+            "TEXT"
+        )
+    except Exception:
+        pass
+
+    try:
+        add_column(
+            "users",
+            "last_login",
+            "TEXT"
+        )
+    except Exception:
+        pass
+
+    # ========================================================
+    # ADMIN USER
+    # ========================================================
+
+    try:
+
+        admin = fetch_one(
+            """
+            SELECT id
+            FROM users
+            WHERE LOWER(username)=?
+            LIMIT 1
+            """,
+            ("admin",),
+        )
+
+        if not admin:
+
+            user_columns = columns(
+                "users"
+            )
+
+            names = []
+            values = []
+
+            data = [
+                (
+                    "username",
+                    "admin"
+                ),
+                (
+                    "password_hash",
+                    hash_password("admin123")
+                ),
+                (
+                    "password",
+                    hash_password("admin123")
+                ),
+                (
+                    "full_name",
+                    "System Administrator"
+                ),
+                (
+                    "role",
+                    "Administrator"
+                ),
+                (
+                    "active",
+                    1
+                ),
+                (
+                    "created_at",
+                    nowstr()
+                ),
+            ]
+
+            for name, value in data:
+
+                if name in user_columns:
+
+                    names.append(name)
+                    values.append(value)
+
+            if names:
+
+                placeholders_list = ",".join(
+                    ["?"] * len(values)
+                )
+
+                execute(
+                    """
+                    INSERT INTO users
+                    (""" + ",".join(names) + """)
+                    VALUES
+                    (""" + placeholders_list + """)
+                    """,
+                    values,
+                    commit=True,
+                )
+
     except Exception as e:
-        app.logger.warning("admin initialization: %r", e)
 
-    defaults={"company_name":DEFAULT_COMPANY_NAME,"company_address":"","company_phone":"","company_email":"","company_logo":""}
+        app.logger.warning(
+            "Admin initialization error: %r",
+            e
+        )
+
+    # ========================================================
+    # DEFAULT COMPANY SETTINGS
+    # ========================================================
+
+    defaults = {
+        "company_name": DEFAULT_COMPANY_NAME,
+        "company_address": "",
+        "company_phone": "",
+        "company_email": "",
+        "company_logo": "",
+    }
+
     try:
-        for k,v in defaults.items():
-            if is_postgres():
-                execute("INSERT INTO company_settings(key,value) VALUES(?,?) ON CONFLICT(key) DO NOTHING", (k,v), commit=True)
-            else:
-                execute("INSERT OR IGNORE INTO company_settings(key,value) VALUES(?,?)", (k,v), commit=True)
-    except Exception as e: app.logger.warning("settings initialization: %r", e)
 
+        for key, value in defaults.items():
+
+            if is_postgres():
+
+                execute(
+                    """
+                    INSERT INTO company_settings
+                    (key,value)
+                    VALUES (?,?)
+                    ON CONFLICT(key)
+                    DO NOTHING
+                    """,
+                    (key, value),
+                    commit=True,
+                )
+
+            else:
+
+                execute(
+                    """
+                    INSERT OR IGNORE INTO company_settings
+                    (key,value)
+                    VALUES (?,?)
+                    """,
+                    (key, value),
+                    commit=True,
+                )
+
+    except Exception as e:
+
+        app.logger.warning(
+            "Settings initialization error: %r",
+            e
+        )
+
+
+# ============================================================
+# SETTINGS
+# ============================================================
 
 def get_settings():
-    try: return {r["key"]: r["value"] for r in fetch_all("SELECT key,value FROM company_settings")}
-    except Exception: return {"company_name":DEFAULT_COMPANY_NAME}
 
-
-def log_activity(username, action):
     try:
-        # Actual migrated schema uses log_time, not created_at.
-        execute("INSERT INTO activity_log(username,action,log_time) VALUES(?,?,?)", (username,action,nowstr()), commit=True)
-    except Exception as e:
-        app.logger.warning("Activity log error: %r", e)
 
+        rows = fetch_all(
+            """
+            SELECT key,value
+            FROM company_settings
+            """
+        )
+
+        result = {}
+
+        for row in rows:
+            result[
+                row["key"]
+            ] = row["value"]
+
+        if "company_name" not in result:
+            result["company_name"] = (
+                DEFAULT_COMPANY_NAME
+            )
+
+        return result
+
+    except Exception:
+
+        return {
+            "company_name":
+                DEFAULT_COMPANY_NAME
+        }
+
+
+# ============================================================
+# ACTIVITY LOG
+# ============================================================
+
+def log_activity(
+    username,
+    action
+):
+
+    try:
+
+        execute(
+            """
+            INSERT INTO activity_log
+            (username,action,log_time)
+            VALUES (?,?,?)
+            """,
+            (
+                username,
+                action,
+                nowstr(),
+            ),
+            commit=True,
+        )
+
+    except Exception as e:
+
+        app.logger.warning(
+            "Activity log error: %r",
+            e
+        )
+
+
+# ============================================================
+# CURRENT USER
+# ============================================================
 
 def current_user():
-    uid=session.get("user_id")
-    if not uid: return None
-    try: return fetch_one("SELECT * FROM users WHERE id=?", (uid,))
-    except Exception: return None
+
+    user_id = session.get(
+        "user_id"
+    )
+
+    if not user_id:
+        return None
+
+    try:
+
+        return fetch_one(
+            """
+            SELECT *
+            FROM users
+            WHERE id=?
+            """,
+            (user_id,),
+        )
+
+    except Exception:
+
+        return None
 
 
-def login_required(f):
-    @wraps(f)
+# ============================================================
+# LOGIN REQUIRED
+# ============================================================
+
+def login_required(function):
+
+    @wraps(function)
     def wrapper(*args, **kwargs):
+
         if not session.get("user_id"):
-            return redirect(url_for("login", next=request.path))
-        return f(*args, **kwargs)
+
+            return redirect(
+                url_for(
+                    "login",
+                    next=request.path
+                )
+            )
+
+        return function(
+            *args,
+            **kwargs
+        )
+
     return wrapper
 
 
-def admin_required(f):
-    @wraps(f)
+# ============================================================
+# ADMIN REQUIRED
+# ============================================================
+
+def admin_required(function):
+
+    @wraps(function)
     def wrapper(*args, **kwargs):
-        u=current_user()
-        if not u or str(u.get("role","" )).lower() not in ("administrator","admin"):
-            flash("Administrator access required.", "danger"); return redirect(url_for("dashboard"))
-        return f(*args, **kwargs)
+
+        user = current_user()
+
+        if not user:
+
+            return redirect(
+                url_for("login")
+            )
+
+        role = str(
+            user.get("role", "")
+        ).lower()
+
+        if role not in (
+            "administrator",
+            "admin",
+        ):
+
+            flash(
+                "Administrator access required.",
+                "danger"
+            )
+
+            return redirect(
+                url_for("dashboard")
+            )
+
+        return function(
+            *args,
+            **kwargs
+        )
+
     return wrapper
 
 
-def month_name_year(month=None, year=None):
-    month=month or request.values.get("month") or MONTHS[datetime.date.today().month-1]
-    year=year or request.values.get("year") or str(datetime.date.today().year)
+# ============================================================
+# MONTH
+# ============================================================
+
+def month_name_year(
+    month=None,
+    year=None
+):
+
+    month = (
+        month
+        or request.values.get("month")
+        or MONTHS[
+            datetime.date.today().month - 1
+        ]
+    )
+
+    year = (
+        year
+        or request.values.get("year")
+        or str(
+            datetime.date.today().year
+        )
+    )
+
     if str(month) not in MONTHS:
-        month=MONTHS[datetime.date.today().month-1]
-    return f"{month} {int(year)}"
+
+        month = MONTHS[
+            datetime.date.today().month - 1
+        ]
+
+    try:
+        year = int(year)
+    except Exception:
+        year = datetime.date.today().year
+
+    return f"{month} {year}"
 
 
-def parse_num(v, default=0.0):
-    try: return float(v or default)
-    except Exception: return default
+# ============================================================
+# NUMBER PARSER
+# ============================================================
 
+def parse_num(
+    value,
+    default=0.0
+):
+
+    try:
+
+        if value is None:
+            return default
+
+        text = str(value).strip()
+
+        if text == "":
+            return default
+
+        return float(text)
+
+    except Exception:
+
+        return default
+
+
+# ============================================================
+# MONTH FROM DATE
+# ============================================================
+
+def month_name_from_date(value):
+
+    try:
+
+        text = str(value)[:10]
+
+        year, month, day = (
+            text.split("-")
+        )
+
+        return (
+            f"{MONTHS[int(month)-1]} "
+            f"{int(year)}"
+        )
+
+    except Exception:
+
+        return ""
+
+
+# ============================================================
+# LEGACY ADVANCE TABLE
+# ============================================================
 
 def legacy_advance_source():
-    # Prefer the web table if present; otherwise use the legacy migration table.
-    if table_exists("worker_advances"):
-        c=columns("worker_advances")
-        if {"worker_id","amount"}.issubset(c): return "worker_advances"
-    if table_exists("advance_salary"):
+
+    if table_exists(
+        "worker_advances"
+    ):
+
+        cols = columns(
+            "worker_advances"
+        )
+
+        if {
+            "worker_id",
+            "amount",
+        }.issubset(cols):
+
+            return "worker_advances"
+
+    if table_exists(
+        "advance_salary"
+    ):
+
         return "advance_salary"
-    if table_exists("advances"):
+
+    if table_exists(
+        "advances"
+    ):
+
         return "advances"
+
     return None
 
 
-def advance_rows(month=None, worker_id=None):
-    t=legacy_advance_source()
-    if not t: return []
-    c=columns(t)
-    if t=="worker_advances":
-        where=[]; p=[]
-        if month: where.append("month_year=?"); p.append(month)
-        if worker_id: where.append("worker_id=?"); p.append(worker_id)
-        q="SELECT id,worker_id,month_year,advance_date,amount,note FROM worker_advances"
-        if where:q+=" WHERE "+" AND ".join(where)
-        q+=" ORDER BY id DESC"
-        return fetch_all(q,p)
-    if t=="advance_salary":
-        datecol="date" if "date" in c else ("advance_date" if "advance_date" in c else None)
-        q=f"SELECT id,worker_id,{datecol or 'NULL'} AS advance_date,amount,note FROM {t}"
-        rows=fetch_all(q)
-        for r in rows:r["month_year"]=month_name_from_date(r.get("advance_date"))
-        if month: rows=[r for r in rows if r.get("month_year")==month]
-        if worker_id: rows=[r for r in rows if str(r.get("worker_id"))==str(worker_id)]
+# ============================================================
+# ADVANCE ROWS
+# ============================================================
+
+def advance_rows(
+    month=None,
+    worker_id=None
+):
+
+    table_name = (
+        legacy_advance_source()
+    )
+
+    if not table_name:
+        return []
+
+    table_columns = columns(
+        table_name
+    )
+
+    # --------------------------------------------------------
+    # Modern worker_advances
+    # --------------------------------------------------------
+
+    if table_name == "worker_advances":
+
+        where = []
+        params = []
+
+        if month:
+
+            where.append(
+                "month_year=?"
+            )
+
+            params.append(month)
+
+        if worker_id:
+
+            where.append(
+                "worker_id=?"
+            )
+
+            params.append(worker_id)
+
+        query = """
+            SELECT
+                id,
+                worker_id,
+                month_year,
+                advance_date,
+                amount,
+                note
+            FROM worker_advances
+        """
+
+        if where:
+
+            query += (
+                " WHERE "
+                + " AND ".join(where)
+            )
+
+        query += " ORDER BY id DESC"
+
+        return fetch_all(
+            query,
+            params
+        )
+
+    # --------------------------------------------------------
+    # Legacy advance_salary
+    # --------------------------------------------------------
+
+    if table_name == "advance_salary":
+
+        if "date" in table_columns:
+
+            date_column = "date"
+
+        elif "advance_date" in table_columns:
+
+            date_column = "advance_date"
+
+        else:
+
+            date_column = None
+
+        query = f"""
+            SELECT
+                id,
+                worker_id,
+                {
+                    date_column
+                    if date_column
+                    else "NULL"
+                } AS advance_date,
+                amount,
+                note
+            FROM advance_salary
+        """
+
+        rows = fetch_all(query)
+
+        for row in rows:
+
+            row["month_year"] = (
+                month_name_from_date(
+                    row.get(
+                        "advance_date"
+                    )
+                )
+            )
+
+        if month:
+
+            rows = [
+                row
+                for row in rows
+                if row.get(
+                    "month_year"
+                ) == month
+            ]
+
+        if worker_id:
+
+            rows = [
+                row
+                for row in rows
+                if str(
+                    row.get("worker_id")
+                ) == str(worker_id)
+            ]
+
         return rows
-    # advances legacy table
-    q=f"SELECT id,worker_id,date AS advance_date,amount,note FROM {t}"
-    rows=fetch_all(q)
-    for r in rows:r["month_year"]=month_name_from_date(r.get("advance_date"))
-    if month: rows=[r for r in rows if r.get("month_year")==month]
-    if worker_id: rows=[r for r in rows if str(r.get("worker_id"))==str(worker_id)]
+
+    # --------------------------------------------------------
+    # Legacy advances
+    # --------------------------------------------------------
+
+    if (
+        "date" in table_columns
+        and "amount" in table_columns
+    ):
+
+        query = f"""
+            SELECT
+                id,
+                worker_id,
+                date AS advance_date,
+                amount,
+                note
+            FROM {table_name}
+        """
+
+    else:
+
+        date_column = (
+            "advance_date"
+            if "advance_date"
+            in table_columns
+            else "NULL"
+        )
+
+        note_column = (
+            "note"
+            if "note"
+            in table_columns
+            else "''"
+        )
+
+        query = f"""
+            SELECT
+                id,
+                worker_id,
+                {date_column}
+                    AS advance_date,
+                amount,
+                {note_column}
+                    AS note
+            FROM {table_name}
+        """
+
+    rows = fetch_all(query)
+
+    for row in rows:
+
+        row["month_year"] = (
+            month_name_from_date(
+                row.get(
+                    "advance_date"
+                )
+            )
+        )
+
+    if month:
+
+        rows = [
+            row
+            for row in rows
+            if row.get(
+                "month_year"
+            ) == month
+        ]
+
+    if worker_id:
+
+        rows = [
+            row
+            for row in rows
+            if str(
+                row.get("worker_id")
+            ) == str(worker_id)
+        ]
+
     return rows
 
 
-def month_name_from_date(s):
-    try:
-        d=str(s)[:10]
-        y,m,_=d.split("-")
-        return f"{MONTHS[int(m)-1]} {int(y)}"
-    except Exception:return ""
+# ============================================================
+# SAVE ADVANCE
+# ============================================================
 
+def save_advance_record(
+    worker_id,
+    month,
+    advance_date,
+    amount,
+    note
+):
 
-def save_advance_record(worker_id, month, adv_date, amount, note):
-    t=legacy_advance_source()
-    if t=="worker_advances":
-        execute("INSERT INTO worker_advances(worker_id,month_year,advance_date,amount,note) VALUES(?,?,?,?,?)", (worker_id,month,adv_date,amount,note), commit=True)
-    elif t=="advance_salary":
-        c=columns(t); datecol="date" if "date" in c else "advance_date"
-        execute(f"INSERT INTO {t}(worker_id,{datecol},amount,note) VALUES(?,?,?,?)", (worker_id,adv_date,amount,note), commit=True)
-    elif t=="advances":
-        execute("INSERT INTO advances(worker_id,date,amount,note) VALUES(?,?,?,?)", (str(worker_id),adv_date,amount,note), commit=True)
+    table_name = (
+        legacy_advance_source()
+    )
+
+    # --------------------------------------------------------
+    # Existing worker_advances
+    # --------------------------------------------------------
+
+    if table_name == "worker_advances":
+
+        table_columns = columns(
+            "worker_advances"
+        )
+
+        names = []
+        values = []
+
+        data = [
+            (
+                "worker_id",
+                worker_id
+            ),
+            (
+                "month_year",
+                month
+            ),
+            (
+                "advance_date",
+                advance_date
+            ),
+            (
+                "amount",
+                amount
+            ),
+            (
+                "note",
+                note
+            ),
+        ]
+
+        for name, value in data:
+
+            if name in table_columns:
+
+                names.append(name)
+                values.append(value)
+
+        execute(
+            """
+            INSERT INTO worker_advances
+            (""" + ",".join(names) + """)
+            VALUES
+            (""" + ",".join(
+                ["?"] * len(values)
+            ) + """)
+            """,
+            values,
+            commit=True,
+        )
+
+        return
+
+    # --------------------------------------------------------
+    # Existing advance_salary
+    # --------------------------------------------------------
+
+    if table_name == "advance_salary":
+
+        table_columns = columns(
+            "advance_salary"
+        )
+
+        date_column = (
+            "date"
+            if "date" in table_columns
+            else (
+                "advance_date"
+                if "advance_date"
+                in table_columns
+                else None
+            )
+        )
+
+        if not date_column:
+            raise RuntimeError(
+                "advance_salary has no date column."
+            )
+
+        names = [
+            "worker_id",
+            date_column,
+            "amount",
+        ]
+
+        values = [
+            worker_id,
+            advance_date,
+            amount,
+        ]
+
+        if "note" in table_columns:
+
+            names.append("note")
+            values.append(note)
+
+        execute(
+            """
+            INSERT INTO advance_salary
+            (""" + ",".join(names) + """)
+            VALUES
+            (""" + ",".join(
+                ["?"] * len(values)
+            ) + """)
+            """,
+            values,
+            commit=True,
+        )
+
+        return
+
+    # --------------------------------------------------------
+    # Existing advances
+    # --------------------------------------------------------
+
+    if table_name == "advances":
+
+        table_columns = columns(
+            "advances"
+        )
+
+        if (
+            "worker_id" in table_columns
+            and "date" in table_columns
+            and "amount" in table_columns
+        ):
+
+            names = [
+                "worker_id",
+                "date",
+                "amount",
+            ]
+
+            values = [
+                worker_id,
+                advance_date,
+                amount,
+            ]
+
+            if "note" in table_columns:
+
+                names.append("note")
+                values.append(note)
+
+            execute(
+                """
+                INSERT INTO advances
+                (""" + ",".join(names) + """)
+                VALUES
+                (""" + ",".join(
+                    ["?"] * len(values)
+                ) + """)
+                """,
+                values,
+                commit=True,
+            )
+
+            return
+
+    # --------------------------------------------------------
+    # No advance table exists.
+    # Create only new table.
+    # --------------------------------------------------------
+
+    if is_postgres():
+
+        execute(
+            """
+            CREATE TABLE IF NOT EXISTS worker_advances (
+                id SERIAL PRIMARY KEY,
+                worker_id INTEGER,
+                month_year TEXT NOT NULL,
+                advance_date TEXT NOT NULL,
+                amount DOUBLE PRECISION NOT NULL,
+                note TEXT
+            )
+            """,
+            commit=True,
+        )
+
     else:
-        # Create only if none exists; this does not touch migrated tables.
-        if is_postgres():
-            execute("CREATE TABLE IF NOT EXISTS worker_advances (id SERIAL PRIMARY KEY, worker_id INTEGER, month_year TEXT NOT NULL, advance_date TEXT NOT NULL, amount REAL NOT NULL, note TEXT)", commit=True)
-        else:
-            execute("CREATE TABLE IF NOT EXISTS worker_advances (id INTEGER PRIMARY KEY AUTOINCREMENT, worker_id INTEGER, month_year TEXT NOT NULL, advance_date TEXT NOT NULL, amount REAL NOT NULL, note TEXT)", commit=True)
-        execute("INSERT INTO worker_advances(worker_id,month_year,advance_date,amount,note) VALUES(?,?,?,?,?)", (worker_id,month,adv_date,amount,note), commit=True)
+
+        execute(
+            """
+            CREATE TABLE IF NOT EXISTS worker_advances (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                worker_id INTEGER,
+                month_year TEXT NOT NULL,
+                advance_date TEXT NOT NULL,
+                amount REAL NOT NULL,
+                note TEXT
+            )
+            """,
+            commit=True,
+        )
+
+    execute(
+        """
+        INSERT INTO worker_advances
+        (
+            worker_id,
+            month_year,
+            advance_date,
+            amount,
+            note
+        )
+        VALUES
+        (?,?,?,?,?)
+        """,
+        (
+            worker_id,
+            month,
+            advance_date,
+            amount,
+            note,
+        ),
+        commit=True,
+    )
 
 
-def delete_advance_record(aid):
-    t=legacy_advance_source()
-    if t: execute(f"DELETE FROM {t} WHERE id=?", (aid,), commit=True)
+# ============================================================
+# DELETE ADVANCE
+# ============================================================
+
+def delete_advance_record(
+    advance_id
+):
+
+    table_name = (
+        legacy_advance_source()
+    )
+
+    if not table_name:
+        return
+
+    execute(
+        f"""
+        DELETE FROM {table_name}
+        WHERE id=?
+        """,
+        (advance_id,),
+        commit=True,
+    )
 
 
-def daily_map(worker_id, month):
-    rows=fetch_all("SELECT day,status FROM daily_attendance WHERE worker_id=? AND month_year=?", (worker_id,month))
-    return {int(r["day"]): str(r["status"] or "P") for r in rows}
+# ============================================================
+# DAILY ATTENDANCE MAP
+# ============================================================
 
+def daily_map(
+    worker_id,
+    month
+):
 
-def calculate_salary_bulk(workers, month):
-    """Calculate salaries for many workers using a small number of DB queries."""
-    ids=[w["id"] for w in workers]
-    if not ids: return {}
-    att_rows=fetch_all("SELECT * FROM attendance WHERE month_year=? ORDER BY id DESC", (month,))
-    att_by={}
-    for r in att_rows:
-        wid=r.get("worker_id")
-        if wid not in att_by: att_by[wid]=r
+    rows = fetch_all(
+        """
+        SELECT day,status
+        FROM daily_attendance
+        WHERE worker_id=?
+        AND month_year=?
+        """,
+        (
+            worker_id,
+            month,
+        ),
+    )
 
-    daily_rows=fetch_all("SELECT worker_id,day,status FROM daily_attendance WHERE month_year=?", (month,))
-    daily_by={}
-    for r in daily_rows:
-        try: daily_by.setdefault(r.get("worker_id"), {})[int(r.get("day"))]=str(r.get("status") or "P")
-        except Exception: pass
+    result = {}
 
-    advances_by={}
-    t=legacy_advance_source()
-    if t:
-        c=columns(t)
+    for row in rows:
+
         try:
-            if t=="worker_advances" and {"worker_id","amount"}.issubset(c):
-                adv_rows=fetch_all("SELECT worker_id,amount,month_year FROM worker_advances WHERE month_year=?", (month,))
-                for r in adv_rows: advances_by[r.get("worker_id")]=advances_by.get(r.get("worker_id"),0)+parse_num(r.get("amount"))
-            elif t in ("advance_salary","advances") and "worker_id" in c and "amount" in c:
-                datecol="date" if "date" in c else ("advance_date" if "advance_date" in c else None)
-                if datecol:
-                    adv_rows=fetch_all(f"SELECT worker_id,{datecol} AS advance_date,amount FROM {t}")
-                    for r in adv_rows:
-                        if month_name_from_date(r.get("advance_date"))==month:
-                            wid=r.get("worker_id"); advances_by[wid]=advances_by.get(wid,0)+parse_num(r.get("amount"))
-        except Exception as e:
-            app.logger.warning("Bulk advance load error: %r", e)
 
-    out={}
-    for w in workers:
-        att=att_by.get(w["id"], {})
-        present=int(att.get("present_days") or 0); absent=int(att.get("absent_days") or 0); ot=parse_num(att.get("ot_hours"),0)
-        try:
-            mon,ys=month.split(); y=int(ys); mi=MONTHS.index(mon)+1; days=calendar.monthrange(y,mi)[1]
+            result[
+                int(row["day"])
+            ] = str(
+                row["status"] or "P"
+            )
+
         except Exception:
-            days=30; y=datetime.date.today().year; mi=datetime.date.today().month
-        basic=parse_num(w.get("basic_salary")); ot_rate=parse_num(w.get("ot_rate")); nasta_rate=parse_num(w.get("refreshment_bill"))
-        absent_cut=(basic/days)*absent if days else 0
-        earned_basic=max(0,basic-absent_cut)
-        ot_amt=ot*ot_rate
-        dm=daily_by.get(w["id"],{})
-        if dm:
-            billable=sum(1 for d in range(1,days+1) if dm.get(d,"P")=="P" and datetime.date(y,mi,d).weekday()!=4)
-            nasta=billable*nasta_rate
-        else:
-            non_friday=sum(1 for d in range(1,days+1) if datetime.date(y,mi,d).weekday()!=4) if days else 0
-            nasta=round(present*(non_friday/days)*nasta_rate,2) if days else 0
-        advances=advances_by.get(w["id"],0)
-        gross=earned_basic+ot_amt+nasta
-        out[w["id"]]={"present":present,"absent":absent,"ot":ot,"absent_cut":absent_cut,"earned_basic":earned_basic,"ot_amt":ot_amt,"nasta":nasta,"gross":gross,"advance":advances,"net":gross-advances}
-    return out
+            pass
 
-def calculate_salary(worker, month, att=None):
-    if att is None: att=fetch_one("SELECT * FROM attendance WHERE worker_id=? AND month_year=? ORDER BY id DESC LIMIT 1", (worker["id"],month)) or {}
-    present=int(att.get("present_days") or 0); absent=int(att.get("absent_days") or 0); ot=parse_num(att.get("ot_hours"),0)
+    return result
+
+
+# ============================================================
+# BULK SALARY CALCULATION
+# ============================================================
+
+def calculate_salary_bulk(
+    workers,
+    month
+):
+
+    worker_ids = [
+        worker["id"]
+        for worker in workers
+    ]
+
+    if not worker_ids:
+        return {}
+
+    # --------------------------------------------------------
+    # Attendance
+    # --------------------------------------------------------
+
+    attendance_rows = fetch_all(
+        """
+        SELECT *
+        FROM attendance
+        WHERE month_year=?
+        ORDER BY id DESC
+        """,
+        (month,),
+    )
+
+    attendance_by_worker = {}
+
+    for row in attendance_rows:
+
+        worker_id = row.get(
+            "worker_id"
+        )
+
+        if worker_id not in attendance_by_worker:
+
+            attendance_by_worker[
+                worker_id
+            ] = row
+
+    # --------------------------------------------------------
+    # Daily attendance
+    # --------------------------------------------------------
+
+    daily_rows = fetch_all(
+        """
+        SELECT
+            worker_id,
+            day,
+            status
+        FROM daily_attendance
+        WHERE month_year=?
+        """,
+        (month,),
+    )
+
+    daily_by_worker = {}
+
+    for row in daily_rows:
+
+        try:
+
+            worker_id = row.get(
+                "worker_id"
+            )
+
+            day = int(
+                row.get("day")
+            )
+
+            status = str(
+                row.get("status")
+                or "P"
+            )
+
+            daily_by_worker.setdefault(
+                worker_id,
+                {}
+            )[day] = status
+
+        except Exception:
+            pass
+
+    # --------------------------------------------------------
+    # Advances
+    # --------------------------------------------------------
+
+    advances_by_worker = {}
+
+    table_name = (
+        legacy_advance_source()
+    )
+
+    if table_name:
+
+        table_columns = columns(
+            table_name
+        )
+
+        try:
+
+            if (
+                table_name
+                == "worker_advances"
+                and {
+                    "worker_id",
+                    "amount",
+                    "month_year",
+                }.issubset(
+                    table_columns
+                )
+            ):
+
+                advance_data = fetch_all(
+                    """
+                    SELECT
+                        worker_id,
+                        amount
+                    FROM worker_advances
+                    WHERE month_year=?
+                    """,
+                    (month,),
+                )
+
+                for row in advance_data:
+
+                    worker_id = row.get(
+                        "worker_id"
+                    )
+
+                    advances_by_worker[
+                        worker_id
+                    ] = (
+                        advances_by_worker.get(
+                            worker_id,
+                            0
+                        )
+                        + parse_num(
+                            row.get("amount")
+                        )
+                    )
+
+            elif (
+                table_name
+                in (
+                    "advance_salary",
+                    "advances",
+                )
+                and "worker_id"
+                in table_columns
+                and "amount"
+                in table_columns
+            ):
+
+                if "date" in table_columns:
+
+                    date_column = "date"
+
+                elif (
+                    "advance_date"
+                    in table_columns
+                ):
+
+                    date_column = (
+                        "advance_date"
+                    )
+
+                else:
+
+                    date_column = None
+
+                if date_column:
+
+                    advance_data = fetch_all(
+                        f"""
+                        SELECT
+                            worker_id,
+                            {date_column}
+                                AS advance_date,
+                            amount
+                        FROM {table_name}
+                        """
+                    )
+
+                    for row in advance_data:
+
+                        if (
+                            month_name_from_date(
+                                row.get(
+                                    "advance_date"
+                                )
+                            )
+                            == month
+                        ):
+
+                            worker_id = row.get(
+                                "worker_id"
+                            )
+
+                            advances_by_worker[
+                                worker_id
+                            ] = (
+                                advances_by_worker.get(
+                                    worker_id,
+                                    0
+                                )
+                                + parse_num(
+                                    row.get(
+                                        "amount"
+                                    )
+                                )
+                            )
+
+        except Exception as e:
+
+            app.logger.warning(
+                "Bulk advance load error: %r",
+                e
+            )
+
+    # --------------------------------------------------------
+    # Calculate
+    # --------------------------------------------------------
+
+    result = {}
+
     try:
-        mon, ys=month.split(); y=int(ys); mi=MONTHS.index(mon)+1; days=calendar.monthrange(y,mi)[1]
-    except Exception: days=30
-    # Preserve the legacy payroll logic: absent cut from monthly basic, OT by rate, nasta excluding Fridays.
-    basic=parse_num(worker.get("basic_salary")); ot_rate=parse_num(worker.get("ot_rate")); nasta_rate=parse_num(worker.get("refreshment_bill"))
-    absent_cut=(basic/days)*absent if days else 0
-    earned_basic=max(0,basic-absent_cut)
-    ot_amt=ot*ot_rate
-    dm=daily_map(worker["id"],month)
-    if dm:
-        billable=sum(1 for d in range(1,days+1) if dm.get(d,"P")=="P" and datetime.date(y,mi,d).weekday()!=4)
-        nasta=billable*nasta_rate
-    else:
-        non_friday=sum(1 for d in range(1,days+1) if datetime.date(y,mi,d).weekday()!=4) if days else 0
-        nasta=round(present*(non_friday/days)*nasta_rate,2) if days else 0
-    advances=sum(parse_num(r.get("amount")) for r in advance_rows(month,worker["id"]))
-    gross=earned_basic+ot_amt+nasta
-    return {"present":present,"absent":absent,"ot":ot,"absent_cut":absent_cut,"earned_basic":earned_basic,"ot_amt":ot_amt,"nasta":nasta,"gross":gross,"advance":advances,"net":gross-advances}
 
+        month_name, year_text = (
+            month.split()
+        )
+
+        year = int(year_text)
+
+        month_number = (
+            MONTHS.index(
+                month_name
+            ) + 1
+        )
+
+        days_in_month = (
+            calendar.monthrange(
+                year,
+                month_number
+            )[1]
+        )
+
+    except Exception:
+
+        year = datetime.date.today().year
+        month_number = (
+            datetime.date.today().month
+        )
+
+        days_in_month = 30
+
+    for worker in workers:
+
+        worker_id = worker["id"]
+
+        attendance = (
+            attendance_by_worker.get(
+                worker_id,
+                {}
+            )
+        )
+
+        present = int(
+            attendance.get(
+                "present_days"
+            )
+            or 0
+        )
+
+        absent = int(
+            attendance.get(
+                "absent_days"
+            )
+            or 0
+        )
+
+        overtime = parse_num(
+            attendance.get(
+                "ot_hours"
+            ),
+            0
+        )
+
+        basic_salary = parse_num(
+            worker.get(
+                "basic_salary"
+            ),
+            0
+        )
+
+        ot_rate = parse_num(
+            worker.get(
+                "ot_rate"
+            ),
+            0
+        )
+
+        nasta_rate = parse_num(
+            worker.get(
+                "refreshment_bill"
+            ),
+            0
+        )
+
+        # ----------------------------------------------------
+        # Absent deduction
+        # ----------------------------------------------------
+
+        absent_cut = (
+            basic_salary
+            / days_in_month
+            * absent
+            if days_in_month
+            else 0
+        )
+
+        earned_basic = max(
+            0,
+            basic_salary - absent_cut
+        )
+
+        # ----------------------------------------------------
+        # OT
+        # ----------------------------------------------------
+
+        ot_amount = (
+            overtime * ot_rate
+        )
+
+        # ----------------------------------------------------
+        # Nasta
+        # ----------------------------------------------------
+
+        daily = daily_by_worker.get(
+            worker_id,
+            {}
+        )
+
+        if daily:
+
+            billable_days = 0
+
+            for day in range(
+                1,
+                days_in_month + 1
+            ):
+
+                status = daily.get(
+                    day,
+                    "P"
+                )
+
+                try:
+
+                    current_date = (
+                        datetime.date(
+                            year,
+                            month_number,
+                            day,
+                        )
+                    )
+
+                    is_friday = (
+                        current_date.weekday()
+                        == 4
+                    )
+
+                except Exception:
+
+                    is_friday = False
+
+                if (
+                    status == "P"
+                    and not is_friday
+                ):
+
+                    billable_days += 1
+
+            nasta = (
+                billable_days
+                * nasta_rate
+            )
+
+        else:
+
+            non_friday_days = sum(
+                1
+                for day in range(
+                    1,
+                    days_in_month + 1
+                )
+                if datetime.date(
+                    year,
+                    month_number,
+                    day
+                ).weekday() != 4
+            )
+
+            if days_in_month:
+
+                nasta = round(
+                    present
+                    * (
+                        non_friday_days
+                        / days_in_month
+                    )
+                    * nasta_rate,
+                    2,
+                )
+
+            else:
+
+                nasta = 0
+
+        # ----------------------------------------------------
+        # Advance
+        # ----------------------------------------------------
+
+        advance = (
+            advances_by_worker.get(
+                worker_id,
+                0
+            )
+        )
+
+        # ----------------------------------------------------
+        # Gross / Net
+        # ----------------------------------------------------
+
+        gross = (
+            earned_basic
+            + ot_amount
+            + nasta
+        )
+
+        net = (
+            gross
+            - advance
+        )
+
+        result[worker_id] = {
+            "present": present,
+            "absent": absent,
+            "ot": overtime,
+            "absent_cut": absent_cut,
+            "earned_basic": earned_basic,
+            "ot_amt": ot_amount,
+            "nasta": nasta,
+            "gross": gross,
+            "advance": advance,
+            "net": net,
+        }
+
+    return result
+
+
+# ============================================================
+# SINGLE SALARY
+# ============================================================
+
+def calculate_salary(
+    worker,
+    month,
+    attendance=None
+):
+
+    if not worker:
+        return {}
+
+    if attendance is None:
+
+        attendance = fetch_one(
+            """
+            SELECT *
+            FROM attendance
+            WHERE worker_id=?
+            AND month_year=?
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (
+                worker["id"],
+                month,
+            ),
+        ) or {}
+
+    present = int(
+        attendance.get(
+            "present_days"
+        )
+        or 0
+    )
+
+    absent = int(
+        attendance.get(
+            "absent_days"
+        )
+        or 0
+    )
+
+    overtime = parse_num(
+        attendance.get(
+            "ot_hours"
+        ),
+        0
+    )
+
+    try:
+
+        month_name, year_text = (
+            month.split()
+        )
+
+        year = int(year_text)
+
+        month_number = (
+            MONTHS.index(
+                month_name
+            ) + 1
+        )
+
+        days_in_month = (
+            calendar.monthrange(
+                year,
+                month_number
+            )[1]
+        )
+
+    except Exception:
+
+        year = datetime.date.today().year
+        month_number = (
+            datetime.date.today().month
+        )
+        days_in_month = 30
+
+    basic_salary = parse_num(
+        worker.get(
+            "basic_salary"
+        ),
+        0
+    )
+
+    ot_rate = parse_num(
+        worker.get(
+            "ot_rate"
+        ),
+        0
+    )
+
+    nasta_rate = parse_num(
+        worker.get(
+            "refreshment_bill"
+        ),
+        0
+    )
+
+    absent_cut = (
+        basic_salary
+        / days_in_month
+        * absent
+        if days_in_month
+        else 0
+    )
+
+    earned_basic = max(
+        0,
+        basic_salary - absent_cut
+    )
+
+    ot_amount = (
+        overtime * ot_rate
+    )
+
+    daily = daily_map(
+        worker["id"],
+        month
+    )
+
+    if daily:
+
+        billable_days = 0
+
+        for day in range(
+            1,
+            days_in_month + 1
+        ):
+
+            status = daily.get(
+                day,
+                "P"
+            )
+
+            current_date = datetime.date(
+                year,
+                month_number,
+                day
+            )
+
+            if (
+                status == "P"
+                and current_date.weekday()
+                != 4
+            ):
+
+                billable_days += 1
+
+        nasta = (
+            billable_days
+            * nasta_rate
+        )
+
+    else:
+
+        non_friday_days = sum(
+            1
+            for day in range(
+                1,
+                days_in_month + 1
+            )
+            if datetime.date(
+                year,
+                month_number,
+                day
+            ).weekday() != 4
+        )
+
+        nasta = (
+            round(
+                present
+                * (
+                    non_friday_days
+                    / days_in_month
+                )
+                * nasta_rate,
+                2,
+            )
+            if days_in_month
+            else 0
+        )
+
+    advances = sum(
+        parse_num(
+            row.get("amount")
+        )
+        for row in advance_rows(
+            month,
+            worker["id"]
+        )
+    )
+
+    gross = (
+        earned_basic
+        + ot_amount
+        + nasta
+    )
+
+    return {
+        "present": present,
+        "absent": absent,
+        "ot": overtime,
+        "absent_cut": absent_cut,
+        "earned_basic": earned_basic,
+        "ot_amt": ot_amount,
+        "nasta": nasta,
+        "gross": gross,
+        "advance": advances,
+        "net": gross - advances,
+    }
+
+
+# ============================================================
+# TEMPLATE GLOBALS
+# ============================================================
 
 @app.context_processor
 def inject_globals():
-    settings=get_settings()
-    lang=session.get("language","en")
-    def tr(s): return LANG.get(s,s) if lang=="bn" else s
-    def dept(s): return DEPT_BN.get(str(s),str(s)) if lang=="bn" else str(s or "")
-    return {"current_user":current_user(),"settings":settings,"language":lang,"tr":tr,"dept":dept,"display_dept":dept,"months":MONTHS,"years":list(range(2024,2032))}
 
+    settings = get_settings()
+
+    language = session.get(
+        "language",
+        "en"
+    )
+
+    def translate(text):
+
+        if language == "bn":
+
+            return LANG.get(
+                text,
+                text
+            )
+
+        return text
+
+    def department_translate(value):
+
+        value = str(
+            value or ""
+        )
+
+        if language == "bn":
+
+            return DEPT_BN.get(
+                value,
+                value
+            )
+
+        return value
+
+    return {
+        "current_user": current_user(),
+        "settings": settings,
+        "language": language,
+        "tr": translate,
+        "dept": department_translate,
+        "display_dept": department_translate,
+        "months": MONTHS,
+        "years": list(
+            range(
+                2024,
+                2032
+            )
+        ),
+        "departments": DEPARTMENTS,
+    }
+
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
 
 @app.route("/health")
 def health():
-    try:
-        w=scalar("SELECT COUNT(*) FROM workers",default=0)
-        a=scalar("SELECT COUNT(*) FROM attendance",default=0)
-        d=scalar("SELECT COUNT(*) FROM daily_attendance",default=0)
-        return jsonify({"status":"ok","database":"postgresql" if is_postgres() else "sqlite","workers":w,"attendance":a,"daily_attendance":d})
-    except Exception as e:return jsonify({"status":"error","error":repr(e)}),500
 
+    try:
+
+        workers_count = scalar(
+            "SELECT COUNT(*) FROM workers",
+            default=0
+        )
+
+        attendance_count = scalar(
+            "SELECT COUNT(*) FROM attendance",
+            default=0
+        )
+
+        daily_count = scalar(
+            "SELECT COUNT(*) FROM daily_attendance",
+            default=0
+        )
+
+        return jsonify({
+            "status": "ok",
+            "database": (
+                "postgresql"
+                if is_postgres()
+                else "sqlite"
+            ),
+            "workers": workers_count,
+            "attendance": attendance_count,
+            "daily_attendance": daily_count,
+        })
+
+    except Exception as e:
+
+        return jsonify({
+            "status": "error",
+            "error": repr(e),
+        }), 500
+
+
+# ============================================================
+# DATABASE CHECK
+# ============================================================
 
 @app.route("/db-check")
 @login_required
 def db_check():
-    info={}
-    for t in ["workers","attendance","daily_attendance","company_settings","users","activity_log","worker_advances","advance_salary","advances"]:
-        try: info[t]={"exists":table_exists(t),"columns":sorted(columns(t)) if table_exists(t) else []}
-        except Exception as e: info[t]={"error":repr(e)}
-    return render_template("db_check.html",info=info)
+
+    information = {}
+
+    tables = [
+        "workers",
+        "attendance",
+        "daily_attendance",
+        "company_settings",
+        "users",
+        "activity_log",
+        "worker_advances",
+        "advance_salary",
+        "advances",
+    ]
+
+    for table_name in tables:
+
+        try:
+
+            exists = table_exists(
+                table_name
+            )
+
+            information[
+                table_name
+            ] = {
+                "exists": exists,
+                "columns": sorted(
+                    columns(table_name)
+                ) if exists else [],
+            }
+
+        except Exception as e:
+
+            information[
+                table_name
+            ] = {
+                "error": repr(e)
+            }
+
+    return render_template(
+        "db_check.html",
+        info=information
+    )
 
 
-@app.route("/login", methods=["GET","POST"])
+# ============================================================
+# LOGIN
+# ============================================================
+
+@app.route(
+    "/login",
+    methods=["GET", "POST"]
+)
 def login():
-    if request.method=="POST":
-        u=request.form.get("username","").strip(); p=request.form.get("password","")
-        user=fetch_one("SELECT * FROM users WHERE username=? LIMIT 1",(u,))
-        ok=False
-        if user and int(user.get("active") if user.get("active") is not None else 1):
-            ph=user.get("password_hash") or user.get("password") or ""
-            ok = ph in (hash_password(p), p)  # supports old migrated password only if it is already a hash/plain legacy value
-        if ok:
-            session["user_id"]=user["id"]; session["language"]=session.get("language","en")
-            try: execute("UPDATE users SET last_login=? WHERE id=?",(nowstr(),user["id"]),commit=True)
-            except Exception: pass
-            log_activity(u,"Logged in")
-            return redirect(request.args.get("next") or url_for("dashboard"))
-        flash("Invalid User ID or Password.","danger")
-    return render_template("login.html")
 
+    if request.method == "POST":
+
+        username = request.form.get(
+            "username",
+            ""
+        ).strip()
+
+        password = request.form.get(
+            "password",
+            ""
+        )
+
+        user = fetch_one(
+            """
+            SELECT *
+            FROM users
+            WHERE username=?
+            LIMIT 1
+            """,
+            (username,),
+        )
+
+        valid = False
+
+        if user:
+
+            active = user.get(
+                "active"
+            )
+
+            if active is None:
+                active = 1
+
+            if int(active):
+
+                stored_password = (
+                    user.get(
+                        "password_hash"
+                    )
+                    or user.get(
+                        "password"
+                    )
+                    or ""
+                )
+
+                valid = (
+                    stored_password
+                    == hash_password(password)
+                    or stored_password
+                    == password
+                )
+
+        if valid:
+
+            session["user_id"] = (
+                user["id"]
+            )
+
+            session["language"] = (
+                session.get(
+                    "language",
+                    "en"
+                )
+            )
+
+            try:
+
+                if "last_login" in columns(
+                    "users"
+                ):
+
+                    execute(
+                        """
+                        UPDATE users
+                        SET last_login=?
+                        WHERE id=?
+                        """,
+                        (
+                            nowstr(),
+                            user["id"],
+                        ),
+                        commit=True,
+                    )
+
+            except Exception:
+                pass
+
+            log_activity(
+                username,
+                "Logged in"
+            )
+
+            next_url = request.args.get(
+                "next"
+            )
+
+            if next_url:
+                return redirect(next_url)
+
+            return redirect(
+                url_for("dashboard")
+            )
+
+        flash(
+            "Invalid User ID or Password.",
+            "danger"
+        )
+
+    return render_template(
+        "login.html"
+    )
+
+
+# ============================================================
+# LOGOUT
+# ============================================================
 
 @app.route("/logout")
 def logout():
-    u=current_user();
-    if u: log_activity(u.get("username"),"Logged out")
-    session.clear(); return redirect(url_for("login"))
+
+    user = current_user()
+
+    if user:
+
+        log_activity(
+            user.get("username"),
+            "Logged out"
+        )
+
+    session.clear()
+
+    return redirect(
+        url_for("login")
+    )
+
+
+# ============================================================
+# LANGUAGE
+# ============================================================
 
 @app.route("/language/<lang>")
 def language(lang):
-    session["language"]="bn" if lang=="bn" else "en"; return redirect(request.referrer or url_for("dashboard"))
 
+    if lang == "bn":
+
+        session["language"] = "bn"
+
+    else:
+
+        session["language"] = "en"
+
+    return redirect(
+        request.referrer
+        or url_for("dashboard")
+    )
+
+
+# ============================================================
+# INDEX
+# ============================================================
 
 @app.route("/")
 @login_required
-def index(): return redirect(url_for("dashboard"))
+def index():
+
+    return redirect(
+        url_for("dashboard")
+    )
+
+
+# ============================================================
+# DASHBOARD
+# ============================================================
 
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    month=month_name_year(); workers=fetch_all("SELECT * FROM workers ORDER BY id")
-    salaries=calculate_salary_bulk(workers,month)
-    gross=sum(s["gross"] for s in salaries.values())
-    adv=sum(s["advance"] for s in salaries.values())
-    today=datetime.date.today(); tm=f"{MONTHS[today.month-1]} {today.year}"
-    today_rows=fetch_all("SELECT status,COUNT(*) AS c FROM daily_attendance WHERE month_year=? AND day=? GROUP BY status",(tm,today.day))
-    mp={r["status"]:r["c"] for r in today_rows}
-    depts=fetch_all("SELECT department,COUNT(*) AS worker_count,COALESCE(SUM(basic_salary),0) AS total_basic FROM workers GROUP BY department ORDER BY department")
-    return render_template("dashboard.html",workers=workers,month=month,month_name=month.split()[0],year=month.split()[1],gross=gross,advance=adv,today_present=mp.get("P",0),today_absent=mp.get("A",0),dept_rows=depts,total_workers=len(workers))
+
+    month = month_name_year()
+
+    workers = fetch_all(
+        """
+        SELECT *
+        FROM workers
+        ORDER BY id
+        """
+    )
+
+    salaries = calculate_salary_bulk(
+        workers,
+        month
+    )
+
+    gross = sum(
+        salary["gross"]
+        for salary in salaries.values()
+    )
+
+    advance = sum(
+        salary["advance"]
+        for salary in salaries.values()
+    )
+
+    today = datetime.date.today()
+
+    today_month = (
+        f"{MONTHS[today.month - 1]} "
+        f"{today.year}"
+    )
+
+    today_rows = fetch_all(
+        """
+        SELECT
+            status,
+            COUNT(*) AS c
+        FROM daily_attendance
+        WHERE month_year=?
+        AND day=?
+        GROUP BY status
+        """,
+        (
+            today_month,
+            today.day,
+        ),
+    )
+
+    today_map = {
+        row["status"]: row["c"]
+        for row in today_rows
+    }
+
+    department_rows = fetch_all(
+        """
+        SELECT
+            department,
+            COUNT(*) AS worker_count,
+            COALESCE(
+                SUM(basic_salary),
+                0
+            ) AS total_basic
+        FROM workers
+        GROUP BY department
+        ORDER BY department
+        """
+    )
+
+    return render_template(
+        "dashboard.html",
+        workers=workers,
+        month=month,
+        month_name=month.split()[0],
+        year=month.split()[1],
+        gross=gross,
+        advance=advance,
+        today_present=today_map.get(
+            "P",
+            0
+        ),
+        today_absent=today_map.get(
+            "A",
+            0
+        ),
+        dept_rows=department_rows,
+        total_workers=len(workers),
+    )
 
 
 # ============================================================
@@ -537,21 +2930,41 @@ def dashboard():
 @app.route("/workers")
 @login_required
 def workers():
-    q = request.args.get("q", "").strip().lower()
+
+    query_text = request.args.get(
+        "q",
+        ""
+    ).strip()
+
     params = []
 
-    sql = "SELECT * FROM workers"
+    sql = """
+        SELECT *
+        FROM workers
+    """
 
-    if q:
-        like_value = f"%{q}%"
+    if query_text:
+
+        like_value = (
+            f"%{query_text.lower()}%"
+        )
 
         sql += """
             WHERE
-                CAST(id AS TEXT) LIKE ?
-                OR lower(COALESCE(name, '')) LIKE ?
-                OR lower(COALESCE(bangla_name, '')) LIKE ?
-                OR lower(COALESCE(department, '')) LIKE ?
-                OR lower(COALESCE(designation, '')) LIKE ?
+                CAST(id AS TEXT)
+                    LIKE ?
+                OR LOWER(
+                    COALESCE(name, '')
+                ) LIKE ?
+                OR LOWER(
+                    COALESCE(bangla_name, '')
+                ) LIKE ?
+                OR LOWER(
+                    COALESCE(department, '')
+                ) LIKE ?
+                OR LOWER(
+                    COALESCE(designation, '')
+                ) LIKE ?
         """
 
         params = [
@@ -559,17 +2972,22 @@ def workers():
             like_value,
             like_value,
             like_value,
-            like_value
+            like_value,
         ]
 
-    sql += " ORDER BY id DESC"
+    sql += """
+        ORDER BY id DESC
+    """
 
-    worker_rows = fetch_all(sql, params)
+    worker_rows = fetch_all(
+        sql,
+        params
+    )
 
     return render_template(
         "worker.html",
         workers=worker_rows,
-        q=q
+        q=query_text,
     )
 
 
@@ -577,257 +2995,1976 @@ def workers():
 # ADD WORKER
 # ============================================================
 
-@app.route("/workers/add", methods=["GET", "POST"])
+@app.route(
+    "/workers/add",
+    methods=["GET", "POST"]
+)
 @login_required
 def add_worker():
-    ...
+
+    if request.method == "POST":
+
+        form = request.form
+
+        name = form.get(
+            "name",
+            ""
+        ).strip()
+
+        bangla_name = form.get(
+            "bangla_name",
+            ""
+        ).strip()
+
+        department = form.get(
+            "department",
+            ""
+        ).strip()
+
+        designation = form.get(
+            "designation",
+            ""
+        ).strip()
+
+        basic_salary = parse_num(
+            form.get("basic_salary"),
+            0
+        )
+
+        ot_rate = parse_num(
+            form.get("ot_rate"),
+            0
+        )
+
+        refreshment_bill = parse_num(
+            form.get(
+                "refreshment_bill"
+            ),
+            0
+        )
+
+        if not name:
+
+            flash(
+                "Worker name is required.",
+                "danger"
+            )
+
+            return render_template(
+                "worker_form.html",
+                worker=form,
+                departments=(
+                    get_worker_departments()
+                ),
+                form_title="Add Worker",
+                submit_text="Save",
+            )
+
+        if (
+            department
+            not in DEPARTMENTS
+            or department
+            == "All Departments"
+        ):
+
+            department = "General"
+
+        try:
+
+            execute(
+                """
+                INSERT INTO workers
+                (
+                    name,
+                    basic_salary,
+                    ot_rate,
+                    department,
+                    designation,
+                    refreshment_bill,
+                    bangla_name
+                )
+                VALUES
+                (?,?,?,?,?,?,?)
+                """,
+                (
+                    name,
+                    basic_salary,
+                    ot_rate,
+                    department,
+                    designation,
+                    refreshment_bill,
+                    bangla_name,
+                ),
+                commit=True,
+            )
+
+            flash(
+                "Worker saved successfully.",
+                "success"
+            )
+
+            return redirect(
+                url_for("workers")
+            )
+
+        except Exception as e:
+
+            app.logger.exception(
+                "Worker insert error"
+            )
+
+            flash(
+                f"Could not save worker: {e}",
+                "danger"
+            )
+
+            return render_template(
+                "worker_form.html",
+                worker=form,
+                departments=(
+                    get_worker_departments()
+                ),
+                form_title="Add Worker",
+                submit_text="Save",
+            )
+
+    return render_template(
+        "worker_form.html",
+        worker=None,
+        departments=(
+            get_worker_departments()
+        ),
+        form_title="Add Worker",
+        submit_text="Save",
+    )
 
 
-@app.route("/workers/add", methods=["GET","POST"])
-@login_required
-def add_worker():
-    if request.method=="POST":
-        f=request.form; name=f.get("name","").strip()
-        if not name: flash("Worker name is required.","danger"); return render_template("worker_form.html",worker=f)
-        vals=(name,parse_num(f.get("basic_salary")),parse_num(f.get("ot_rate")),f.get("department","").strip(),f.get("designation","").strip(),parse_num(f.get("refreshment_bill")),f.get("bangla_name","").strip())
-        execute("INSERT INTO workers(name,basic_salary,ot_rate,department,designation,refreshment_bill,bangla_name) VALUES(?,?,?,?,?,?,?)",vals,commit=True)
-        flash("Worker saved.","success"); return redirect(url_for("workers"))
-    return render_template("worker_form.html",worker=None)
+# ============================================================
+# EDIT WORKER
+# ============================================================
 
-
-@app.route("/workers/edit/<int:worker_id>", methods=["GET","POST"])
+@app.route(
+    "/workers/edit/<int:worker_id>",
+    methods=["GET", "POST"]
+)
 @login_required
 def edit_worker(worker_id):
-    w=fetch_one("SELECT * FROM workers WHERE id=?",(worker_id,))
-    if not w: abort(404)
-    if request.method=="POST":
-        f=request.form
-        execute("UPDATE workers SET name=?,basic_salary=?,ot_rate=?,department=?,designation=?,refreshment_bill=?,bangla_name=? WHERE id=?",(f.get("name",""),parse_num(f.get("basic_salary")),parse_num(f.get("ot_rate")),f.get("department",""),f.get("designation",""),parse_num(f.get("refreshment_bill")),f.get("bangla_name",""),worker_id),commit=True)
-        flash("Worker updated.","success"); return redirect(url_for("workers"))
-    return render_template("worker_form.html",worker=w)
+
+    worker = fetch_one(
+        """
+        SELECT *
+        FROM workers
+        WHERE id=?
+        """,
+        (worker_id,),
+    )
+
+    if not worker:
+
+        abort(404)
+
+    if request.method == "POST":
+
+        form = request.form
+
+        name = form.get(
+            "name",
+            ""
+        ).strip()
+
+        bangla_name = form.get(
+            "bangla_name",
+            ""
+        ).strip()
+
+        department = form.get(
+            "department",
+            ""
+        ).strip()
+
+        designation = form.get(
+            "designation",
+            ""
+        ).strip()
+
+        basic_salary = parse_num(
+            form.get("basic_salary"),
+            0
+        )
+
+        ot_rate = parse_num(
+            form.get("ot_rate"),
+            0
+        )
+
+        refreshment_bill = parse_num(
+            form.get(
+                "refreshment_bill"
+            ),
+            0
+        )
+
+        if not name:
+
+            flash(
+                "Worker name is required.",
+                "danger"
+            )
+
+            return render_template(
+                "worker_form.html",
+                worker=form,
+                departments=(
+                    get_worker_departments()
+                ),
+                form_title="Edit Worker",
+                submit_text="Update",
+            )
+
+        if (
+            department
+            not in DEPARTMENTS
+            or department
+            == "All Departments"
+        ):
+
+            department = "General"
+
+        try:
+
+            execute(
+                """
+                UPDATE workers
+                SET
+                    name=?,
+                    basic_salary=?,
+                    ot_rate=?,
+                    department=?,
+                    designation=?,
+                    refreshment_bill=?,
+                    bangla_name=?
+                WHERE id=?
+                """,
+                (
+                    name,
+                    basic_salary,
+                    ot_rate,
+                    department,
+                    designation,
+                    refreshment_bill,
+                    bangla_name,
+                    worker_id,
+                ),
+                commit=True,
+            )
+
+            flash(
+                "Worker updated successfully.",
+                "success"
+            )
+
+            return redirect(
+                url_for("workers")
+            )
+
+        except Exception as e:
+
+            app.logger.exception(
+                "Worker update error"
+            )
+
+            flash(
+                f"Could not update worker: {e}",
+                "danger"
+            )
+
+            return render_template(
+                "worker_form.html",
+                worker=form,
+                departments=(
+                    get_worker_departments()
+                ),
+                form_title="Edit Worker",
+                submit_text="Update",
+            )
+
+    return render_template(
+        "worker_form.html",
+        worker=worker,
+        departments=(
+            get_worker_departments()
+        ),
+        form_title="Edit Worker",
+        submit_text="Update",
+    )
 
 
-@app.route("/workers/delete/<int:worker_id>", methods=["POST","GET"])
+# ============================================================
+# DELETE WORKER
+# ============================================================
+
+@app.route(
+    "/workers/delete/<int:worker_id>",
+    methods=["POST", "GET"]
+)
 @login_required
 def delete_worker(worker_id):
-    execute("DELETE FROM workers WHERE id=?",(worker_id,),commit=True)
-    # Explicit user action only; never used during initialization/migration.
-    for t in ["attendance","daily_attendance","worker_advances","advance_salary","advances"]:
-        if table_exists(t):
-            try: execute(f"DELETE FROM {t} WHERE worker_id=?",(worker_id,),commit=True)
-            except Exception: pass
-    flash("Worker deleted.","success"); return redirect(url_for("workers"))
 
+    worker = fetch_one(
+        """
+        SELECT id,name
+        FROM workers
+        WHERE id=?
+        """,
+        (worker_id,),
+    )
+
+    if not worker:
+
+        flash(
+            "Worker not found.",
+            "danger"
+        )
+
+        return redirect(
+            url_for("workers")
+        )
+
+    try:
+
+        # Delete related records ONLY
+        # after explicit worker deletion.
+
+        for table_name in [
+            "attendance",
+            "daily_attendance",
+            "worker_advances",
+            "advance_salary",
+            "advances",
+        ]:
+
+            if table_exists(
+                table_name
+            ):
+
+                try:
+
+                    if "worker_id" in columns(
+                        table_name
+                    ):
+
+                        execute(
+                            f"""
+                            DELETE FROM {table_name}
+                            WHERE worker_id=?
+                            """,
+                            (worker_id,),
+                            commit=True,
+                        )
+
+                except Exception as e:
+
+                    app.logger.warning(
+                        "Related delete %s: %r",
+                        table_name,
+                        e
+                    )
+
+        execute(
+            """
+            DELETE FROM workers
+            WHERE id=?
+            """,
+            (worker_id,),
+            commit=True,
+        )
+
+        flash(
+            "Worker deleted successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        app.logger.exception(
+            "Worker delete error"
+        )
+
+        flash(
+            f"Could not delete worker: {e}",
+            "danger"
+        )
+
+    return redirect(
+        url_for("workers")
+    )
+
+
+# ============================================================
+# ATTENDANCE
+# ============================================================
 
 @app.route("/attendance")
 @login_required
 def attendance():
-    req_month=request.args.get("month")
-    req_year=request.args.get("year")
-    month=month_name_year(req_month, req_year) if req_month and req_year else month_name_year()
-    wid=request.args.get("worker_id",""); w=None; days=[]; summary={}
-    if wid:
-        w=fetch_one("SELECT * FROM workers WHERE id=?",(wid,))
-        if w:
-            dm=daily_map(w["id"],month); mon,ys=month.split(); y=int(ys); mi=MONTHS.index(mon)+1; nd=calendar.monthrange(y,mi)[1]
-            days=[{"day":d,"status":dm.get(d,"P"),"date":datetime.date(y,mi,d)} for d in range(1,nd+1)]
-            summary=calculate_salary(w,month)
-    return render_template("attendance.html",workers=fetch_all("SELECT id,name,department FROM workers ORDER BY id"),worker=w,days=days,summary=summary,month=month)
+
+    requested_month = request.args.get(
+        "month"
+    )
+
+    requested_year = request.args.get(
+        "year"
+    )
+
+    if (
+        requested_month
+        and requested_year
+    ):
+
+        month = month_name_year(
+            requested_month,
+            requested_year
+        )
+
+    else:
+
+        month = month_name_year()
+
+    worker_id = request.args.get(
+        "worker_id",
+        ""
+    )
+
+    worker = None
+    days = []
+    summary = {}
+
+    if worker_id:
+
+        worker = fetch_one(
+            """
+            SELECT *
+            FROM workers
+            WHERE id=?
+            """,
+            (worker_id,),
+        )
+
+        if worker:
+
+            daily = daily_map(
+                worker["id"],
+                month
+            )
+
+            month_name, year_text = (
+                month.split()
+            )
+
+            year = int(
+                year_text
+            )
+
+            month_number = (
+                MONTHS.index(
+                    month_name
+                ) + 1
+            )
+
+            number_of_days = (
+                calendar.monthrange(
+                    year,
+                    month_number
+                )[1]
+            )
+
+            days = [
+                {
+                    "day": day,
+                    "status": daily.get(
+                        day,
+                        "P"
+                    ),
+                    "date": datetime.date(
+                        year,
+                        month_number,
+                        day
+                    ),
+                }
+                for day in range(
+                    1,
+                    number_of_days + 1
+                )
+            ]
+
+            summary = calculate_salary(
+                worker,
+                month
+            )
+
+    return render_template(
+        "attendance.html",
+        workers=fetch_all(
+            """
+            SELECT
+                id,
+                name,
+                department
+            FROM workers
+            ORDER BY id
+            """
+        ),
+        worker=worker,
+        days=days,
+        summary=summary,
+        month=month,
+    )
 
 
-@app.route("/attendance/save", methods=["POST"])
+# ============================================================
+# SAVE ATTENDANCE
+# ============================================================
+
+@app.route(
+    "/attendance/save",
+    methods=["POST"]
+)
 @login_required
 def save_attendance():
-    f=request.form; wid=int(f.get("worker_id")); month=month_name_year(f.get("month"),f.get("year")) if f.get("year") else f.get("month_year") or month_name_year()
-    present=int(f.get("present_days") or 0); absent=int(f.get("absent_days") or 0); ot=parse_num(f.get("ot_hours"))
-    dm={}
-    raw=f.get("statuses_json")
-    if raw:
-        try: import json; dm=json.loads(raw)
-        except Exception: dm={}
-    # Also accept fields day_1=P etc.
-    for k,v in f.items():
-        if k.startswith("day_"): dm[k[4:]]=v
-    for d,st in dm.items():
-        try:
-            day=int(d); st="A" if str(st).upper().startswith("A") else "P"
-            existing_day = fetch_one("SELECT id FROM daily_attendance WHERE worker_id=? AND month_year=? AND day=? ORDER BY id DESC LIMIT 1", (wid, month, day))
-            if existing_day:
-                execute("UPDATE daily_attendance SET status=? WHERE id=?", (st, existing_day["id"]), commit=True)
-            else:
-                execute("INSERT INTO daily_attendance(worker_id,month_year,day,status) VALUES(?,?,?,?)", (wid,month,day,st), commit=True)
-        except Exception: pass
-    existing=fetch_one("SELECT id FROM attendance WHERE worker_id=? AND month_year=? ORDER BY id DESC LIMIT 1",(wid,month))
-    if existing:
-        execute("UPDATE attendance SET present_days=?,absent_days=?,ot_hours=? WHERE id=?",(present,absent,ot,existing["id"]),commit=True)
-    else:
-        acols = columns("attendance")
-        names = ["worker_id","month_year","present_days","absent_days","ot_hours"]
-        vals = [wid,month,present,absent,ot]
-        if "advance_deduction" in acols:
-            names.append("advance_deduction"); vals.append(0)
-        execute("INSERT INTO attendance(" + ",".join(names) + ") VALUES(" + ",".join(["?"]*len(vals)) + ")", vals, commit=True)
-    flash("Attendance saved.","success"); return redirect(url_for("attendance",worker_id=wid,month=month.split()[0],year=month.split()[1]))
 
+    form = request.form
+
+    try:
+
+        worker_id = int(
+            form.get("worker_id")
+        )
+
+    except Exception:
+
+        flash(
+            "Invalid worker.",
+            "danger"
+        )
+
+        return redirect(
+            url_for("attendance")
+        )
+
+    if form.get("year"):
+
+        month = month_name_year(
+            form.get("month"),
+            form.get("year")
+        )
+
+    else:
+
+        month = (
+            form.get("month_year")
+            or month_name_year()
+        )
+
+    present = int(
+        form.get(
+            "present_days",
+            0
+        )
+        or 0
+    )
+
+    absent = int(
+        form.get(
+            "absent_days",
+            0
+        )
+        or 0
+    )
+
+    overtime = parse_num(
+        form.get("ot_hours"),
+        0
+    )
+
+    daily_statuses = {}
+
+    raw_json = form.get(
+        "statuses_json"
+    )
+
+    if raw_json:
+
+        try:
+
+            import json
+
+            daily_statuses = (
+                json.loads(raw_json)
+            )
+
+        except Exception:
+
+            daily_statuses = {}
+
+    # Accept day_1=P etc.
+
+    for key, value in form.items():
+
+        if key.startswith(
+            "day_"
+        ):
+
+            daily_statuses[
+                key[4:]
+            ] = value
+
+    # --------------------------------------------------------
+    # Save daily attendance
+    # --------------------------------------------------------
+
+    for day, status in (
+        daily_statuses.items()
+    ):
+
+        try:
+
+            day_number = int(day)
+
+            status = (
+                "A"
+                if str(status)
+                .upper()
+                .startswith("A")
+                else "P"
+            )
+
+            existing = fetch_one(
+                """
+                SELECT id
+                FROM daily_attendance
+                WHERE worker_id=?
+                AND month_year=?
+                AND day=?
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (
+                    worker_id,
+                    month,
+                    day_number,
+                ),
+            )
+
+            if existing:
+
+                execute(
+                    """
+                    UPDATE daily_attendance
+                    SET status=?
+                    WHERE id=?
+                    """,
+                    (
+                        status,
+                        existing["id"],
+                    ),
+                    commit=True,
+                )
+
+            else:
+
+                execute(
+                    """
+                    INSERT INTO daily_attendance
+                    (
+                        worker_id,
+                        month_year,
+                        day,
+                        status
+                    )
+                    VALUES
+                    (?,?,?,?)
+                    """,
+                    (
+                        worker_id,
+                        month,
+                        day_number,
+                        status,
+                    ),
+                    commit=True,
+                )
+
+        except Exception as e:
+
+            app.logger.warning(
+                "Daily attendance error: %r",
+                e
+            )
+
+    # --------------------------------------------------------
+    # Monthly attendance
+    # --------------------------------------------------------
+
+    existing = fetch_one(
+        """
+        SELECT id
+        FROM attendance
+        WHERE worker_id=?
+        AND month_year=?
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (
+            worker_id,
+            month,
+        ),
+    )
+
+    if existing:
+
+        execute(
+            """
+            UPDATE attendance
+            SET
+                present_days=?,
+                absent_days=?,
+                ot_hours=?
+            WHERE id=?
+            """,
+            (
+                present,
+                absent,
+                overtime,
+                existing["id"],
+            ),
+            commit=True,
+        )
+
+    else:
+
+        attendance_columns = columns(
+            "attendance"
+        )
+
+        names = [
+            "worker_id",
+            "month_year",
+            "present_days",
+            "absent_days",
+            "ot_hours",
+        ]
+
+        values = [
+            worker_id,
+            month,
+            present,
+            absent,
+            overtime,
+        ]
+
+        if (
+            "advance_deduction"
+            in attendance_columns
+        ):
+
+            names.append(
+                "advance_deduction"
+            )
+
+            values.append(0)
+
+        execute(
+            """
+            INSERT INTO attendance
+            (""" + ",".join(names) + """)
+            VALUES
+            (""" + ",".join(
+                ["?"] * len(values)
+            ) + """)
+            """,
+            values,
+            commit=True,
+        )
+
+    flash(
+        "Attendance saved successfully.",
+        "success"
+    )
+
+    return redirect(
+        url_for(
+            "attendance",
+            worker_id=worker_id,
+            month=month.split()[0],
+            year=month.split()[1],
+        )
+    )
+
+
+# ============================================================
+# PAYSLIP
+# ============================================================
 
 @app.route("/payslip")
 @login_required
 def payslip():
-    month=month_name_year(); wid=request.args.get("worker_id"); w=fetch_one("SELECT * FROM workers WHERE id=?",(wid,)) if wid else None
-    salary=calculate_salary(w,month) if w else {}
-    return render_template("payslip.html",workers=fetch_all("SELECT id,name,department FROM workers ORDER BY id"),worker=w,summary=salary,month=month)
 
+    month = month_name_year()
+
+    worker_id = request.args.get(
+        "worker_id"
+    )
+
+    worker = (
+        fetch_one(
+            """
+            SELECT *
+            FROM workers
+            WHERE id=?
+            """,
+            (worker_id,),
+        )
+        if worker_id
+        else None
+    )
+
+    summary = (
+        calculate_salary(
+            worker,
+            month
+        )
+        if worker
+        else {}
+    )
+
+    return render_template(
+        "payslip.html",
+        workers=fetch_all(
+            """
+            SELECT
+                id,
+                name,
+                department
+            FROM workers
+            ORDER BY id
+            """
+        ),
+        worker=worker,
+        summary=summary,
+        month=month,
+    )
+
+
+# ============================================================
+# DEPARTMENT SALARY
+# ============================================================
 
 @app.route("/department")
 @login_required
 def department():
-    month=month_name_year(); dept=request.args.get("department","")
-    ws=fetch_all("SELECT * FROM workers" + (" WHERE department=?" if dept else "") + " ORDER BY id",(dept,) if dept else ())
-    salary_map=calculate_salary_bulk(ws,month)
-    rows=[{**w,**salary_map.get(w["id"],{})} for w in ws]
-    return render_template("department.html",rows=rows,month=month,department=dept,departments=[r["department"] for r in fetch_all("SELECT DISTINCT department FROM workers WHERE department IS NOT NULL AND department<>'' ORDER BY department")])
 
-# Compatibility endpoint used by the current dashboard template.
-# The existing Department Salary page is the report view.
-app.add_url_rule("/report", endpoint="report", view_func=department, methods=["GET"])
+    month = month_name_year()
 
+    department_name = request.args.get(
+        "department",
+        ""
+    )
+
+    if department_name:
+
+        workers_list = fetch_all(
+            """
+            SELECT *
+            FROM workers
+            WHERE department=?
+            ORDER BY id
+            """,
+            (department_name,),
+        )
+
+    else:
+
+        workers_list = fetch_all(
+            """
+            SELECT *
+            FROM workers
+            ORDER BY id
+            """
+        )
+
+    salary_map = (
+        calculate_salary_bulk(
+            workers_list,
+            month
+        )
+    )
+
+    rows = []
+
+    for worker in workers_list:
+
+        row = dict(worker)
+
+        row.update(
+            salary_map.get(
+                worker["id"],
+                {}
+            )
+        )
+
+        rows.append(row)
+
+    department_list = fetch_all(
+        """
+        SELECT DISTINCT department
+        FROM workers
+        WHERE department IS NOT NULL
+        AND department <> ''
+        ORDER BY department
+        """
+    )
+
+    return render_template(
+        "department.html",
+        rows=rows,
+        month=month,
+        department=department_name,
+        departments=[
+            row["department"]
+            for row in department_list
+        ],
+    )
+
+
+# ============================================================
+# REPORT COMPATIBILITY
+# ============================================================
+
+@app.add_url_rule(
+    "/report",
+    endpoint="report",
+    view_func=department,
+    methods=["GET"]
+)
+
+
+# ============================================================
+# ADVANCE
+# ============================================================
 
 @app.route("/advance")
 @app.route("/advances")
 @login_required
 def advance():
-    month=month_name_year(); wid=request.args.get("worker_id")
-    return render_template("advance.html",workers=fetch_all("SELECT id,name,department FROM workers ORDER BY id"),rows=advance_rows(month,wid),month=month)
 
-# Compatibility endpoints for older templates.
-# Flask endpoint names come from function names, so the route aliases above
-# do not create an endpoint named "advances".
-app.add_url_rule("/advances", endpoint="advances", view_func=advance, methods=["GET"])
+    month = month_name_year()
+
+    worker_id = request.args.get(
+        "worker_id"
+    )
+
+    return render_template(
+        "advance.html",
+        workers=fetch_all(
+            """
+            SELECT
+                id,
+                name,
+                department
+            FROM workers
+            ORDER BY id
+            """
+        ),
+        rows=advance_rows(
+            month,
+            worker_id
+        ),
+        month=month,
+    )
 
 
+# Compatibility endpoint.
 
-@app.route("/advance/save", methods=["POST"])
-@app.route("/advances/save", methods=["POST"])
+app.add_url_rule(
+    "/advances",
+    endpoint="advances",
+    view_func=advance,
+    methods=["GET"]
+)
+
+
+# ============================================================
+# SAVE ADVANCE
+# ============================================================
+
+@app.route(
+    "/advance/save",
+    methods=["POST"]
+)
+@app.route(
+    "/advances/save",
+    methods=["POST"]
+)
 @login_required
 def save_advance():
-    f=request.form; wid=int(f.get("worker_id")); month=f.get("month_year") or month_name_year(f.get("month"),f.get("year")); adv_date=f.get("advance_date") or datetime.date.today().isoformat(); amount=parse_num(f.get("amount")); note=f.get("note","")
-    if amount<=0: flash("Amount must be greater than zero.","danger"); return redirect(url_for("advance",month=month))
-    save_advance_record(wid,month,adv_date,amount,note); flash("Advance saved.","success"); return redirect(url_for("advance",month=month))
+
+    form = request.form
+
+    try:
+
+        worker_id = int(
+            form.get("worker_id")
+        )
+
+    except Exception:
+
+        flash(
+            "Invalid worker.",
+            "danger"
+        )
+
+        return redirect(
+            url_for("advance")
+        )
+
+    month = (
+        form.get("month_year")
+        or month_name_year(
+            form.get("month"),
+            form.get("year")
+        )
+    )
+
+    advance_date = (
+        form.get("advance_date")
+        or datetime.date.today()
+        .isoformat()
+    )
+
+    amount = parse_num(
+        form.get("amount"),
+        0
+    )
+
+    note = form.get(
+        "note",
+        ""
+    ).strip()
+
+    if amount <= 0:
+
+        flash(
+            "Amount must be greater than zero.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "advance",
+                month=month
+            )
+        )
+
+    try:
+
+        save_advance_record(
+            worker_id,
+            month,
+            advance_date,
+            amount,
+            note,
+        )
+
+        flash(
+            "Advance saved successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        app.logger.exception(
+            "Advance save error"
+        )
+
+        flash(
+            f"Could not save advance: {e}",
+            "danger"
+        )
+
+    return redirect(
+        url_for(
+            "advance",
+            month=month
+        )
+    )
 
 
-@app.route("/advance/delete/<int:aid>")
-@app.route("/advances/delete/<int:aid>")
+# ============================================================
+# DELETE ADVANCE
+# ============================================================
+
+@app.route(
+    "/advance/delete/<int:aid>",
+    methods=["GET", "POST"]
+)
+@app.route(
+    "/advances/delete/<int:aid>",
+    methods=["GET", "POST"]
+)
 @login_required
 def delete_advance(aid):
-    delete_advance_record(aid); flash("Advance deleted.","success"); return redirect(url_for("advance"))
+
+    try:
+
+        delete_advance_record(
+            aid
+        )
+
+        flash(
+            "Advance deleted successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        app.logger.exception(
+            "Advance delete error"
+        )
+
+        flash(
+            f"Could not delete advance: {e}",
+            "danger"
+        )
+
+    return redirect(
+        url_for("advance")
+    )
 
 
-@app.route("/settings", methods=["GET","POST"])
+# ============================================================
+# SETTINGS
+# ============================================================
+
+@app.route(
+    "/settings",
+    methods=["GET", "POST"]
+)
 @admin_required
 def settings():
-    if request.method=="POST":
-        for k in ["company_name","company_address","company_phone","company_email","company_logo"]:
-            v=request.form.get(k,"")
-            if is_postgres(): execute("INSERT INTO company_settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value",(k,v),commit=True)
-            else: execute("INSERT OR REPLACE INTO company_settings(key,value) VALUES(?,?)",(k,v),commit=True)
-        flash("Settings saved.","success")
-    return render_template("settings.html",settings=get_settings())
 
+    if request.method == "POST":
+
+        for key in [
+            "company_name",
+            "company_address",
+            "company_phone",
+            "company_email",
+            "company_logo",
+        ]:
+
+            value = request.form.get(
+                key,
+                ""
+            )
+
+            if is_postgres():
+
+                execute(
+                    """
+                    INSERT INTO company_settings
+                    (key,value)
+                    VALUES (?,?)
+                    ON CONFLICT(key)
+                    DO UPDATE
+                    SET value=EXCLUDED.value
+                    """,
+                    (
+                        key,
+                        value,
+                    ),
+                    commit=True,
+                )
+
+            else:
+
+                execute(
+                    """
+                    INSERT OR REPLACE
+                    INTO company_settings
+                    (key,value)
+                    VALUES (?,?)
+                    """,
+                    (
+                        key,
+                        value,
+                    ),
+                    commit=True,
+                )
+
+        flash(
+            "Settings saved successfully.",
+            "success"
+        )
+
+    return render_template(
+        "settings.html",
+        settings=get_settings()
+    )
+
+
+# ============================================================
+# USERS
+# ============================================================
 
 @app.route("/users")
 @admin_required
-def users(): return render_template("users.html",users=fetch_all("SELECT id,username,full_name,role,active,created_at,last_login FROM users ORDER BY id"))
+def users():
 
-@app.route("/users/add", methods=["GET","POST"])
+    return render_template(
+        "users.html",
+        users=fetch_all(
+            """
+            SELECT
+                id,
+                username,
+                full_name,
+                role,
+                active,
+                created_at,
+                last_login
+            FROM users
+            ORDER BY id
+            """
+        ),
+    )
+
+
+# ============================================================
+# ADD USER
+# ============================================================
+
+@app.route(
+    "/users/add",
+    methods=["GET", "POST"]
+)
 @admin_required
 def add_user():
-    if request.method=="POST":
-        f=request.form; username=f.get("username","").strip(); pw=f.get("password","")
-        if not username or not pw: flash("Username and password are required.","danger"); return render_template("user_form.html",user=f)
-        ph=hash_password(pw); cols=columns("users")
-        names=[]; vals=[]
-        for n,v in [("username",username),("password_hash",ph),("password",ph),("full_name",f.get("full_name","")),("role",f.get("role","Operator")),("active",1),("created_at",nowstr())]:
-            if n in cols:names.append(n);vals.append(v)
-        try: execute("INSERT INTO users("+",".join(names)+") VALUES("+",".join(["?"]*len(vals))+")",vals,commit=True); flash("User created.","success"); return redirect(url_for("users"))
-        except Exception as e: flash(f"Could not create user: {e}","danger")
-    return render_template("user_form.html",user=None)
 
-@app.route("/users/delete/<int:user_id>")
+    if request.method == "POST":
+
+        form = request.form
+
+        username = form.get(
+            "username",
+            ""
+        ).strip()
+
+        password = form.get(
+            "password",
+            ""
+        )
+
+        if not username or not password:
+
+            flash(
+                "Username and password are required.",
+                "danger"
+            )
+
+            return render_template(
+                "user_form.html",
+                user=form
+            )
+
+        password_hash = (
+            hash_password(password)
+        )
+
+        user_columns = columns(
+            "users"
+        )
+
+        names = []
+        values = []
+
+        data = [
+            (
+                "username",
+                username
+            ),
+            (
+                "password_hash",
+                password_hash
+            ),
+            (
+                "password",
+                password_hash
+            ),
+            (
+                "full_name",
+                form.get(
+                    "full_name",
+                    ""
+                )
+            ),
+            (
+                "role",
+                form.get(
+                    "role",
+                    "Operator"
+                )
+            ),
+            (
+                "active",
+                1
+            ),
+            (
+                "created_at",
+                nowstr()
+            ),
+        ]
+
+        for name, value in data:
+
+            if name in user_columns:
+
+                names.append(name)
+                values.append(value)
+
+        try:
+
+            execute(
+                """
+                INSERT INTO users
+                (""" + ",".join(names) + """)
+                VALUES
+                (""" + ",".join(
+                    ["?"] * len(values)
+                ) + """)
+                """,
+                values,
+                commit=True,
+            )
+
+            flash(
+                "User created successfully.",
+                "success"
+            )
+
+            return redirect(
+                url_for("users")
+            )
+
+        except Exception as e:
+
+            app.logger.exception(
+                "User creation error"
+            )
+
+            flash(
+                f"Could not create user: {e}",
+                "danger"
+            )
+
+    return render_template(
+        "user_form.html",
+        user=None
+    )
+
+
+# ============================================================
+# DELETE USER
+# ============================================================
+
+@app.route(
+    "/users/delete/<int:user_id>"
+)
 @admin_required
 def delete_user(user_id):
-    if current_user() and current_user().get("id")==user_id: flash("You cannot delete the logged-in user.","danger")
-    else: execute("DELETE FROM users WHERE id=?",(user_id,),commit=True); flash("User deleted.","success")
-    return redirect(url_for("users"))
+
+    user = current_user()
+
+    if (
+        user
+        and user.get("id")
+        == user_id
+    ):
+
+        flash(
+            "You cannot delete the logged-in user.",
+            "danger"
+        )
+
+    else:
+
+        execute(
+            """
+            DELETE FROM users
+            WHERE id=?
+            """,
+            (user_id,),
+            commit=True,
+        )
+
+        flash(
+            "User deleted successfully.",
+            "success"
+        )
+
+    return redirect(
+        url_for("users")
+    )
+
+
+# ============================================================
+# ACTIVITY
+# ============================================================
 
 @app.route("/activity")
 @admin_required
-def activity(): return render_template("activity.html",logs=fetch_all("SELECT * FROM activity_log ORDER BY id DESC LIMIT 500"))
+def activity():
+
+    return render_template(
+        "activity.html",
+        logs=fetch_all(
+            """
+            SELECT *
+            FROM activity_log
+            ORDER BY id DESC
+            LIMIT 500
+            """
+        ),
+    )
 
 
-def export_rows(rows, filename, title="Reedoy Payroll"):
-    if openpyxl is None: abort(503,description="openpyxl is not installed")
-    wb=Workbook(); ws=wb.active; ws.title="Payroll"
+# ============================================================
+# EXCEL EXPORT
+# ============================================================
+
+def export_rows(
+    rows,
+    filename,
+    title="Reedoy Payroll"
+):
+
+    if openpyxl is None:
+
+        abort(
+            503,
+            description=(
+                "openpyxl is not installed."
+            )
+        )
+
+    workbook = Workbook()
+
+    worksheet = workbook.active
+
+    worksheet.title = "Payroll"
+
     if rows:
-        headers=list(rows[0].keys()); ws.append(headers)
-        for r in rows: ws.append([r.get(h) for h in headers])
-    else: ws.append(["No records"])
-    bio=io.BytesIO(); wb.save(bio); bio.seek(0)
-    return send_file(bio,as_attachment=True,download_name=filename,mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-@app.route("/export/workers.xlsx")
+        headers = list(
+            rows[0].keys()
+        )
+
+        worksheet.append(
+            headers
+        )
+
+        for row in rows:
+
+            worksheet.append(
+                [
+                    row.get(header)
+                    for header in headers
+                ]
+            )
+
+    else:
+
+        worksheet.append(
+            ["No records"]
+        )
+
+    output = io.BytesIO()
+
+    workbook.save(
+        output
+    )
+
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=filename,
+        mimetype=(
+            "application/"
+            "vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+    )
+
+
+# ============================================================
+# WORKERS EXCEL
+# ============================================================
+
+@app.route(
+    "/export/workers.xlsx"
+)
 @login_required
-def export_workers(): return export_rows(fetch_all("SELECT * FROM workers ORDER BY id"),"reedoy_workers.xlsx")
+def export_workers():
 
-@app.route("/export/advances.xlsx")
+    return export_rows(
+        fetch_all(
+            """
+            SELECT *
+            FROM workers
+            ORDER BY id
+            """
+        ),
+        "reedoy_workers.xlsx"
+    )
+
+
+# ============================================================
+# ADVANCES EXCEL
+# ============================================================
+
+@app.route(
+    "/export/advances.xlsx"
+)
 @login_required
-def export_advances(): return export_rows(advance_rows(month_name_year()),"reedoy_advances.xlsx")
+def export_advances():
 
-@app.route("/export/department.xlsx")
+    return export_rows(
+        advance_rows(
+            month_name_year()
+        ),
+        "reedoy_advances.xlsx"
+    )
+
+
+# ============================================================
+# DEPARTMENT EXCEL
+# ============================================================
+
+@app.route(
+    "/export/department.xlsx"
+)
 @login_required
 def export_department():
-    month=month_name_year(); dept=request.args.get("department",""); ws=fetch_all("SELECT * FROM workers"+(" WHERE department=?" if dept else "")+" ORDER BY id",(dept,) if dept else ())
-    salary_map=calculate_salary_bulk(ws,month)
-    rows=[{"ID":w["id"],"Worker Name":w["name"],"Department":w.get("department"),"Designation":w.get("designation"),**salary_map.get(w["id"],{})} for w in ws]
-    return export_rows(rows,"reedoy_department_salary.xlsx")
 
-@app.route("/export/payslip.pdf")
+    month = month_name_year()
+
+    department_name = request.args.get(
+        "department",
+        ""
+    )
+
+    if department_name:
+
+        worker_list = fetch_all(
+            """
+            SELECT *
+            FROM workers
+            WHERE department=?
+            ORDER BY id
+            """,
+            (department_name,),
+        )
+
+    else:
+
+        worker_list = fetch_all(
+            """
+            SELECT *
+            FROM workers
+            ORDER BY id
+            """
+        )
+
+    salary_map = (
+        calculate_salary_bulk(
+            worker_list,
+            month
+        )
+    )
+
+    rows = []
+
+    for worker in worker_list:
+
+        salary = salary_map.get(
+            worker["id"],
+            {}
+        )
+
+        rows.append({
+            "ID": worker["id"],
+            "Worker Name": worker["name"],
+            "Department": worker.get(
+                "department"
+            ),
+            "Designation": worker.get(
+                "designation"
+            ),
+            "Present": salary.get(
+                "present",
+                0
+            ),
+            "Absent": salary.get(
+                "absent",
+                0
+            ),
+            "OT": salary.get(
+                "ot",
+                0
+            ),
+            "Absent Deduction": salary.get(
+                "absent_cut",
+                0
+            ),
+            "OT Amount": salary.get(
+                "ot_amt",
+                0
+            ),
+            "Nasta": salary.get(
+                "nasta",
+                0
+            ),
+            "Gross": salary.get(
+                "gross",
+                0
+            ),
+            "Advance": salary.get(
+                "advance",
+                0
+            ),
+            "Net Payable": salary.get(
+                "net",
+                0
+            ),
+        })
+
+    return export_rows(
+        rows,
+        "reedoy_department_salary.xlsx"
+    )
+
+
+# ============================================================
+# PAYSLIP PDF
+# ============================================================
+
+@app.route(
+    "/export/payslip.pdf"
+)
 @login_required
 def export_payslip_pdf():
-    if SimpleDocTemplate is None: abort(503,description="reportlab is not installed")
-    wid=request.args.get("worker_id"); month=month_name_year(); w=fetch_one("SELECT * FROM workers WHERE id=?",(wid,))
-    if not w: abort(404)
-    s=calculate_salary(w,month); bio=io.BytesIO(); doc=SimpleDocTemplate(bio,pagesize=A4,rightMargin=35,leftMargin=35,topMargin=35,bottomMargin=35)
-    styles=getSampleStyleSheet(); story=[Paragraph(DEFAULT_COMPANY_NAME,styles["Title"]),Paragraph("Payroll Payslip - "+month,styles["Heading2"]),Spacer(1,12)]
-    data=[["Worker ID",w["id"]],["Worker Name",w["name"]],["Department",w.get("department") or ""],["Basic Salary",f"BDT {s['earned_basic']:,.2f}"],["Absent Deduction",f"BDT {s['absent_cut']:,.2f}"],["OT",f"BDT {s['ot_amt']:,.2f}"],["Nasta",f"BDT {s['nasta']:,.2f}"],["Gross",f"BDT {s['gross']:,.2f}"],["Advance",f"BDT {s['advance']:,.2f}"],["Net Payable",f"BDT {s['net']:,.2f}"]]
-    story.append(Table(data,colWidths=[180,280],style=TableStyle([("GRID",(0,0),(-1,-1),0.5,colors.grey),("FONTNAME",(0,0),(-1,-1),"Helvetica"),("PADDING",(0,0),(-1,-1),6)])))
-    doc.build(story); bio.seek(0); return send_file(bio,as_attachment=True,download_name=f"payslip_{w['id']}_{month.replace(' ','_')}.pdf",mimetype="application/pdf")
 
-@app.route("/export/workers.csv")
+    if (
+        SimpleDocTemplate is None
+        or Paragraph is None
+        or Table is None
+        or TableStyle is None
+    ):
+
+        abort(
+            503,
+            description=(
+                "reportlab is not installed."
+            )
+        )
+
+    worker_id = request.args.get(
+        "worker_id"
+    )
+
+    month = month_name_year()
+
+    worker = fetch_one(
+        """
+        SELECT *
+        FROM workers
+        WHERE id=?
+        """,
+        (worker_id,),
+    )
+
+    if not worker:
+        abort(404)
+
+    salary = calculate_salary(
+        worker,
+        month
+    )
+
+    output = io.BytesIO()
+
+    document = SimpleDocTemplate(
+        output,
+        pagesize=A4,
+        rightMargin=35,
+        leftMargin=35,
+        topMargin=35,
+        bottomMargin=35,
+    )
+
+    styles = getSampleStyleSheet()
+
+    story = [
+        Paragraph(
+            DEFAULT_COMPANY_NAME,
+            styles["Title"]
+        ),
+        Paragraph(
+            "Payroll Payslip - " + month,
+            styles["Heading2"]
+        ),
+        Spacer(
+            1,
+            12
+        ),
+    ]
+
+    data = [
+        [
+            "Worker ID",
+            worker["id"]
+        ],
+        [
+            "Worker Name",
+            worker["name"]
+        ],
+        [
+            "Department",
+            worker.get(
+                "department"
+            ) or ""
+        ],
+        [
+            "Basic Salary",
+            f"BDT {salary['earned_basic']:,.2f}"
+        ],
+        [
+            "Absent Deduction",
+            f"BDT {salary['absent_cut']:,.2f}"
+        ],
+        [
+            "OT",
+            f"BDT {salary['ot_amt']:,.2f}"
+        ],
+        [
+            "Nasta",
+            f"BDT {salary['nasta']:,.2f}"
+        ],
+        [
+            "Gross",
+            f"BDT {salary['gross']:,.2f}"
+        ],
+        [
+            "Advance",
+            f"BDT {salary['advance']:,.2f}"
+        ],
+        [
+            "Net Payable",
+            f"BDT {salary['net']:,.2f}"
+        ],
+    ]
+
+    story.append(
+        Table(
+            data,
+            colWidths=[
+                180,
+                280
+            ],
+            style=TableStyle([
+                (
+                    "GRID",
+                    (0, 0),
+                    (-1, -1),
+                    0.5,
+                    colors.grey
+                ),
+                (
+                    "FONTNAME",
+                    (0, 0),
+                    (-1, -1),
+                    "Helvetica"
+                ),
+                (
+                    "PADDING",
+                    (0, 0),
+                    (-1, -1),
+                    6
+                ),
+            ]),
+        )
+    )
+
+    document.build(
+        story
+    )
+
+    output.seek(0)
+
+    filename = (
+        f"payslip_"
+        f"{worker['id']}_"
+        f"{month.replace(' ', '_')}.pdf"
+    )
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/pdf",
+    )
+
+
+# ============================================================
+# WORKERS CSV
+# ============================================================
+
+@app.route(
+    "/export/workers.csv"
+)
 @login_required
 def export_workers_csv():
-    rows=fetch_all("SELECT * FROM workers ORDER BY id"); bio=io.StringIO();
-    if rows:
-        wr=csv.DictWriter(bio,fieldnames=list(rows[0].keys()));wr.writeheader();wr.writerows(rows)
-    return send_file(io.BytesIO(bio.getvalue().encode("utf-8-sig")),as_attachment=True,download_name="reedoy_workers.csv",mimetype="text/csv")
 
+    rows = fetch_all(
+        """
+        SELECT *
+        FROM workers
+        ORDER BY id
+        """
+    )
+
+    output = io.StringIO()
+
+    if rows:
+
+        writer = csv.DictWriter(
+            output,
+            fieldnames=list(
+                rows[0].keys()
+            )
+        )
+
+        writer.writeheader()
+
+        writer.writerows(
+            rows
+        )
+
+    else:
+
+        output.write(
+            "No records\n"
+        )
+
+    data = io.BytesIO(
+        output.getvalue().encode(
+            "utf-8-sig"
+        )
+    )
+
+    return send_file(
+        data,
+        as_attachment=True,
+        download_name=(
+            "reedoy_workers.csv"
+        ),
+        mimetype="text/csv",
+    )
+
+
+# ============================================================
+# 404
+# ============================================================
 
 @app.errorhandler(404)
-def not_found(e):
-    try:return render_template("404.html"),404
-    except Exception:return "404 - Page not found",404
+def not_found(error):
+
+    try:
+
+        return (
+            render_template(
+                "404.html"
+            ),
+            404,
+        )
+
+    except Exception:
+
+        return (
+            "404 - Page not found",
+            404,
+        )
+
+
+# ============================================================
+# 500
+# ============================================================
 
 @app.errorhandler(500)
-def server_error(e):
-    app.logger.exception("Unhandled application error")
-    try:return render_template("500.html",error=e),500
-    except Exception:return f"500 - Internal Server Error\n{e}",500
+def server_error(error):
+
+    app.logger.exception(
+        "Unhandled application error"
+    )
+
+    try:
+
+        return (
+            render_template(
+                "500.html",
+                error=error
+            ),
+            500,
+        )
+
+    except Exception:
+
+        return (
+            f"500 - Internal Server Error\n"
+            f"{error}",
+            500,
+        )
 
 
-# Initialize on import so gunicorn app:app can start.
+# ============================================================
+# DATABASE INITIALIZATION
+# ============================================================
+
 try:
+
     init_db()
+
 except Exception as e:
-    app.logger.exception("Database initialization error: %r", e)
+
+    app.logger.exception(
+        "Database initialization error: %r",
+        e
+    )
+
+
+# ============================================================
+# LOCAL DEVELOPMENT
+# ============================================================
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",port=int(os.environ.get("PORT",5000)),debug=False)
+
+    app.run(
+        host="0.0.0.0",
+        port=int(
+            os.environ.get(
+                "PORT",
+                5000
+            )
+        ),
+        debug=False,
+    )
