@@ -24,13 +24,30 @@ DB_PATH = os.environ.get("SQLITE_DB", "reedoy_payroll.db")
 DEFAULT_COMPANY_NAME = "REEDOY TEXTILE DYEING PRINTING & FINISHING"
 
 MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"]
-DEPT_BN = {
-    "All Departments":"সব বিভাগ", "Cutting":"কাটিং", "Sewing":"সেলাই", "Finishing":"ফিনিশিং",
-    "Quality Control":"কোয়ালিটি কন্ট্রোল", "Knitting":"নিটিং", "Dyeing":"ডাইং", "Printing":"প্রিন্টিং",
-    "Washing":"ওয়াশিং", "Iron & Packing":"আয়রন ও প্যাকিং", "Maintenance":"মেইনটেন্যান্স",
-    "Store & Logistics":"স্টোর ও লজিস্টিকস", "Human Resources & Admin":"মানবসম্পদ ও প্রশাসন",
-    "Accounts & Commercial":"অ্যাকাউন্টস ও কমার্শিয়াল", "Utility":"ইউটিলিটি"
-}
+DEPT_BN = # ============================================================
+# REEDOY FIXED DEPARTMENTS
+# ============================================================
+
+DEPARTMENTS = [
+    "All Departments",
+    "General",
+    "Printing",
+    "Jigar",
+    "Wash",
+    "Loop",
+    "Stanter",
+    "Electrical",
+    "Accounts",
+    "Design",
+]
+
+
+def get_worker_departments():
+    """
+    Fixed department list for Worker Add/Edit.
+    Existing worker/database data is NOT modified.
+    """
+    return DEPARTMENTS.copy()
 LANG = {
     "Dashboard":"ড্যাশবোর্ড", "Workers Management":"কর্মী ব্যবস্থাপনা", "Attendance & Calendar":"উপস্থিতি ও ক্যালেন্ডার",
     "Single Payslip":"একক পে-স্লিপ", "Advance Salary":"অগ্রিম বেতন", "Department Salary Sheet":"বিভাগভিত্তিক বেতন শীট",
