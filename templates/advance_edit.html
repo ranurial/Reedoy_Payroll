@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h2>Advance Salary - Edit Record</h2>
+
+    <form method="POST">
+
+        <div class="mb-3">
+            <label for="worker_id" class="form-label">Worker</label>
+
+            <select name="worker_id" id="worker_id" class="form-select" required>
+                <option value="">Select Worker</option>
+
+                {% for worker in workers %}
+                <option value="{{ worker.id }}"
+                    {% if worker.id|string == record.worker_id|string %}selected{% endif %}>
+                    {{ worker.id }} - {{ worker.name }}
+                    {% if worker.bangla_name %} / {{ worker.bangla_name }}{% endif %}
+                    {% if worker.department %} ({{ worker.department }}){% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="advance_date" class="form-label">Advance Date</label>
+            <input
+                type="date"
+                name="advance_date"
+                id="advance_date"
+                class="form-control"
+                value="{{ record.advance_date }}"
+                required>
+        </div>
+
+        <div class="mb-3">
+            <label for="amount" class="form-label">Amount (BDT)</label>
+            <input
+                type="number"
+                name="amount"
+                id="amount"
+                class="form-control"
+                min="0"
+                step="0.01"
+                value="{{ record.amount }}"
+                required>
+        </div>
+
+        <div class="mb-3">
+            <label for="month_year" class="form-label">Salary Month</label>
+            <input
+                type="text"
+                name="month_year"
+                id="month_year"
+                class="form-control"
+                value="{{ record.month_year or '' }}"
+                placeholder="Example: September 2026">
+        </div>
+
+        <div class="mb-3">
+            <label for="note" class="form-label">Note</label>
+            <textarea
+                name="note"
+                id="note"
+                class="form-control"
+                rows="3">{{ record.note or '' }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Update Advance
+        </button>
+
+        <a href="{{ url_for('advance') }}" class="btn btn-secondary">
+            Cancel / Back
+        </a>
+
+    </form>
+</div>
+
+{% endblock %}
