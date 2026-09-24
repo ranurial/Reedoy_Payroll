@@ -120,16 +120,16 @@ DEPARTMENTS = [
 
 
 DEPT_BN = {
-    "All Departments": "সকল বিভাগ",
-    "General": "সাধারণ",
-    "Printing": "প্রিন্টিং",
-    "Jigar": "জিগার",
-    "Wash": "ওয়াশ",
-    "Loop": "লুপ",
-    "Stanter": "স্ট্যান্টার",
-    "Electrical": "ইলেকট্রিক্যাল",
-    "Accounts": "অ্যাকাউন্টস",
-    "Design": "ডিজাইন",
+    "All Departments": "à¦¸à¦•à¦² à¦¬à¦¿à¦­à¦¾à¦—",
+    "General": "à¦¸à¦¾à¦§à¦¾à¦°à¦£",
+    "Printing": "à¦ªà§à¦°à¦¿à¦¨à§à¦Ÿà¦¿à¦‚",
+    "Jigar": "à¦œà¦¿à¦—à¦¾à¦°",
+    "Wash": "à¦“à¦¯à¦¼à¦¾à¦¶",
+    "Loop": "à¦²à§à¦ª",
+    "Stanter": "à¦¸à§à¦Ÿà§à¦¯à¦¾à¦¨à§à¦Ÿà¦¾à¦°",
+    "Electrical": "à¦‡à¦²à§‡à¦•à¦Ÿà§à¦°à¦¿à¦•à§à¦¯à¦¾à¦²",
+    "Accounts": "à¦…à§à¦¯à¦¾à¦•à¦¾à¦‰à¦¨à§à¦Ÿà¦¸",
+    "Design": "à¦¡à¦¿à¦œà¦¾à¦‡à¦¨",
 }
 
 
@@ -147,39 +147,39 @@ def get_worker_departments():
 # ============================================================
 
 LANG = {
-    "Dashboard": "ড্যাশবোর্ড",
-    "Workers Management": "কর্মী ব্যবস্থাপনা",
-    "Attendance & Calendar": "উপস্থিতি ও ক্যালেন্ডার",
-    "Single Payslip": "একক পে-স্লিপ",
-    "Advance Salary": "অগ্রিম বেতন",
-    "Department Salary Sheet": "বিভাগভিত্তিক বেতন শীট",
-    "Settings": "সেটিংস",
-    "Worker Name": "কর্মীর নাম",
-    "Department": "বিভাগ",
-    "Designation": "পদবি",
-    "Basic Salary": "মূল বেতন",
-    "OT Rate": "OT হার",
-    "Nasta Rate": "নাস্তা হার",
-    "Present": "উপস্থিত",
-    "Absent": "অনুপস্থিত",
-    "Absent Deduction": "অনুপস্থিতির কর্তন",
-    "OT Amt": "OT টাকা",
-    "Nasta": "নাস্তা",
-    "Gross Salary": "মোট বেতন",
-    "Advance": "অগ্রিম",
-    "Net Payable": "নেট প্রদেয়",
-    "Payroll Month": "বেতন মাস",
-    "Advance Date": "অগ্রিমের তারিখ",
-    "Amount (BDT)": "পরিমাণ (টাকা)",
-    "Note": "নোট",
-    "Save": "সংরক্ষণ",
-    "Update": "আপডেট",
-    "Delete": "মুছুন",
-    "Search": "অনুসন্ধান",
-    "Refresh": "রিফ্রেশ",
-    "Generate": "তৈরি করুন",
-    "Export Excel": "এক্সেল রপ্তানি",
-    "Export PDF": "PDF রপ্তানি",
+    "Dashboard": "à¦¡à§à¦¯à¦¾à¦¶à¦¬à§‹à¦°à§à¦¡",
+    "Workers Management": "à¦•à¦°à§à¦®à§€ à¦¬à§à¦¯à¦¬à¦¸à§à¦¥à¦¾à¦ªà¦¨à¦¾",
+    "Attendance & Calendar": "à¦‰à¦ªà¦¸à§à¦¥à¦¿à¦¤à¦¿ à¦“ à¦•à§à¦¯à¦¾à¦²à§‡à¦¨à§à¦¡à¦¾à¦°",
+    "Single Payslip": "à¦à¦•à¦• à¦ªà§‡-à¦¸à§à¦²à¦¿à¦ª",
+    "Advance Salary": "à¦…à¦—à§à¦°à¦¿à¦® à¦¬à§‡à¦¤à¦¨",
+    "Department Salary Sheet": "à¦¬à¦¿à¦­à¦¾à¦—à¦­à¦¿à¦¤à§à¦¤à¦¿à¦• à¦¬à§‡à¦¤à¦¨ à¦¶à§€à¦Ÿ",
+    "Settings": "à¦¸à§‡à¦Ÿà¦¿à¦‚à¦¸",
+    "Worker Name": "à¦•à¦°à§à¦®à§€à¦° à¦¨à¦¾à¦®",
+    "Department": "à¦¬à¦¿à¦­à¦¾à¦—",
+    "Designation": "à¦ªà¦¦à¦¬à¦¿",
+    "Basic Salary": "à¦®à§‚à¦² à¦¬à§‡à¦¤à¦¨",
+    "OT Rate": "OT à¦¹à¦¾à¦°",
+    "Nasta Rate": "à¦¨à¦¾à¦¸à§à¦¤à¦¾ à¦¹à¦¾à¦°",
+    "Present": "à¦‰à¦ªà¦¸à§à¦¥à¦¿à¦¤",
+    "Absent": "à¦…à¦¨à§à¦ªà¦¸à§à¦¥à¦¿à¦¤",
+    "Absent Deduction": "à¦…à¦¨à§à¦ªà¦¸à§à¦¥à¦¿à¦¤à¦¿à¦° à¦•à¦°à§à¦¤à¦¨",
+    "OT Amt": "OT à¦Ÿà¦¾à¦•à¦¾",
+    "Nasta": "à¦¨à¦¾à¦¸à§à¦¤à¦¾",
+    "Gross Salary": "à¦®à§‹à¦Ÿ à¦¬à§‡à¦¤à¦¨",
+    "Advance": "à¦…à¦—à§à¦°à¦¿à¦®",
+    "Net Payable": "à¦¨à§‡à¦Ÿ à¦ªà§à¦°à¦¦à§‡à¦¯à¦¼",
+    "Payroll Month": "à¦¬à§‡à¦¤à¦¨ à¦®à¦¾à¦¸",
+    "Advance Date": "à¦…à¦—à§à¦°à¦¿à¦®à§‡à¦° à¦¤à¦¾à¦°à¦¿à¦–",
+    "Amount (BDT)": "à¦ªà¦°à¦¿à¦®à¦¾à¦£ (à¦Ÿà¦¾à¦•à¦¾)",
+    "Note": "à¦¨à§‹à¦Ÿ",
+    "Save": "à¦¸à¦‚à¦°à¦•à§à¦·à¦£",
+    "Update": "à¦†à¦ªà¦¡à§‡à¦Ÿ",
+    "Delete": "à¦®à§à¦›à§à¦¨",
+    "Search": "à¦…à¦¨à§à¦¸à¦¨à§à¦§à¦¾à¦¨",
+    "Refresh": "à¦°à¦¿à¦«à§à¦°à§‡à¦¶",
+    "Generate": "à¦¤à§ˆà¦°à¦¿ à¦•à¦°à§à¦¨",
+    "Export Excel": "à¦à¦•à§à¦¸à§‡à¦² à¦°à¦ªà§à¦¤à¦¾à¦¨à¦¿",
+    "Export PDF": "PDF à¦°à¦ªà§à¦¤à¦¾à¦¨à¦¿",
 }
 
 
@@ -812,6 +812,7 @@ def init_db():
         ("address", "TEXT"),
         ("joining_date", "TEXT"),
         ("status", "TEXT"),
+        ("bangla_name", "TEXT"),
     ]
 
     for col, typ in worker_columns:
@@ -1331,15 +1332,20 @@ def advance_rows(
 
             params.append(worker_id)
 
-        query = """
+        query = f"""
             SELECT
-                id,
-                worker_id,
-                month_year,
-                advance_date,
-                amount,
-                note
-            FROM worker_advances
+                wa.id,
+                wa.worker_id,
+                wa.month_year,
+                wa.advance_date,
+                wa.amount,
+                {("wa.note" if "note" in table_columns else "''")} AS note,
+                w.name AS worker_name,
+                w.bangla_name,
+                w.department
+            FROM worker_advances wa
+            LEFT JOIN workers w
+                ON w.id = wa.worker_id
         """
 
         if where:
@@ -1376,16 +1382,21 @@ def advance_rows(
 
         query = f"""
             SELECT
-                id,
-                worker_id,
+                a.id,
+                a.worker_id,
                 {
-                    date_column
+                    "a." + date_column
                     if date_column
                     else "NULL"
                 } AS advance_date,
-                amount,
-                note
-            FROM advance_salary
+                a.amount,
+                {("a.note" if "note" in table_columns else "''")} AS note,
+                w.name AS worker_name,
+                w.bangla_name,
+                w.department
+            FROM advance_salary a
+            LEFT JOIN workers w
+                ON w.id = a.worker_id
         """
 
         rows = fetch_all(query)
@@ -1426,48 +1437,32 @@ def advance_rows(
     # Legacy advances
     # --------------------------------------------------------
 
-    if (
-        "date" in table_columns
-        and "amount" in table_columns
-    ):
-
-        query = f"""
-            SELECT
-                id,
-                worker_id,
-                date AS advance_date,
-                amount,
-                note
-            FROM {table_name}
-        """
-
-    else:
-
-        date_column = (
+    date_column = (
+        "date"
+        if "date" in table_columns
+        else (
             "advance_date"
-            if "advance_date"
-            in table_columns
-            else "NULL"
+            if "advance_date" in table_columns
+            else None
         )
+    )
+    note_expr = "a.note" if "note" in table_columns else "''"
+    date_expr = f"a.{date_column}" if date_column else "NULL"
 
-        note_column = (
-            "note"
-            if "note"
-            in table_columns
-            else "''"
-        )
-
-        query = f"""
-            SELECT
-                id,
-                worker_id,
-                {date_column}
-                    AS advance_date,
-                amount,
-                {note_column}
-                    AS note
-            FROM {table_name}
-        """
+    query = f"""
+        SELECT
+            a.id,
+            a.worker_id,
+            {date_expr} AS advance_date,
+            a.amount,
+            {note_expr} AS note,
+            w.name AS worker_name,
+            w.bangla_name,
+            w.department
+        FROM {table_name} a
+        LEFT JOIN workers w
+            ON w.id = a.worker_id
+    """
 
     rows = fetch_all(query)
 
@@ -1746,6 +1741,160 @@ def save_advance_record(
 
 
 # ============================================================
+# EDIT ADVANCE
+# ============================================================
+
+@app.route(
+    "/advance/edit/<int:aid>",
+    methods=["GET", "POST"]
+)
+@app.route(
+    "/advances/edit/<int:aid>",
+    methods=["GET", "POST"]
+)
+@login_required
+def edit_advance(aid):
+
+    rows = advance_rows()
+
+    record = None
+
+    for row in rows:
+        if str(row.get("id")) == str(aid):
+            record = row
+            break
+
+    if not record:
+        flash(
+            "Advance record not found.",
+            "danger"
+        )
+        return redirect(
+            url_for("advance")
+        )
+
+    if request.method == "GET":
+
+        return render_template(
+            "advance_edit.html",
+            record=record,
+            workers=fetch_all(
+                """
+                SELECT
+                    id,
+                    name,
+                    bangla_name,
+                    department
+                FROM workers
+                ORDER BY id
+                """
+            ),
+        )
+
+    form = request.form
+
+    try:
+
+        worker_id = int(
+            form.get("worker_id")
+        )
+
+    except Exception:
+
+        flash(
+            "Invalid worker.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "edit_advance",
+                aid=aid
+            )
+        )
+
+    month = (
+        form.get("month_year")
+        or month_name_year(
+            form.get("month"),
+            form.get("year")
+        )
+        or record.get("month_year")
+    )
+
+    advance_date = (
+        form.get("advance_date")
+        or record.get("advance_date")
+        or datetime.date.today().isoformat()
+    )
+
+    amount = parse_num(
+        form.get("amount"),
+        0
+    )
+
+    note = (
+        form.get("note", "")
+        .strip()
+    )
+
+    if amount <= 0:
+
+        flash(
+            "Amount must be greater than zero.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "edit_advance",
+                aid=aid
+            )
+        )
+
+    try:
+
+        update_advance_record(
+            aid,
+            worker_id,
+            month,
+            advance_date,
+            amount,
+            note,
+        )
+
+        flash(
+            "Advance updated successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        app.logger.exception(
+            "Advance update error"
+        )
+
+        flash(
+            f"Could not update advance: {e}",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "edit_advance",
+                aid=aid
+            )
+        )
+
+    return redirect(
+        url_for(
+            "advance",
+            month=month
+        )
+    )
+
+
+# ============================================================
 # DELETE ADVANCE
 # ============================================================
 
@@ -1768,6 +1917,188 @@ def delete_advance_record(
         (advance_id,),
         commit=True,
     )
+
+
+# ============================================================
+# UPDATE ADVANCE
+# ============================================================
+
+def update_advance_record(
+    advance_id,
+    worker_id,
+    month,
+    advance_date,
+    amount,
+    note
+):
+    table_name = legacy_advance_source()
+
+    if not table_name:
+        raise RuntimeError(
+            "No advance table exists."
+        )
+
+    table_columns = columns(
+        table_name
+    )
+
+    if "worker_id" not in table_columns:
+        raise RuntimeError(
+            f"{table_name} has no worker_id column."
+        )
+
+    if "amount" not in table_columns:
+        raise RuntimeError(
+            f"{table_name} has no amount column."
+        )
+
+    # --------------------------------------------------------
+    # Modern worker_advances
+    # --------------------------------------------------------
+
+    if table_name == "worker_advances":
+
+        fields = []
+        values = []
+
+        if "worker_id" in table_columns:
+            fields.append("worker_id=?")
+            values.append(worker_id)
+
+        if "month_year" in table_columns:
+            fields.append("month_year=?")
+            values.append(month)
+
+        if "advance_date" in table_columns:
+            fields.append("advance_date=?")
+            values.append(advance_date)
+
+        if "amount" in table_columns:
+            fields.append("amount=?")
+            values.append(amount)
+
+        if "note" in table_columns:
+            fields.append("note=?")
+            values.append(note)
+
+        values.append(advance_id)
+
+        execute(
+            """
+            UPDATE worker_advances
+            SET
+            """ + ",".join(fields) + """
+            WHERE id=?
+            """,
+            values,
+            commit=True,
+        )
+
+        return
+
+    # --------------------------------------------------------
+    # Legacy advance_salary
+    # --------------------------------------------------------
+
+    if table_name == "advance_salary":
+
+        date_column = (
+            "date"
+            if "date" in table_columns
+            else (
+                "advance_date"
+                if "advance_date" in table_columns
+                else None
+            )
+        )
+
+        if not date_column:
+            raise RuntimeError(
+                "advance_salary has no date column."
+            )
+
+        fields = [
+            "worker_id=?",
+            f"{date_column}=?",
+            "amount=?",
+        ]
+
+        values = [
+            worker_id,
+            advance_date,
+            amount,
+        ]
+
+        if "note" in table_columns:
+            fields.append("note=?")
+            values.append(note)
+
+        values.append(advance_id)
+
+        execute(
+            """
+            UPDATE advance_salary
+            SET
+            """ + ",".join(fields) + """
+            WHERE id=?
+            """,
+            values,
+            commit=True,
+        )
+
+        return
+
+    # --------------------------------------------------------
+    # Legacy advances
+    # --------------------------------------------------------
+
+    if table_name == "advances":
+
+        date_column = (
+            "date"
+            if "date" in table_columns
+            else (
+                "advance_date"
+                if "advance_date" in table_columns
+                else None
+            )
+        )
+
+        if not date_column:
+            raise RuntimeError(
+                "advances has no date column."
+            )
+
+        fields = [
+            "worker_id=?",
+            f"{date_column}=?",
+            "amount=?",
+        ]
+
+        values = [
+            worker_id,
+            advance_date,
+            amount,
+        ]
+
+        if "note" in table_columns:
+            fields.append("note=?")
+            values.append(note)
+
+        values.append(advance_id)
+
+        execute(
+            """
+            UPDATE advances
+            SET
+            """ + ",".join(fields) + """
+            WHERE id=?
+            """,
+            values,
+            commit=True,
+        )
+
+        return
 
 
 # ============================================================
@@ -3509,6 +3840,7 @@ def attendance():
             SELECT
                 id,
                 name,
+                bangla_name,
                 department
             FROM workers
             ORDER BY id
@@ -3843,6 +4175,7 @@ def payslip():
             SELECT
                 id,
                 name,
+                bangla_name,
                 department
             FROM workers
             ORDER BY id
@@ -3967,6 +4300,7 @@ def advance():
             SELECT
                 id,
                 name,
+                bangla_name,
                 department
             FROM workers
             ORDER BY id
@@ -4086,6 +4420,160 @@ def save_advance():
         flash(
             f"Could not save advance: {e}",
             "danger"
+        )
+
+    return redirect(
+        url_for(
+            "advance",
+            month=month
+        )
+    )
+
+
+# ============================================================
+# EDIT ADVANCE
+# ============================================================
+
+@app.route(
+    "/advance/edit/<int:aid>",
+    methods=["GET", "POST"]
+)
+@app.route(
+    "/advances/edit/<int:aid>",
+    methods=["GET", "POST"]
+)
+@login_required
+def edit_advance(aid):
+
+    rows = advance_rows()
+
+    record = None
+
+    for row in rows:
+        if str(row.get("id")) == str(aid):
+            record = row
+            break
+
+    if not record:
+        flash(
+            "Advance record not found.",
+            "danger"
+        )
+        return redirect(
+            url_for("advance")
+        )
+
+    if request.method == "GET":
+
+        return render_template(
+            "advance_edit.html",
+            record=record,
+            workers=fetch_all(
+                """
+                SELECT
+                    id,
+                    name,
+                    bangla_name,
+                    department
+                FROM workers
+                ORDER BY id
+                """
+            ),
+        )
+
+    form = request.form
+
+    try:
+
+        worker_id = int(
+            form.get("worker_id")
+        )
+
+    except Exception:
+
+        flash(
+            "Invalid worker.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "edit_advance",
+                aid=aid
+            )
+        )
+
+    month = (
+        form.get("month_year")
+        or month_name_year(
+            form.get("month"),
+            form.get("year")
+        )
+        or record.get("month_year")
+    )
+
+    advance_date = (
+        form.get("advance_date")
+        or record.get("advance_date")
+        or datetime.date.today().isoformat()
+    )
+
+    amount = parse_num(
+        form.get("amount"),
+        0
+    )
+
+    note = (
+        form.get("note", "")
+        .strip()
+    )
+
+    if amount <= 0:
+
+        flash(
+            "Amount must be greater than zero.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "edit_advance",
+                aid=aid
+            )
+        )
+
+    try:
+
+        update_advance_record(
+            aid,
+            worker_id,
+            month,
+            advance_date,
+            amount,
+            note,
+        )
+
+        flash(
+            "Advance updated successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        app.logger.exception(
+            "Advance update error"
+        )
+
+        flash(
+            f"Could not update advance: {e}",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "edit_advance",
+                aid=aid
+            )
         )
 
     return redirect(
@@ -4966,3 +5454,8 @@ if __name__ == "__main__":
         ),
         debug=False,
     )
+
+
+
+
+
