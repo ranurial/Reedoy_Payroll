@@ -43,28 +43,11 @@
   </section>
   <section class="section">
     <h2>{{ tr('Department Summary') }}</h2>
-    <div class="tablewrap">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ tr('Department') }}</th>
-            <th>{{ tr('Workers') }}</th>
-            <th>{{ tr('Total Basic Salary') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in dept_rows|default([], true) %}
-          <tr>
-            <td>{{ display_dept(item.get('department', '')) }}</td>
-            <td>{{ item.get('worker_count', 0)|int }}</td>
-            <td>৳ {{ '{:,.2f}'.format(item.get('total_basic', 0)|float) }}</td>
-          </tr>
-          {% else %}
-          <tr><td colspan="3" class="empty">{{ tr('No department data available') }}</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <div class="tablewrap"><table><thead><tr><th>{{ tr('Department') }}</th><th>{{ tr('Workers') }}</th><th>{{ tr('Total Basic Salary') }}</th></tr></thead><tbody>
+    {% for row in dept_rows|default([]) %}
+      <tr><td>{{ display_dept(row.get('department')) }}</td><td>{{ row.get('worker_count', 0) }}</td><td>৳ {{ '{:,.2f}'.format(row.get('total_basic', 0)|float) }}</td></tr>
+    {% else %}<tr><td colspan="3" class="empty">{{ tr('No department data available') }}</td></tr>{% endfor %}
+    </tbody></table></div>
   </section>
 </main>
 </body>
