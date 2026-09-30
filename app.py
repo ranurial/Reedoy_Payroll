@@ -140,7 +140,7 @@ DEPT_BN = {
     "General": "সাধারণ",
     "Printing": "প্রিন্টিং",
     "Jigar": "জিগার",
-    "Wash": "ওয়াশ",
+    "Wash": "ওয়াশ",
     "Loop": "লুপ",
     "Stanter": "স্ট্যান্টার",
     "Electrical": "ইলেকট্রিক্যাল",
@@ -2344,45 +2344,79 @@ def update_advance_record(
 # DAILY ATTENDANCE MAP
 # ============================================================
 
-def daily_map(
-    worker_id,
-    month
-):
+def daily_map(worker_id, month):
+    month_text = str(month or "").strip()
+
+    year = None
+    month_number = None
+
+    # Accept YYYY-MM
+    parts = month_text.split("-")
+    if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+        try:
+            year = int(parts[0])
+            month_number = int(parts[1])
+        except Exception:
+            year = None
+            month_number = None
+
+    # Accept "October 2026"
+    if year is None:
+        for fmt in ("%B %Y", "%b %Y"):
+            try:
+                parsed = datetime.datetime.strptime(month_text, fmt)
+                year = parsed.year
+                month_number = parsed.month
+                break
+            except Exception:
+                pass
+
+    # Always use database format YYYY-MM for the query
+    db_month = month_text
+    if year is not None and month_number is not None:
+        db_month = f"{year:04d}-{month_number:02d}"
 
     rows = fetch_all(
-        """
-        SELECT day,status
-        FROM daily_attendance
-        WHERE worker_id=?
-        AND month_year=?
-        """,
-        (
-            worker_id,
-            month,
-        ),
+        "SELECT day, status FROM daily_attendance "
+        "WHERE worker_id=? AND month_year=?",
+        (worker_id, db_month)
     )
 
     result = {}
 
+    # Preserve all stored non-Friday attendance
     for row in rows:
-
         try:
-
-            result[
-                int(row["day"])
-            ] = str(
-                row["status"] or "P"
-            )
-
+            day_number = int(row["day"])
         except Exception:
-            pass
+            continue
+
+        status = row["status"]
+
+        # Friday is ALWAYS A
+        if year is not None and month_number is not None:
+            try:
+                current_date = datetime.date(year, month_number, day_number)
+                if current_date.weekday() == 4:
+                    result[day_number] = "A"
+                    continue
+            except Exception:
+                pass
+
+        result[day_number] = str(status or "")
+
+    # Add Friday=A even when there is no database attendance row
+    if year is not None and month_number is not None:
+        for day_number in range(1, 32):
+            try:
+                current_date = datetime.date(year, month_number, day_number)
+            except ValueError:
+                break
+
+            if current_date.weekday() == 4:
+                result[day_number] = "A"
 
     return result
-
-
-# ============================================================
-# BULK SALARY CALCULATION
-# ============================================================
 
 def calculate_salary_bulk(
     workers,
@@ -3540,9 +3574,9 @@ BUILTIN_OT_REPORT_TEMPLATE = r"""
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1500px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.filters{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}.field select{padding:9px;border:1px solid #cbd5e1;border-radius:7px}.btn{display:inline-block;background:#1764c0;color:#fff;border:0;border-radius:8px;padding:9px 14px;text-decoration:none;cursor:pointer}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:#f8fafc;padding:14px;border-radius:10px}.label{color:#64748b;font-size:13px}.value{font-size:21px;font-weight:800;color:#1764c0;margin-top:5px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1000px}th,td{padding:8px;border-bottom:1px solid #e2e8f0;text-align:right;white-space:nowrap}th{background:#f8fafc}th:nth-child(1),td:nth-child(1),th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){text-align:left}.msg{padding:9px;background:#ecfdf5;color:#166534;border-radius:7px;margin-bottom:12px}.actions{display:flex;gap:10px;flex-wrap:wrap}@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.cards{grid-template-columns:1fr}}@media print{@page{size:A4 landscape;margin:6mm}.nav,.filters,.actions{display:none!important}.wrap{max-width:none;width:100%;margin:0;padding:0}.box{box-shadow:none;border:0;padding:2px;margin-bottom:6px}.cards{grid-template-columns:repeat(4,1fr)}table{min-width:0;font-size:7px}th,td{padding:3px 2px}tr{page-break-inside:avoid}}</style></head><body>
 <header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('worker_search') }}">Worker Search</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('ot_report') }}">OT Report</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap"><div class="box filters"><div><h1 style="margin:0">Overtime Report</h1><p style="color:#64748b">Monthly OT hours and OT amount by worker and department.</p></div><form method="get" action="{{ url_for('ot_report') }}"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{m}}" {% if month.split()[0]==m %}selected{% endif %}>{{m}}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{y}}" {% if month.split()[1]|int==y %}selected{% endif %}>{{y}}</option>{% endfor %}</select></div><button class="btn" type="submit">Generate</button></form></div>
-<div class="cards"><div class="card"><div class="label">Workers with OT</div><div class="value">{{ totals.workers }}</div></div><div class="card"><div class="label">Total OT Hours</div><div class="value">{{ '%.2f'|format(totals.hours) }}</div></div><div class="card"><div class="label">Total OT Amount</div><div class="value">৳ {{ '%.2f'|format(totals.amount) }}</div></div><div class="card"><div class="label">Payroll Month</div><div class="value">{{ month }}</div></div></div>
-<div class="box"><h2>Worker-wise OT — {{ month }}</h2><div class="tablewrap"><table><tr><th>Worker ID</th><th>Worker Name</th><th>Department</th><th>Designation</th><th>Basic Salary</th><th>OT Rate</th><th>OT Hours</th><th>OT Amount</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.bangla_name if language == 'bn' and r.bangla_name else r.name}}</td><td>{{display_dept(r.department)}}</td><td>{{r.designation or ''}}</td><td>৳ {{'%.2f'|format((r.basic_salary or 0)|float)}}</td><td>৳ {{'%.2f'|format((r.ot_rate or 0)|float)}}</td><td>{{'%.2f'|format((r.ot or 0)|float)}}</td><td>৳ {{'%.2f'|format((r.ot_amt or 0)|float)}}</td></tr>{% else %}<tr><td colspan="9">No workers found.</td></tr>{% endfor %}<tr><th colspan="6">Total</th><th>{{'%.2f'|format(totals.hours)}}</th><th>৳ {{'%.2f'|format(totals.amount)}}</th></tr></table></div></div>
-<div class="box"><h2>Department-wise OT Summary</h2><div class="tablewrap"><table><tr><th>Department</th><th>Workers with OT</th><th>OT Hours</th><th>OT Amount</th></tr>{% for d in departments_summary %}<tr><td>{{display_dept(d.department)}}</td><td>{{d.workers}}</td><td>{{'%.2f'|format(d.hours)}}</td><td>৳ {{'%.2f'|format(d.amount)}}</td></tr>{% endfor %}<tr><th>Total</th><th>{{totals.workers}}</th><th>{{'%.2f'|format(totals.hours)}}</th><th>৳ {{'%.2f'|format(totals.amount)}}</th></tr></table></div></div>
+<div class="cards"><div class="card"><div class="label">Workers with OT</div><div class="value">{{ totals.workers }}</div></div><div class="card"><div class="label">Total OT Hours</div><div class="value">{{ '%.2f'|format(totals.hours) }}</div></div><div class="card"><div class="label">Total OT Amount</div><div class="value">à§³ {{ '%.2f'|format(totals.amount) }}</div></div><div class="card"><div class="label">Payroll Month</div><div class="value">{{ month }}</div></div></div>
+<div class="box"><h2>Worker-wise OT â€” {{ month }}</h2><div class="tablewrap"><table><tr><th>Worker ID</th><th>Worker Name</th><th>Department</th><th>Designation</th><th>Basic Salary</th><th>OT Rate</th><th>OT Hours</th><th>OT Amount</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.bangla_name if language == 'bn' and r.bangla_name else r.name}}</td><td>{{display_dept(r.department)}}</td><td>{{r.designation or ''}}</td><td>à§³ {{'%.2f'|format((r.basic_salary or 0)|float)}}</td><td>à§³ {{'%.2f'|format((r.ot_rate or 0)|float)}}</td><td>{{'%.2f'|format((r.ot or 0)|float)}}</td><td>à§³ {{'%.2f'|format((r.ot_amt or 0)|float)}}</td></tr>{% else %}<tr><td colspan="9">No workers found.</td></tr>{% endfor %}<tr><th colspan="6">Total</th><th>{{'%.2f'|format(totals.hours)}}</th><th>à§³ {{'%.2f'|format(totals.amount)}}</th></tr></table></div></div>
+<div class="box"><h2>Department-wise OT Summary</h2><div class="tablewrap"><table><tr><th>Department</th><th>Workers with OT</th><th>OT Hours</th><th>OT Amount</th></tr>{% for d in departments_summary %}<tr><td>{{display_dept(d.department)}}</td><td>{{d.workers}}</td><td>{{'%.2f'|format(d.hours)}}</td><td>à§³ {{'%.2f'|format(d.amount)}}</td></tr>{% endfor %}<tr><th>Total</th><th>{{totals.workers}}</th><th>{{'%.2f'|format(totals.hours)}}</th><th>à§³ {{'%.2f'|format(totals.amount)}}</th></tr></table></div></div>
 <div class="box actions"><a class="btn" href="{{url_for('ot_report_export',month=month.split()[0],year=month.split()[1])}}">Export CSV</a><button class="btn" onclick="window.print()">Print OT Report</button><a class="btn" href="{{url_for('dashboard')}}">Dashboard</a></div></main>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
@@ -3551,7 +3585,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3567,11 +3601,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3596,10 +3630,10 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 @media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.cards{grid-template-columns:1fr}}
 </style></head><body>
 <header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div>
-<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance & Calendar</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('ot_report') }}">OT Report</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a></nav></header>
+<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance & Calendar</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('data_sync') }}">â†” Sync</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('ot_report') }}">OT Report</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a></nav></header>
 <main class="wrap"><h1>{{ tr('Dashboard') }}</h1><p>{{ month }}</p>
-<section class="cards"><div class="card"><div class="label">Total Workers</div><div class="value">{{ total_workers|default(0) }}</div></div><div class="card"><div class="label">Present Today</div><div class="value">{{ today_present|default(0) }}</div></div><div class="card"><div class="label">Absent Today</div><div class="value">{{ today_absent|default(0) }}</div></div><div class="card"><div class="label">Gross Salary</div><div class="value">৳ {{ '%.2f'|format(gross|default(0)|float) }}</div></div></section>
-<section class="box"><h2>Attendance</h2><p>Attendance & Calendar module is ready.</p><a href="{{ url_for('attendance') }}">Open Attendance & Calendar →</a></section><section class="box"><h2>Payslip</h2><p>View the selected worker monthly payslip.</p><a href="{{ url_for('payslip') }}">Open Payslip →</a></section><section class="box"><h2>Advance Salary</h2><p>Add, edit and delete worker advance salary records.</p><a href="{{ url_for('advance') }}">Open Advance Salary →</a></section><section class="box"><h2>Backup & Maintenance</h2><p>Create and download a safe backup of the payroll database.</p><a href="{{ url_for('backup_maintenance') }}">Open Backup & Maintenance →</a></section><section class="box"><h2>Reports</h2><p>View monthly payroll totals, department summary and worker payroll details.</p><a href="{{ url_for('reports') }}">Open Reports →</a></section><section class="box"><h2>Payment History</h2><p>View saved payment transactions by month and worker.</p><a href="{{ url_for('payment_history') }}">Open Payment History →</a></section><section class="box"><h2>Accounts / Financial Summary</h2><p>View monthly payroll financial summary and department-wise financial totals.</p><a href="{{ url_for('accounts') }}">Open Accounts →</a></section><section class="box"><h2>OT Report</h2><p>View monthly overtime hours and OT amount by worker and department.</p><a href="{{ url_for('ot_report') }}">Open OT Report →</a></section><section class="box"><h2>Payment Management</h2><p>Track paid, unpaid and partially paid monthly salaries.</p><a href="{{ url_for('payments') }}">Open Payments →</a></section><section class="box"><h2>Payroll Closing</h2><p>Lock a completed payroll month so attendance, advances and payments cannot be changed accidentally.</p><a href="{{ url_for('payroll_closing') }}">Open Payroll Closing →</a></section>
+<section class="cards"><div class="card"><div class="label">Total Workers</div><div class="value">{{ total_workers|default(0) }}</div></div><div class="card"><div class="label">Present Today</div><div class="value">{{ today_present|default(0) }}</div></div><div class="card"><div class="label">Absent Today</div><div class="value">{{ today_absent|default(0) }}</div></div><div class="card"><div class="label">Gross Salary</div><div class="value">à§³ {{ '%.2f'|format(gross|default(0)|float) }}</div></div></section>
+<section class="box"><h2>Attendance</h2><p>Attendance & Calendar module is ready.</p><a href="{{ url_for('attendance') }}">Open Attendance & Calendar â†’</a></section><section class="box"><h2>Payslip</h2><p>View the selected worker monthly payslip.</p><a href="{{ url_for('payslip') }}">Open Payslip â†’</a></section><section class="box"><h2>Advance Salary</h2><p>Add, edit and delete worker advance salary records.</p><a href="{{ url_for('advance') }}">Open Advance Salary â†’</a></section><section class="box"><h2>Backup & Maintenance</h2><p>Create and download a safe backup of the payroll database.</p><a href="{{ url_for('backup_maintenance') }}">Open Backup & Maintenance â†’</a></section><section class="box"><h2>Reports</h2><p>View monthly payroll totals, department summary and worker payroll details.</p><a href="{{ url_for('reports') }}">Open Reports â†’</a></section><section class="box"><h2>Payment History</h2><p>View saved payment transactions by month and worker.</p><a href="{{ url_for('payment_history') }}">Open Payment History â†’</a></section><section class="box"><h2>Accounts / Financial Summary</h2><p>View monthly payroll financial summary and department-wise financial totals.</p><a href="{{ url_for('accounts') }}">Open Accounts â†’</a></section><section class="box"><h2>OT Report</h2><p>View monthly overtime hours and OT amount by worker and department.</p><a href="{{ url_for('ot_report') }}">Open OT Report â†’</a></section><section class="box"><h2>Payment Management</h2><p>Track paid, unpaid and partially paid monthly salaries.</p><a href="{{ url_for('payments') }}">Open Payments â†’</a></section><section class="box"><h2>Payroll Closing</h2><p>Lock a completed payroll month so attendance, advances and payments cannot be changed accidentally.</p><a href="{{ url_for('payroll_closing') }}">Open Payroll Closing â†’</a></section>
 </main></body></html>
 """
 
@@ -3608,8 +3642,8 @@ BUILTIN_PAYMENTS_TEMPLATE = r"""
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1500px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}.card{background:#f8fafc;padding:14px;border-radius:10px}.label{color:#64748b;font-size:13px}.value{font-size:20px;font-weight:800;color:#1764c0;margin-top:5px}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}.field select,.field input{padding:8px;border:1px solid #cbd5e1;border-radius:7px}.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:8px 12px;text-decoration:none;cursor:pointer}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1200px}th,td{padding:7px;border-bottom:1px solid #e2e8f0;text-align:right;white-space:nowrap}th{background:#f8fafc}th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){text-align:left}input.small,select.small{padding:5px;font-size:12px;width:105px}.save{padding:6px 9px;font-size:12px}.paid{font-weight:700}.partial{font-weight:700}.unpaid{font-weight:700}.danger{background:#dc2626}@media(max-width:1000px){.cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:600px){.cards{grid-template-columns:1fr 1fr}}@media print{@page{size:A4 landscape;margin:6mm}.nav,.filters,.actions,.editcol{display:none!important}.wrap{max-width:none;width:100%;margin:0;padding:0}.box{box-shadow:none;border:0;padding:2px}.cards{grid-template-columns:repeat(6,1fr)}table{min-width:0;font-size:7px}th,td{padding:3px 2px}}
 </style></head><body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap"><div class="box filters"><form method="get" action="{{ url_for('payments') }}"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{m}}" {% if month.split()[0]==m %}selected{% endif %}>{{m}}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{y}}" {% if month.split()[1]|int==y %}selected{% endif %}>{{y}}</option>{% endfor %}</select></div><button class="btn">Load</button></form></div>
-<div class="cards"><div class="card"><div class="label">Workers</div><div class="value">{{totals.workers}}</div></div><div class="card"><div class="label">Net Payable</div><div class="value">৳ {{'%.2f'|format(totals.net)}}</div></div><div class="card"><div class="label">Paid</div><div class="value">৳ {{'%.2f'|format(totals.paid)}}</div></div><div class="card"><div class="label">Due</div><div class="value">৳ {{'%.2f'|format(totals.due)}}</div></div><div class="card"><div class="label">Paid Workers</div><div class="value">{{totals.paid_count}}</div></div><div class="card"><div class="label">Unpaid/Partial</div><div class="value">{{totals.unpaid_count}}</div></div></div>
-<div class="box"><h1>Payment Management — {{month}}</h1><div class="tablewrap"><table><tr><th>ID</th><th>Worker</th><th>Department</th><th>Net Payable</th><th>Paid Amount</th><th>Due</th><th>Status</th><th class="editcol">Payment Date</th><th class="editcol">Method</th><th class="editcol">Note</th><th class="editcol">Actions</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.bangla_name or r.name}}</td><td>{{r.department or ''}}</td><td>{{'%.2f'|format(r.net)}}</td><td>{{'%.2f'|format(r.paid_amount)}}</td><td>{{'%.2f'|format(r.due)}}</td><td class="{{r.status|lower}}">{{r.status}}</td><form class="payment-edit-form" method="post" action="{{url_for('save_payment')}}"><input type="hidden" name="worker_id" value="{{r.id}}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><td class="editcol"><input class="small payment-field" type="date" name="payment_date" value="{{r.payment_date or ''}}" disabled></td><td class="editcol"><select class="small payment-field" name="payment_method" disabled><option {% if r.payment_method=='Cash' %}selected{% endif %}>Cash</option><option {% if r.payment_method=='Bank' %}selected{% endif %}>Bank</option><option {% if r.payment_method=='Mobile Banking' %}selected{% endif %}>Mobile Banking</option><option {% if r.payment_method=='Cheque' %}selected{% endif %}>Cheque</option></select></td><td class="editcol"><input class="small payment-field" name="note" value="{{r.note or ''}}" disabled></td><td class="editcol"><input class="small payment-field" type="number" step="0.01" min="0" max="{{r.net}}" name="paid_amount" value="{{'%.2f'|format(r.paid_amount)}}" disabled><button class="btn edit-btn" type="button" onclick="togglePaymentEdit(this)">Edit</button><button class="btn save save-btn" type="submit" style="display:none">Save</button></form> <form method="post" action="{{url_for('delete_payment')}}" style="display:inline" onsubmit="return confirm('Delete this payment record for {{r.bangla_name or r.name}} — {{month}}?');"><input type="hidden" name="worker_id" value="{{r.id}}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><button class="btn danger delete-btn" type="submit">Delete</button></form></td></tr>{% endfor %}</table></div></div><div class="box actions"><a class="btn" href="{{url_for('payments_export',month=month.split()[0],year=month.split()[1])}}">Export CSV</a> <button class="btn" onclick="window.print()">Print Payment Report</button></div></main>
+<div class="cards"><div class="card"><div class="label">Workers</div><div class="value">{{totals.workers}}</div></div><div class="card"><div class="label">Net Payable</div><div class="value">à§³ {{'%.2f'|format(totals.net)}}</div></div><div class="card"><div class="label">Paid</div><div class="value">à§³ {{'%.2f'|format(totals.paid)}}</div></div><div class="card"><div class="label">Due</div><div class="value">à§³ {{'%.2f'|format(totals.due)}}</div></div><div class="card"><div class="label">Paid Workers</div><div class="value">{{totals.paid_count}}</div></div><div class="card"><div class="label">Unpaid/Partial</div><div class="value">{{totals.unpaid_count}}</div></div></div>
+<div class="box"><h1>Payment Management â€” {{month}}</h1><div class="tablewrap"><table><tr><th>ID</th><th>Worker</th><th>Department</th><th>Net Payable</th><th>Paid Amount</th><th>Due</th><th>Status</th><th class="editcol">Payment Date</th><th class="editcol">Method</th><th class="editcol">Note</th><th class="editcol">Actions</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.bangla_name or r.name}}</td><td>{{r.department or ''}}</td><td>{{'%.2f'|format(r.net)}}</td><td>{{'%.2f'|format(r.paid_amount)}}</td><td>{{'%.2f'|format(r.due)}}</td><td class="{{r.status|lower}}">{{r.status}}</td><form class="payment-edit-form" method="post" action="{{url_for('save_payment')}}"><input type="hidden" name="worker_id" value="{{r.id}}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><td class="editcol"><input class="small payment-field" type="date" name="payment_date" value="{{r.payment_date or ''}}" disabled></td><td class="editcol"><select class="small payment-field" name="payment_method" disabled><option {% if r.payment_method=='Cash' %}selected{% endif %}>Cash</option><option {% if r.payment_method=='Bank' %}selected{% endif %}>Bank</option><option {% if r.payment_method=='Mobile Banking' %}selected{% endif %}>Mobile Banking</option><option {% if r.payment_method=='Cheque' %}selected{% endif %}>Cheque</option></select></td><td class="editcol"><input class="small payment-field" name="note" value="{{r.note or ''}}" disabled></td><td class="editcol"><input class="small payment-field" type="number" step="0.01" min="0" max="{{r.net}}" name="paid_amount" value="{{'%.2f'|format(r.paid_amount)}}" disabled><button class="btn edit-btn" type="button" onclick="togglePaymentEdit(this)">Edit</button><button class="btn save save-btn" type="submit" style="display:none">Save</button></form> <form method="post" action="{{url_for('delete_payment')}}" style="display:inline" onsubmit="return confirm('Delete this payment record for {{r.bangla_name or r.name}} â€” {{month}}?');"><input type="hidden" name="worker_id" value="{{r.id}}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><button class="btn danger delete-btn" type="submit">Delete</button></form></td></tr>{% endfor %}</table></div></div><div class="box actions"><a class="btn" href="{{url_for('payments_export',month=month.split()[0],year=month.split()[1])}}">Export CSV</a> <button class="btn" onclick="window.print()">Print Payment Report</button></div></main>
 <script>
 function togglePaymentEdit(btn){
   var row=btn.closest('tr');
@@ -3629,7 +3663,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3645,11 +3679,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3663,7 +3697,7 @@ document.addEventListener('DOMContentLoaded', function(){
 BUILTIN_PAYMENT_HISTORY_TEMPLATE = r"""
 <!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payment History | REEDOY PAYROLL</title>
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1450px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}.field select,.field input{padding:9px;border:1px solid #cbd5e1;border-radius:7px}.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:9px 14px;text-decoration:none;cursor:pointer}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:#f8fafc;padding:14px;border-radius:10px}.label{color:#64748b;font-size:13px}.value{font-size:21px;font-weight:800;color:#1764c0;margin-top:5px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1000px}th,td{padding:8px;border-bottom:1px solid #e2e8f0;text-align:left;white-space:nowrap}th{background:#f8fafc}td.amount,th.amount{text-align:right}.actions{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}}@media print{.nav,.filters,.actions{display:none!important}.box{box-shadow:none;border:0}}
-</style></head><body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('logout') }}">Logout</a></nav></header><main class="wrap"><div class="box filters"><form method="get" action="{{ url_for('payment_history') }}"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{m}}" {% if month.split()[0]==m %}selected{% endif %}>{{m}}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{y}}" {% if month.split()[1]|int==y %}selected{% endif %}>{{y}}</option>{% endfor %}</select></div><div class="field"><label>Worker ID (optional)</label><input name="worker_id" value="{{worker_id or ''}}" placeholder="e.g. 224"></div><button class="btn">Load History</button></form></div><div class="cards"><div class="card"><div class="label">Transactions</div><div class="value">{{totals.count}}</div></div><div class="card"><div class="label">Total Paid</div><div class="value">৳ {{'%.2f'|format(totals.amount)}}</div></div><div class="card"><div class="label">Workers Paid</div><div class="value">{{totals.workers}}</div></div><div class="card"><div class="label">Selected Month</div><div class="value">{{month}}</div></div></div><div class="box"><h1>Payment History — {{month}}</h1><p>Every saved payment transaction is recorded here. Editing a payment creates a new history entry.</p><div class="tablewrap"><table><tr><th>ID</th><th>Worker ID</th><th>Worker Name</th><th>Department</th><th class="amount">Amount</th><th>Payment Date</th><th>Method</th><th>Note</th><th>Created At</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.worker_id}}</td><td>{{r.bangla_name or r.name}}</td><td>{{r.department or ''}}</td><td class="amount">৳ {{'%.2f'|format((r.amount or 0)|float)}}</td><td>{{r.payment_date or ''}}</td><td>{{r.payment_method or ''}}</td><td>{{r.note or ''}}</td><td>{{r.created_at or ''}}</td></tr>{% else %}<tr><td colspan="9">No payment transactions found.</td></tr>{% endfor %}</table></div></div><div class="box actions"><a class="btn" href="{{url_for('payment_history_export',month=month.split()[0],year=month.split()[1],worker_id=worker_id or '')}}">Export CSV</a><button class="btn" onclick="window.print()">Print History</button><a class="btn" href="{{url_for('payments',month=month.split()[0],year=month.split()[1])}}">Back to Payments</a></div></main>
+</style></head><body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('logout') }}">Logout</a></nav></header><main class="wrap"><div class="box filters"><form method="get" action="{{ url_for('payment_history') }}"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{m}}" {% if month.split()[0]==m %}selected{% endif %}>{{m}}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{y}}" {% if month.split()[1]|int==y %}selected{% endif %}>{{y}}</option>{% endfor %}</select></div><div class="field"><label>Worker ID (optional)</label><input name="worker_id" value="{{worker_id or ''}}" placeholder="e.g. 224"></div><button class="btn">Load History</button></form></div><div class="cards"><div class="card"><div class="label">Transactions</div><div class="value">{{totals.count}}</div></div><div class="card"><div class="label">Total Paid</div><div class="value">à§³ {{'%.2f'|format(totals.amount)}}</div></div><div class="card"><div class="label">Workers Paid</div><div class="value">{{totals.workers}}</div></div><div class="card"><div class="label">Selected Month</div><div class="value">{{month}}</div></div></div><div class="box"><h1>Payment History â€” {{month}}</h1><p>Every saved payment transaction is recorded here. Editing a payment creates a new history entry.</p><div class="tablewrap"><table><tr><th>ID</th><th>Worker ID</th><th>Worker Name</th><th>Department</th><th class="amount">Amount</th><th>Payment Date</th><th>Method</th><th>Note</th><th>Created At</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.worker_id}}</td><td>{{r.bangla_name or r.name}}</td><td>{{r.department or ''}}</td><td class="amount">à§³ {{'%.2f'|format((r.amount or 0)|float)}}</td><td>{{r.payment_date or ''}}</td><td>{{r.payment_method or ''}}</td><td>{{r.note or ''}}</td><td>{{r.created_at or ''}}</td></tr>{% else %}<tr><td colspan="9">No payment transactions found.</td></tr>{% endfor %}</table></div></div><div class="box actions"><a class="btn" href="{{url_for('payment_history_export',month=month.split()[0],year=month.split()[1],worker_id=worker_id or '')}}">Export CSV</a><button class="btn" onclick="window.print()">Print History</button><a class="btn" href="{{url_for('payments',month=month.split()[0],year=month.split()[1])}}">Back to Payments</a></div></main>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   function addSelectSearch(sel){
@@ -3671,7 +3705,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3687,11 +3721,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3707,7 +3741,7 @@ BUILTIN_PAYROLL_CLOSING_TEMPLATE = r"""
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1100px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}label{font-weight:600;display:block;margin-bottom:6px}select,input,textarea{padding:10px;border:1px solid #cbd5e1;border-radius:7px;width:100%;box-sizing:border-box}button,.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;text-decoration:none;display:inline-block}.danger{background:#dc2626}.success{background:#16a34a}.msg{padding:10px;border-radius:7px;margin-bottom:10px;background:#fef3c7}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%}th,td{padding:9px;border-bottom:1px solid #e2e8f0;text-align:left}th{background:#f8fafc}.locked{color:#b91c1c;font-weight:700}.open{color:#15803d;font-weight:700}@media(max-width:700px){.grid{grid-template-columns:1fr}}@media print{.nav,.actions,.filters{display:none!important}.box{box-shadow:none}}</style></head><body>
 <header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap"><div class="box filters"><h1>Payroll Closing / Monthly Lock</h1>{% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="msg">{{ message }}</div>{% endfor %}{% endwith %}<form method="get"><div class="grid"><div><label>Month</label><select name="month">{% for m in months %}<option value="{{m}}" {% if month.split()[0]==m %}selected{% endif %}>{{m}}</option>{% endfor %}</select></div><div><label>Year</label><select name="year">{% for y in years %}<option value="{{y}}" {% if month.split()[1]|int==y %}selected{% endif %}>{{y}}</option>{% endfor %}</select></div></div><br><button type="submit">Load Month</button></form></div>
-<div class="box"><h2>{{ month }}</h2>{% if selected_lock %}<p class="locked">🔒 Payroll is LOCKED</p><p>Locked at: {{ selected_lock.locked_at or '' }}<br>Locked by: {{ selected_lock.locked_by or '' }}<br>Note: {{ selected_lock.note or '' }}</p><form method="post" action="{{ url_for('payroll_unlock') }}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><button class="btn danger" type="submit">Unlock Payroll</button></form>{% else %}<p class="open">🟢 Payroll is OPEN</p><form method="post" action="{{ url_for('payroll_close') }}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><label>Lock Note</label><textarea name="note" rows="3" placeholder="Optional note"></textarea><br><br><button class="btn success" type="submit">Lock This Month</button></form>{% endif %}</div>
+<div class="box"><h2>{{ month }}</h2>{% if selected_lock %}<p class="locked">ðŸ”’ Payroll is LOCKED</p><p>Locked at: {{ selected_lock.locked_at or '' }}<br>Locked by: {{ selected_lock.locked_by or '' }}<br>Note: {{ selected_lock.note or '' }}</p><form method="post" action="{{ url_for('payroll_unlock') }}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><button class="btn danger" type="submit">Unlock Payroll</button></form>{% else %}<p class="open">ðŸŸ¢ Payroll is OPEN</p><form method="post" action="{{ url_for('payroll_close') }}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><label>Lock Note</label><textarea name="note" rows="3" placeholder="Optional note"></textarea><br><br><button class="btn success" type="submit">Lock This Month</button></form>{% endif %}</div>
 <div class="box"><h2>Recent Payroll Months</h2><div class="tablewrap"><table><tr><th>Month</th><th>Status</th><th>Locked At</th><th>Locked By</th></tr>{% for r in recent %}<tr><td>{{r.month}}</td><td>{% if r.locked %}<span class="locked">LOCKED</span>{% else %}<span class="open">OPEN</span>{% endif %}</td><td>{{r.locked_at}}</td><td>{{r.locked_by}}</td></tr>{% endfor %}</table></div></div></main></body></html>
 """
 
@@ -3716,8 +3750,8 @@ BUILTIN_ACCOUNTS_TEMPLATE = r"""
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1400px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.card{background:#f8fafc;padding:14px;border-radius:10px}.label{color:#64748b;font-size:13px}.value{font-size:21px;font-weight:800;color:#1764c0;margin-top:5px}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}.field select{padding:9px;border:1px solid #cbd5e1;border-radius:7px}.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:9px 14px;text-decoration:none;cursor:pointer}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:800px}th,td{padding:8px;border-bottom:1px solid #e2e8f0;text-align:right;white-space:nowrap}th{background:#f8fafc}th:first-child,td:first-child{text-align:left}@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.grid{grid-template-columns:1fr}}@media print{@page{size:A4 landscape;margin:6mm}.nav,.filters,.actions{display:none!important}.wrap{max-width:none;width:100%;margin:0;padding:0}.box{box-shadow:none;border:0}.grid{grid-template-columns:repeat(5,1fr)}table{min-width:0;font-size:7px}th,td{padding:3px}}</style></head><body>
 <header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap"><div class="box filters"><div><h1 style="margin:0">Accounts / Financial Summary</h1><p style="color:#64748b">Monthly payroll financial summary based on existing payroll records.</p></div><form method="get" action="{{ url_for('accounts') }}"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select><label style="margin-top:6px">Year</label><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.split()[1]|int==y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div><button class="btn" type="submit">Generate</button></form></div>
-<div class="grid"><div class="card"><div class="label">Workers</div><div class="value">{{ totals.workers }}</div></div><div class="card"><div class="label">Basic Salary</div><div class="value">৳ {{ '%.2f'|format(totals.basic) }}</div></div><div class="card"><div class="label">Gross Salary</div><div class="value">৳ {{ '%.2f'|format(totals.gross) }}</div></div><div class="card"><div class="label">Advance</div><div class="value">৳ {{ '%.2f'|format(totals.advance) }}</div></div><div class="card"><div class="label">Net Payable</div><div class="value">৳ {{ '%.2f'|format(totals.net) }}</div></div></div>
-<div class="box"><h2>Financial Breakdown — {{ month }}</h2><div class="tablewrap"><table><tr><th>Item</th><th>Amount (BDT)</th></tr><tr><td>Basic Salary</td><td>{{ '%.2f'|format(totals.basic) }}</td></tr><tr><td>Absent Deduction</td><td>- {{ '%.2f'|format(totals.absent_cut) }}</td></tr><tr><td>OT Amount</td><td>+ {{ '%.2f'|format(totals.ot_amt) }}</td></tr><tr><td>Nasta</td><td>+ {{ '%.2f'|format(totals.nasta) }}</td></tr><tr><td><strong>Gross Salary</strong></td><td><strong>{{ '%.2f'|format(totals.gross) }}</strong></td></tr><tr><td>Advance Deduction</td><td>- {{ '%.2f'|format(totals.advance) }}</td></tr><tr><td><strong>Net Payable</strong></td><td><strong>{{ '%.2f'|format(totals.net) }}</strong></td></tr></table></div></div>
+<div class="grid"><div class="card"><div class="label">Workers</div><div class="value">{{ totals.workers }}</div></div><div class="card"><div class="label">Basic Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.basic) }}</div></div><div class="card"><div class="label">Gross Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.gross) }}</div></div><div class="card"><div class="label">Advance</div><div class="value">à§³ {{ '%.2f'|format(totals.advance) }}</div></div><div class="card"><div class="label">Net Payable</div><div class="value">à§³ {{ '%.2f'|format(totals.net) }}</div></div></div>
+<div class="box"><h2>Financial Breakdown â€” {{ month }}</h2><div class="tablewrap"><table><tr><th>Item</th><th>Amount (BDT)</th></tr><tr><td>Basic Salary</td><td>{{ '%.2f'|format(totals.basic) }}</td></tr><tr><td>Absent Deduction</td><td>- {{ '%.2f'|format(totals.absent_cut) }}</td></tr><tr><td>OT Amount</td><td>+ {{ '%.2f'|format(totals.ot_amt) }}</td></tr><tr><td>Nasta</td><td>+ {{ '%.2f'|format(totals.nasta) }}</td></tr><tr><td><strong>Gross Salary</strong></td><td><strong>{{ '%.2f'|format(totals.gross) }}</strong></td></tr><tr><td>Advance Deduction</td><td>- {{ '%.2f'|format(totals.advance) }}</td></tr><tr><td><strong>Net Payable</strong></td><td><strong>{{ '%.2f'|format(totals.net) }}</strong></td></tr></table></div></div>
 <div class="box"><h2>Department Financial Summary</h2><div class="tablewrap"><table><tr><th>Department</th><th>Workers</th><th>Basic</th><th>Gross</th><th>Advance</th><th>Net Payable</th></tr>{% for d in departments_summary %}<tr><td>{{ d.department }}</td><td>{{ d.workers }}</td><td>{{ '%.2f'|format(d.basic) }}</td><td>{{ '%.2f'|format(d.gross) }}</td><td>{{ '%.2f'|format(d.advance) }}</td><td>{{ '%.2f'|format(d.net) }}</td></tr>{% endfor %}<tr><th>Total</th><th>{{ totals.workers }}</th><th>{{ '%.2f'|format(totals.basic) }}</th><th>{{ '%.2f'|format(totals.gross) }}</th><th>{{ '%.2f'|format(totals.advance) }}</th><th>{{ '%.2f'|format(totals.net) }}</th></tr></table></div></div>
 <div class="box actions"><a class="btn" href="{{ url_for('accounts_export', month=month.split()[0], year=month.split()[1]) }}">Export CSV</a> <button class="btn" onclick="window.print()">Print Accounts</button></div></main>
 <script>
@@ -3727,7 +3761,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3743,11 +3777,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3774,8 +3808,8 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 <form method="get" action="{{ url_for('attendance') }}"><div class="grid"><div><label>Worker</label><select name="worker_id"><option value="">-- Select Worker --</option>{% for w in workers %}<option value="{{ w.id }}" {% if worker and w.id|string == worker.id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language=='bn' and w.bangla_name else w.name }}{% if w.department %} ({{ w.department }}){% endif %}</option>{% endfor %}</select></div><div><label>Month</label><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select></div><div><label>Year</label><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.split()[1]|int==y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div><div style="align-self:end"><button type="submit">Load Attendance</button></div></div></form></div>
 {% if worker %}<div class="box"><div class="workername">{{ worker.bangla_name if language=='bn' and worker.bangla_name else worker.name }}</div><div class="muted">ID: {{ worker.id }} &nbsp; | &nbsp; Department: {{ worker.department or '' }} &nbsp; | &nbsp; Designation: {{ worker.designation or '' }} &nbsp; | &nbsp; Month: {{ month }}</div></div>
 <form method="post" action="{{ url_for('save_attendance') }}"><input type="hidden" name="worker_id" value="{{ worker.id }}"><input type="hidden" name="month" value="{{ month.split()[0] }}"><input type="hidden" name="year" value="{{ month.split()[1] }}">
-<div class="box"><h2>Monthly Summary</h2><div class="summary"><div class="stat"><label>Present Days</label><input type="number" min="0" name="present_days" value="{{ summary.get('present',0) }}"></div><div class="stat"><label>Absent Days</label><input type="number" min="0" name="absent_days" value="{{ summary.get('absent',0) }}"></div><div class="stat"><label>Overtime Hours</label><input type="number" min="0" step="0.01" name="ot_hours" value="{{ summary.get('ot',0) }}"></div><div class="stat"><label>Net Salary</label><b>৳ {{ '%.2f'|format(summary.get('net',0)|float) }}</b></div></div></div>
-<div class="box calendar"><h2>Daily Attendance — {{ month }}</h2><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><button type="button" class="btn" onclick="markAllAttendance('P')">✓ Mark All Present</button><button type="button" class="btn" style="background:#b91c1c" onclick="markAllAttendance('A')">✕ Mark All Absent</button><button type="button" class="btn" style="background:#64748b" onclick="markAllAttendance('')">↺ Clear All / Not Set</button></div><table><thead><tr><th>Day</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for d in days %}<tr class="{% if d.date.weekday()==4 %}weekend{% endif %}"><td class="day">{{ d.day }}</td><td>{{ d.date.strftime('%d-%b-%Y') }}</td><td><select name="day_{{ d.day }}"><option value="" {% if not d.status %}selected{% endif %}>-- Not Set --</option><option value="P" {% if d.status=='P' %}selected{% endif %}>P - Present</option><option value="A" {% if d.status=='A' %}selected{% endif %}>A - Absent</option></select></td></tr>{% endfor %}</tbody></table></div>
+<div class="box"><h2>Monthly Summary</h2><div class="summary"><div class="stat"><label>Present Days</label><input type="number" min="0" name="present_days" value="{{ summary.get('present',0) }}"></div><div class="stat"><label>Absent Days</label><input type="number" min="0" name="absent_days" value="{{ summary.get('absent',0) }}"></div><div class="stat"><label>Overtime Hours</label><input type="number" min="0" step="0.01" name="ot_hours" value="{{ summary.get('ot',0) }}"></div><div class="stat"><label>Net Salary</label><b>à§³ {{ '%.2f'|format(summary.get('net',0)|float) }}</b></div></div></div>
+<div class="box calendar"><h2>Daily Attendance â€” {{ month }}</h2><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><button type="button" class="btn" onclick="markAllAttendance('P')">âœ“ Mark All Present</button><button type="button" class="btn" style="background:#b91c1c" onclick="markAllAttendance('A')">âœ• Mark All Absent</button><button type="button" class="btn" style="background:#64748b" onclick="markAllAttendance('')">â†º Clear All / Not Set</button></div><table><thead><tr><th>Day</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for d in days %}<tr class="{% if d.date.weekday()==4 %}weekend{% endif %}"><td class="day">{{ d.day }}</td><td>{{ d.date.strftime('%d-%b-%Y') }}</td><td><select name="day_{{ d.day }}"><option value="" {% if not d.status %}selected{% endif %}>-- Not Set --</option><option value="P" {% if d.status=='P' %}selected{% endif %}>P - Present</option><option value="A" {% if d.status=='A' %}selected{% endif %}>A - Absent</option></select></td></tr>{% endfor %}</tbody></table></div>
 <div class="box"><button type="submit">Save Attendance</button> <a class="btn" style="background:#64748b" href="{{ url_for('attendance') }}">Clear</a></div></form>{% endif %}
 </main>
 <script>
@@ -3785,7 +3819,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3801,11 +3835,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3818,8 +3852,8 @@ function markAllAttendance(status){
     var row=sel.closest('tr');
     var dayCell=row ? row.querySelector('.day') : null;
     var dayNumber=dayCell ? parseInt(dayCell.textContent.trim(),10) : 0;
-    // Friday rows are marked with the 'weekend' class by the server.
-    if(status==='P' && row && row.classList.contains('weekend')){
+    // Friday is the weekly holiday. It must always display as Absent.
+    if(row && row.classList.contains('weekend')){
       sel.value='A';
     } else {
       sel.value=status;
@@ -3843,7 +3877,7 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="msg {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
 <form method="get"><div class="grid"><div class="field"><label>Worker</label><select name="worker_id"><option value="">All Workers</option>{% for w in workers %}<option value="{{ w.id }}" {% if request.args.get('worker_id','')|string == w.id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language=='bn' and w.bangla_name else w.name }}</option>{% endfor %}</select></div><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.split()[1]|int==y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div><div class="field" style="align-self:end"><button type="submit">View Advances</button></div></div></form></div>
 <div class="box"><h2>Add Advance Salary</h2><form method="post" action="{{ url_for('save_advance') }}"><div class="grid"><div class="field"><label>Worker</label><select name="worker_id" required><option value="">Select Worker</option>{% for w in workers %}<option value="{{ w.id }}">{{ w.id }} - {{ w.bangla_name if language=='bn' and w.bangla_name else w.name }}</option>{% endfor %}</select></div><div class="field"><label>Date</label><input type="date" name="advance_date" value="{{ today_date }}" required></div><div class="field"><label>Amount (BDT)</label><input type="number" name="amount" min="0.01" step="0.01" required></div><div class="field"><label>Note</label><input type="text" name="note"></div><div class="field" style="align-self:end"><input type="hidden" name="month_year" value="{{ month }}"><button type="submit">Save Advance</button></div></div></form></div>
-<div class="box"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h2 style="margin:0">Advance Records — {{ month }}</h2><div style="font-size:18px;font-weight:700;color:#1764c0">Total Advance: BDT {{ '%.2f'|format(total_advance|float) }}</div></div></div><div class="box" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" onclick="window.print()">Print</button><a class="btn" href="{{ url_for('advance_export', month=month.split(' ')[0], year=month.split(' ')[1], worker_id=request.args.get('worker_id','')) }}">Export Excel</a><a class="btn edit" href="{{ url_for('advance_pdf', month=month.split(' ')[0], year=month.split(' ')[1], worker_id=request.args.get('worker_id','')) }}">Export PDF</a></div><div class="box tablewrap"><table><thead><tr><th>ID</th><th>Worker</th><th>Department</th><th>Date</th><th>Amount</th><th>Note</th><th>Actions</th></tr></thead><tbody>{% if rows %}{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.worker_id }} - {{ r.bangla_name if language=='bn' and r.bangla_name else r.worker_name }}</td><td>{{ display_dept(r.department) }}</td><td>{{ r.advance_date or '' }}</td><td class="amount">BDT {{ '%.2f'|format(r.amount|float) }}</td><td>{{ r.note or '' }}</td><td class="actions"><a class="btn edit" href="{{ url_for('edit_advance', aid=r.id) }}">Edit</a> <a class="btn delete" href="{{ url_for('delete_advance', aid=r.id) }}" onclick="return confirm('Delete this advance record?')">Delete</a></td></tr>{% endfor %}{% else %}<tr><td colspan="7">No advance records found.</td></tr>{% endif %}</tbody></table></div></main>
+<div class="box"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h2 style="margin:0">Advance Records â€” {{ month }}</h2><div style="font-size:18px;font-weight:700;color:#1764c0">Total Advance: BDT {{ '%.2f'|format(total_advance|float) }}</div></div></div><div class="box" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" onclick="window.print()">Print</button><a class="btn" href="{{ url_for('advance_export', month=month.split(' ')[0], year=month.split(' ')[1], worker_id=request.args.get('worker_id','')) }}">Export Excel</a><a class="btn edit" href="{{ url_for('advance_pdf', month=month.split(' ')[0], year=month.split(' ')[1], worker_id=request.args.get('worker_id','')) }}">Export PDF</a></div><div class="box tablewrap"><table><thead><tr><th>ID</th><th>Worker</th><th>Department</th><th>Date</th><th>Amount</th><th>Note</th><th>Actions</th></tr></thead><tbody>{% if rows %}{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.worker_id }} - {{ r.bangla_name if language=='bn' and r.bangla_name else r.worker_name }}</td><td>{{ display_dept(r.department) }}</td><td>{{ r.advance_date or '' }}</td><td class="amount">BDT {{ '%.2f'|format(r.amount|float) }}</td><td>{{ r.note or '' }}</td><td class="actions"><a class="btn edit" href="{{ url_for('edit_advance', aid=r.id) }}">Edit</a> <a class="btn delete" href="{{ url_for('delete_advance', aid=r.id) }}" onclick="return confirm('Delete this advance record?')">Delete</a></td></tr>{% endfor %}{% else %}<tr><td colspan="7">No advance records found.</td></tr>{% endif %}</tbody></table></div></main>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   function addSelectSearch(sel){
@@ -3851,7 +3885,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3867,11 +3901,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3883,12 +3917,12 @@ document.addEventListener('DOMContentLoaded', function(){
 """
 
 BUILTIN_ADVANCE_EDIT_TEMPLATE = r"""
-<!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Edit Advance | REEDOY PAYROLL</title><style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.wrap{max-width:700px;margin:30px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:24px;box-shadow:0 4px 14px rgba(0,0,0,.04)}label{display:block;font-weight:600;margin:12px 0 6px}input,select{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:7px}button,.btn{margin-top:16px;background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 15px;text-decoration:none;cursor:pointer;display:inline-block}.cancel{background:#64748b;margin-left:8px}.nav{margin-bottom:18px}.nav a{color:#1764c0;text-decoration:none;margin-right:12px}</style></head><body><main class="wrap"><div class="box"><div class="nav"><a href="{{ url_for('advance') }}">← Advance Salary</a><a href="{{ url_for('dashboard') }}">Dashboard</a></div><h1>Edit Advance Salary</h1><form method="post"><label>Worker</label><select name="worker_id" required>{% for w in workers %}<option value="{{ w.id }}" {% if w.id|string == record.worker_id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language=='bn' and w.bangla_name else w.name }}</option>{% endfor %}</select><label>Date</label><input type="date" name="advance_date" value="{{ record.advance_date or '' }}" required><label>Amount (BDT)</label><input type="number" name="amount" min="0.01" step="0.01" value="{{ record.amount or 0 }}" required><label>Note</label><input type="text" name="note" value="{{ record.note or '' }}"><input type="hidden" name="month_year" value="{{ record.month_year or '' }}"><button type="submit">Update Advance</button><a class="btn cancel" href="{{ url_for('advance', month=record.month_year) }}">Cancel</a></form></div></main></body></html>
+<!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Edit Advance | REEDOY PAYROLL</title><style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.wrap{max-width:700px;margin:30px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:24px;box-shadow:0 4px 14px rgba(0,0,0,.04)}label{display:block;font-weight:600;margin:12px 0 6px}input,select{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:7px}button,.btn{margin-top:16px;background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 15px;text-decoration:none;cursor:pointer;display:inline-block}.cancel{background:#64748b;margin-left:8px}.nav{margin-bottom:18px}.nav a{color:#1764c0;text-decoration:none;margin-right:12px}</style></head><body><main class="wrap"><div class="box"><div class="nav"><a href="{{ url_for('advance') }}">â† Advance Salary</a><a href="{{ url_for('dashboard') }}">Dashboard</a></div><h1>Edit Advance Salary</h1><form method="post"><label>Worker</label><select name="worker_id" required>{% for w in workers %}<option value="{{ w.id }}" {% if w.id|string == record.worker_id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language=='bn' and w.bangla_name else w.name }}</option>{% endfor %}</select><label>Date</label><input type="date" name="advance_date" value="{{ record.advance_date or '' }}" required><label>Amount (BDT)</label><input type="number" name="amount" min="0.01" step="0.01" value="{{ record.amount or 0 }}" required><label>Note</label><input type="text" name="note" value="{{ record.note or '' }}"><input type="hidden" name="month_year" value="{{ record.month_year or '' }}"><button type="submit">Update Advance</button><a class="btn cancel" href="{{ url_for('advance', month=record.month_year) }}">Cancel</a></form></div></main></body></html>
 """
 
 BUILTIN_LOGIN_TEMPLATE = r"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>REEDOY PAYROLL Login</title><style>body{font-family:Arial,sans-serif;background:#f3f6fb;display:flex;align-items:center;justify-content:center;min-height:100vh}.box{background:#fff;padding:30px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);width:340px}input{width:100%;padding:11px;margin:7px 0 14px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:7px}button{width:100%;padding:11px;background:#1764c0;color:#fff;border:0;border-radius:7px;cursor:pointer}.msg{padding:8px;background:#fee2e2;color:#991b1b;margin-bottom:12px;border-radius:6px}</style></head><body><div class="box"><h2>REEDOY PAYROLL</h2>{% with messages=get_flashed_messages(with_categories=true) %}{% for c,m in messages %}<div class="msg">{{ m }}</div>{% endfor %}{% endwith %}<form method="post"><label>User ID</label><input name="username" required><label>Password</label><input type="password" name="password" required><button type="submit">Login</button></form></div></body></html>"""
 
-BUILTIN_PAYSLIP_TEMPLATE = r"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reedoy Payroll - Payslip</title><style>body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;color:#1f2937}.wrap{max-width:900px;margin:30px auto;padding:0 16px}.box{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:24px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.05)}h1{margin-top:0;color:#174a7e}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.item{padding:12px;background:#f8fafc;border-radius:8px}.label{font-size:13px;color:#64748b}.value{font-size:18px;font-weight:700;margin-top:4px}.net{font-size:26px;color:#1764c0}.nav a{margin-right:14px;color:#1764c0;text-decoration:none}select,button{padding:10px;border:1px solid #cbd5e1;border-radius:7px}button{background:#1764c0;color:#fff;border:0;cursor:pointer}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 18px}.btn{display:inline-block;padding:10px 14px;border-radius:7px;background:#1764c0;color:#fff;text-decoration:none;border:0;cursor:pointer;font-size:14px}.btn.print{background:#0f766e}@media print{body{background:#fff}.wrap{max-width:none;margin:0;padding:0}.box{box-shadow:none;border:0;border-radius:0}.nav,form,.actions{display:none}.item{background:#fff;border:1px solid #ddd}h1{font-size:22px}}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style></head><body><main class="wrap"><div class="box"><div class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a></div><h1>Single Payslip</h1><form method="get"><div class="grid"><div><div class="label">Worker</div><select name="worker_id" required><option value="">Select Worker</option>{% for w in workers %}<option value="{{ w.id }}" {% if worker and w.id|string == worker.id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language == 'bn' and w.bangla_name else w.name }}</option>{% endfor %}</select></div><div><div class="label">Payroll Month</div><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.startswith(m + ' ') %}selected{% endif %}>{{ m }}</option>{% endfor %}</select><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.endswith(y|string) %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div></div><br><button type="submit">View Payslip</button></form></div>{% if worker %}<div class="box"><h2>REEDOY TEXTILE DYEING PRINTING & FINISHING</h2><p><b>Payroll Month:</b> {{ month }}</p><div class="actions"><a class="btn" href="{{ url_for('export_payslip_pdf', worker_id=worker.id, month=month.split()[0], year=month.split()[1]) }}">Export PDF</a><button class="btn print" type="button" onclick="window.print()">Print Payslip</button></div><div class="grid"><div class="item"><div class="label">Worker ID</div><div class="value">{{ worker.id }}</div></div><div class="item"><div class="label">English Name</div><div class="value">{{ worker.name }}</div></div><div class="item"><div class="label">Bangla Name</div><div class="value">{{ worker.bangla_name or '—' }}</div></div><div class="item"><div class="label">Department</div><div class="value">{{ display_dept(worker.department) }}</div></div><div class="item"><div class="label">Basic Salary</div><div class="value">BDT {{ '%.2f'|format(worker.basic_salary|float) }}</div></div><div class="item"><div class="label">Salary Basis</div><div class="value">30 Days</div></div><div class="item"><div class="label">Present Days</div><div class="value">{{ summary.present|default(0) }}</div></div><div class="item"><div class="label">Absent Days</div><div class="value">{{ summary.absent|default(0) }}</div></div><div class="item"><div class="label">Absent Deduction</div><div class="value">BDT {{ '%.2f'|format(summary.absent_cut|default(0)|float) }}</div></div><div class="item"><div class="label">Overtime</div><div class="value">{{ summary.ot|default(0) }} hours / BDT {{ '%.2f'|format(summary.ot_amt|default(0)|float) }}</div></div><div class="item"><div class="label">Refreshment</div><div class="value">BDT {{ '%.2f'|format(summary.nasta|default(0)|float) }}</div></div><div class="item"><div class="label">Advance Salary</div><div class="value">BDT {{ '%.2f'|format(summary.advance|default(0)|float) }}</div></div><div class="item"><div class="label">Gross Salary</div><div class="value">BDT {{ '%.2f'|format(summary.gross|default(0)|float) }}</div></div><div class="item"><div class="label">Net Payable</div><div class="value net">BDT {{ '%.2f'|format(summary.net|default(0)|float) }}</div></div></div></div>{% endif %}</main>
+BUILTIN_PAYSLIP_TEMPLATE = r"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reedoy Payroll - Payslip</title><style>body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;color:#1f2937}.wrap{max-width:900px;margin:30px auto;padding:0 16px}.box{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:24px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.05)}h1{margin-top:0;color:#174a7e}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.item{padding:12px;background:#f8fafc;border-radius:8px}.label{font-size:13px;color:#64748b}.value{font-size:18px;font-weight:700;margin-top:4px}.net{font-size:26px;color:#1764c0}.nav a{margin-right:14px;color:#1764c0;text-decoration:none}select,button{padding:10px;border:1px solid #cbd5e1;border-radius:7px}button{background:#1764c0;color:#fff;border:0;cursor:pointer}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 18px}.btn{display:inline-block;padding:10px 14px;border-radius:7px;background:#1764c0;color:#fff;text-decoration:none;border:0;cursor:pointer;font-size:14px}.btn.print{background:#0f766e}@media print{body{background:#fff}.wrap{max-width:none;margin:0;padding:0}.box{box-shadow:none;border:0;border-radius:0}.nav,form,.actions{display:none}.item{background:#fff;border:1px solid #ddd}h1{font-size:22px}}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style></head><body><main class="wrap"><div class="box"><div class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a></div><h1>Single Payslip</h1><form method="get"><div class="grid"><div><div class="label">Worker</div><select name="worker_id" required><option value="">Select Worker</option>{% for w in workers %}<option value="{{ w.id }}" {% if worker and w.id|string == worker.id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language == 'bn' and w.bangla_name else w.name }}</option>{% endfor %}</select></div><div><div class="label">Payroll Month</div><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.startswith(m + ' ') %}selected{% endif %}>{{ m }}</option>{% endfor %}</select><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.endswith(y|string) %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div></div><br><button type="submit">View Payslip</button></form></div>{% if worker %}<div class="box"><h2>REEDOY TEXTILE DYEING PRINTING & FINISHING</h2><p><b>Payroll Month:</b> {{ month }}</p><div class="actions"><a class="btn" href="{{ url_for('export_payslip_pdf', worker_id=worker.id, month=month.split()[0], year=month.split()[1]) }}">Export PDF</a><button class="btn print" type="button" onclick="window.print()">Print Payslip</button></div><div class="grid"><div class="item"><div class="label">Worker ID</div><div class="value">{{ worker.id }}</div></div><div class="item"><div class="label">English Name</div><div class="value">{{ worker.name }}</div></div><div class="item"><div class="label">Bangla Name</div><div class="value">{{ worker.bangla_name or 'â€”' }}</div></div><div class="item"><div class="label">Department</div><div class="value">{{ display_dept(worker.department) }}</div></div><div class="item"><div class="label">Basic Salary</div><div class="value">BDT {{ '%.2f'|format(worker.basic_salary|float) }}</div></div><div class="item"><div class="label">Salary Basis</div><div class="value">30 Days</div></div><div class="item"><div class="label">Present Days</div><div class="value">{{ summary.present|default(0) }}</div></div><div class="item"><div class="label">Absent Days</div><div class="value">{{ summary.absent|default(0) }}</div></div><div class="item"><div class="label">Absent Deduction</div><div class="value">BDT {{ '%.2f'|format(summary.absent_cut|default(0)|float) }}</div></div><div class="item"><div class="label">Overtime</div><div class="value">{{ summary.ot|default(0) }} hours / BDT {{ '%.2f'|format(summary.ot_amt|default(0)|float) }}</div></div><div class="item"><div class="label">Refreshment</div><div class="value">BDT {{ '%.2f'|format(summary.nasta|default(0)|float) }}</div></div><div class="item"><div class="label">Advance Salary</div><div class="value">BDT {{ '%.2f'|format(summary.advance|default(0)|float) }}</div></div><div class="item"><div class="label">Gross Salary</div><div class="value">BDT {{ '%.2f'|format(summary.gross|default(0)|float) }}</div></div><div class="item"><div class="label">Net Payable</div><div class="value net">BDT {{ '%.2f'|format(summary.net|default(0)|float) }}</div></div></div></div>{% endif %}</main>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   function addSelectSearch(sel){
@@ -3896,7 +3930,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3912,11 +3946,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3937,7 +3971,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3953,11 +3987,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3969,7 +4003,28 @@ document.addEventListener('DOMContentLoaded', function(){
 """
 
 BUILTIN_WORKER_FORM_TEMPLATE = r"""
-<!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ form_title }} | REEDOY PAYROLL</title><style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none}.wrap{max-width:900px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:24px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field label{display:block;font-weight:600;margin-bottom:6px}.field{margin-bottom:4px}input,select{padding:10px;border:1px solid #cbd5e1;border-radius:7px;width:100%;box-sizing:border-box}.actions{margin-top:20px;display:flex;gap:10px}.btn,button{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 16px;text-decoration:none;cursor:pointer}.cancel{background:#64748b}@media(max-width:700px){.grid{grid-template-columns:1fr}}</style></head><body><header class="top"><div class="brand">REEDOY PAYROLL</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('department') }}">Department Salary</a></nav></header><main class="wrap"><div class="box"><h1>{{ form_title }}</h1>{% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div>{{ message }}</div>{% endfor %}{% endwith %}<form method="post"><div class="grid"><div class="field"><label>English Name *</label><input name="name" required value="{{ worker.name if worker and worker.name is defined else (worker.get('name','') if worker else '') }}"></div><div class="field"><label>Bangla Name</label><input name="bangla_name" value="{{ worker.bangla_name if worker and worker.bangla_name is defined else (worker.get('bangla_name','') if worker else '') }}"></div><div class="field"><label>Department</label><select name="department">{% for d in departments if d != 'All Departments' %}<option value="{{ d }}" {% if worker and ((worker.department is defined and worker.department==d) or (worker.get('department','')==d if worker.get is defined else false)) %}selected{% endif %}>{{ d }}</option>{% endfor %}</select></div><div class="field"><label>Designation</label><input name="designation" value="{{ worker.designation if worker and worker.designation is defined else (worker.get('designation','') if worker else '') }}"></div><div class="field"><label>Basic Salary (BDT)</label><input type="number" step="0.01" min="0" name="basic_salary" value="{{ worker.basic_salary if worker and worker.basic_salary is defined else (worker.get('basic_salary',0) if worker else 0) }}"></div><div class="field"><label>OT Rate</label><input type="number" step="0.01" min="0" name="ot_rate" value="{{ worker.ot_rate if worker and worker.ot_rate is defined else (worker.get('ot_rate',0) if worker else 0) }}"></div><div class="field"><label>Refreshment Bill</label><input type="number" step="0.01" min="0" name="refreshment_bill" value="{{ worker.refreshment_bill if worker and worker.refreshment_bill is defined else (worker.get('refreshment_bill',0) if worker else 0) }}"></div><div class="field"><label>Status</label><select name="status"><option value="Active" {% if not worker or (worker.status is defined and worker.status in ('', None)) or (worker.get('status','Active') if worker.get is defined else worker.status) == 'Active' %}selected{% endif %}>Active</option><option value="Inactive" {% if worker and ((worker.status is defined and worker.status=='Inactive') or (worker.get('status','')=='Inactive' if worker.get is defined else false)) %}selected{% endif %}>Inactive</option></select></div></div><div class="actions"><button type="submit">{{ submit_text }}</button><a class="btn cancel" href="{{ url_for('workers') }}">Cancel</a></div></form></div></main></body></html>
+<!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ form_title }} | REEDOY PAYROLL</title><style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none}.wrap{max-width:900px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:24px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field label{display:block;font-weight:600;margin-bottom:6px}.field{margin-bottom:4px}input,select{padding:10px;border:1px solid #cbd5e1;border-radius:7px;width:100%;box-sizing:border-box}.actions{margin-top:20px;display:flex;gap:10px}.btn,button{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 16px;text-decoration:none;cursor:pointer}.cancel{background:#64748b}@media(max-width:700px){.grid{grid-template-columns:1fr}}</style></head><body><header class="top"><div class="brand">REEDOY PAYROLL</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('department') }}">Department Salary</a></nav></header><main class="wrap"><div class="box"><h1>{{ form_title }}</h1>{% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div>{{ message }}</div>{% endfor %}{% endwith %}<form method="post"><div class="grid"><div class="field"><label>English Name *</label><input name="name" required value="{{ worker.name if worker and worker.name is defined else (worker.get('name','') if worker else '') }}"></div><div class="field"><label>Bangla Name</label><input name="bangla_name" value="{{ worker.bangla_name if worker and worker.bangla_name is defined else (worker.get('bangla_name','') if worker else '') }}"></div><div class="field"><label>Department</label><select name="department">{% for d in departments if d != 'All Departments' %}<option value="{{ d }}" {% if worker and ((worker.department is defined and worker.department==d) or (worker.get('department','')==d if worker.get is defined else false)) %}selected{% endif %}>{{ d }}</option>{% endfor %}</select></div><div class="field"><label>Designation</label><input name="designation" value="{{ worker.designation if worker and worker.designation is defined else (worker.get('designation','') if worker else '') }}"></div><div class="field"><label>Basic Salary (BDT)</label><input type="number" step="0.01" min="0" name="basic_salary" value="{{ worker.basic_salary if worker and worker.basic_salary is defined else (worker.get('basic_salary',0) if worker else 0) }}" id="basic_salary"></div><div class="field"><label>OT Rate</label><input type="number" step="0.01" min="0" name="ot_rate" value="{{ worker.ot_rate if worker and worker.ot_rate is defined else (worker.get('ot_rate',0) if worker else 0) }}" id="ot_rate"></div><div class="field"><label>Refreshment Bill</label><input type="number" step="0.01" min="0" name="refreshment_bill" value="{{ worker.refreshment_bill if worker and worker.refreshment_bill is defined else (worker.get('refreshment_bill',0) if worker else 0) }}"></div><div class="field"><label>Status</label><select name="status"><option value="Active" {% if not worker or (worker.status is defined and worker.status in ('', None)) or (worker.get('status','Active') if worker.get is defined else worker.status) == 'Active' %}selected{% endif %}>Active</option><option value="Inactive" {% if worker and ((worker.status is defined and worker.status=='Inactive') or (worker.get('status','')=='Inactive' if worker.get is defined else false)) %}selected{% endif %}>Inactive</option></select></div></div><div class="actions"><button type="submit">{{ submit_text }}</button><a class="btn cancel" href="{{ url_for('workers') }}">Cancel</a></div>
+<script>
+(function () {
+  const basic = document.getElementById("basic_salary");
+  const ot = document.getElementById("ot_rate");
+  if (!basic || !ot) return;
+
+  function updateOtRate() {
+    const b = parseFloat(basic.value);
+    if (!Number.isFinite(b) || b < 0) {
+      ot.value = "";
+      return;
+    }
+    ot.value = Math.round(b / 30 / 12);
+  }
+
+  basic.addEventListener("input", updateOtRate);
+  basic.addEventListener("change", updateOtRate);
+})();
+</script>
+
+</form></div></main></body></html>
 """
 
 
@@ -4039,14 +4094,14 @@ button,.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10p
 </div>
 </form>
 </div>
-<div class="box"><h2>{{ month }}{% if department %} — {{ department }}{% else %} — All Departments{% endif %}</h2>
+<div class="box"><h2>{{ month }}{% if department %} â€” {{ department }}{% else %} â€” All Departments{% endif %}</h2>
 <div style="margin:8px 0 14px;padding:10px 12px;background:#eef6ff;border:1px solid #d7e7fb;border-radius:8px;font-weight:700;color:#334155">Salary Basis: 30 Days &nbsp; | &nbsp; Weekly Holiday: Friday &nbsp; | &nbsp; Friday is excluded from absence deduction</div>
 <div class="cards">
 <div class="card"><div class="label">Workers</div><div class="value">{{ totals.workers }}</div></div>
-<div class="card"><div class="label">Basic Salary</div><div class="value">৳ {{ '%.2f'|format(totals.basic|float) }}</div></div>
-<div class="card"><div class="label">Gross Salary</div><div class="value">৳ {{ '%.2f'|format(totals.gross|float) }}</div></div>
-<div class="card"><div class="label">Advance</div><div class="value">৳ {{ '%.2f'|format(totals.advance|float) }}</div></div>
-<div class="card"><div class="label">Net Payable</div><div class="value">৳ {{ '%.2f'|format(totals.net|float) }}</div></div>
+<div class="card"><div class="label">Basic Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.basic|float) }}</div></div>
+<div class="card"><div class="label">Gross Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.gross|float) }}</div></div>
+<div class="card"><div class="label">Advance</div><div class="value">à§³ {{ '%.2f'|format(totals.advance|float) }}</div></div>
+<div class="card"><div class="label">Net Payable</div><div class="value">à§³ {{ '%.2f'|format(totals.net|float) }}</div></div>
 </div></div>
 <div class="box tablewrap">
 <table>
@@ -4064,7 +4119,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -4080,11 +4135,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -4164,7 +4219,7 @@ BUILTIN_DATA_SYNC_TEMPLATE = r"""
 <html lang="{{ 'bn' if language == 'bn' else 'en' }}">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Online ↔ Offline Data Sync | REEDOY PAYROLL</title>
+<title>Online â†” Offline Data Sync | REEDOY PAYROLL</title>
 <style>
 body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}
 .top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -4189,7 +4244,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px so
 <a href="{{ url_for('department') }}">Department Salary</a>
 <a href="{{ url_for('reports') }}">Reports</a>
 <a href="{{ url_for('backup_maintenance') }}">Backup</a>
-<a href="{{ url_for('data_sync') }}">↔ Sync</a>
+<a href="{{ url_for('data_sync') }}">â†” Sync</a>
 <a href="{{ url_for('logout') }}">Logout</a>
 </nav>
 </header>
@@ -4201,17 +4256,17 @@ table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px so
 {% endwith %}
 
 <div class="box">
-<h1>Online ↔ Offline Data Sync</h1>
-<p>এই tab দিয়ে Online এবং Offline software-এর সম্পূর্ণ payroll data এক backup file-এর মাধ্যমে একে অপরের মধ্যে নেওয়া যাবে।</p>
+<h1>Online â†” Offline Data Sync</h1>
+<p>à¦à¦‡ tab à¦¦à¦¿à§Ÿà§‡ Online à¦à¦¬à¦‚ Offline software-à¦à¦° à¦¸à¦®à§à¦ªà§‚à¦°à§à¦£ payroll data à¦à¦• backup file-à¦à¦° à¦®à¦¾à¦§à§à¦¯à¦®à§‡ à¦à¦•à§‡ à¦…à¦ªà¦°à§‡à¦° à¦®à¦§à§à¦¯à§‡ à¦¨à§‡à¦“à§Ÿà¦¾ à¦¯à¦¾à¦¬à§‡à¥¤</p>
 <div class="note">
 <strong>Backup file:</strong> Reedoy portable backup (.rdb)<br>
-Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Salary/Payment, Payroll Lock, Settings, Users ও Activity data backup-এর মধ্যে রাখা হবে।
+Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Salary/Payment, Payroll Lock, Settings, Users à¦“ Activity data backup-à¦à¦° à¦®à¦§à§à¦¯à§‡ à¦°à¦¾à¦–à¦¾ à¦¹à¦¬à§‡à¥¤
 </div>
 </div>
 
 <div class="box">
-<h2>1. Current Database → Backup File</h2>
-<p>এই software-এর বর্তমান data একটি portable backup file-এ নিন। তারপর সেই file অন্য Online/Offline software-এ Restore করা যাবে।</p>
+<h2>1. Current Database â†’ Backup File</h2>
+<p>à¦à¦‡ software-à¦à¦° à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ data à¦à¦•à¦Ÿà¦¿ portable backup file-à¦ à¦¨à¦¿à¦¨à¥¤ à¦¤à¦¾à¦°à¦ªà¦° à¦¸à§‡à¦‡ file à¦…à¦¨à§à¦¯ Online/Offline software-à¦ Restore à¦•à¦°à¦¾ à¦¯à¦¾à¦¬à§‡à¥¤</p>
 <p><strong>Current database:</strong> {{ 'ONLINE / PostgreSQL' if is_online else 'OFFLINE / SQLite' }}</p>
 <form method="post" action="{{ url_for('create_portable_backup') }}">
 <button class="btn" type="submit">Create Portable Backup & Download</button>
@@ -4219,29 +4274,29 @@ Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Sala
 </div>
 
 <div class="box">
-<h2>2. Backup File → Current Database</h2>
+<h2>2. Backup File â†’ Current Database</h2>
 <div class="warn">
-<strong>সতর্কতা:</strong> Restore করলে এই software-এর বর্তমান data backup file-এর data দিয়ে replace হবে। Restore করার আগে বর্তমান data-এর একটি safety backup স্বয়ংক্রিয়ভাবে তৈরি হবে। Worker ID ও পুরোনো record ID অপরিবর্তিত রাখার চেষ্টা করা হবে।
+<strong>à¦¸à¦¤à¦°à§à¦•à¦¤à¦¾:</strong> Restore à¦•à¦°à¦²à§‡ à¦à¦‡ software-à¦à¦° à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ data backup file-à¦à¦° data à¦¦à¦¿à§Ÿà§‡ replace à¦¹à¦¬à§‡à¥¤ Restore à¦•à¦°à¦¾à¦° à¦†à¦—à§‡ à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ data-à¦à¦° à¦à¦•à¦Ÿà¦¿ safety backup à¦¸à§à¦¬à§Ÿà¦‚à¦•à§à¦°à¦¿à§Ÿà¦­à¦¾à¦¬à§‡ à¦¤à§ˆà¦°à¦¿ à¦¹à¦¬à§‡à¥¤ Worker ID à¦“ à¦ªà§à¦°à§‹à¦¨à§‹ record ID à¦…à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à¦¿à¦¤ à¦°à¦¾à¦–à¦¾à¦° à¦šà§‡à¦·à§à¦Ÿà¦¾ à¦•à¦°à¦¾ à¦¹à¦¬à§‡à¥¤
 </div>
-<form method="post" action="{{ url_for('restore_portable_backup') }}" enctype="multipart/form-data" onsubmit="return confirm('Restore করলে বর্তমান database-এর data backup file-এর data দিয়ে replace হবে। Continue?');">
+<form method="post" action="{{ url_for('restore_portable_backup') }}" enctype="multipart/form-data" onsubmit="return confirm('Restore à¦•à¦°à¦²à§‡ à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ database-à¦à¦° data backup file-à¦à¦° data à¦¦à¦¿à§Ÿà§‡ replace à¦¹à¦¬à§‡à¥¤ Continue?');">
 <input class="file" type="file" name="backup_file" accept=".rdb,.zip" required>
 <button class="btn danger" type="submit">Restore Backup to This Software</button>
 </form>
 </div>
 
 <div class="box">
-<h2>ব্যবহারের নিয়ম</h2>
+<h2>à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°à§‡à¦° à¦¨à¦¿à§Ÿà¦®</h2>
 <table>
-<tr><th>কাজ</th><th>যেভাবে করবেন</th></tr>
-<tr><td>Online → Offline</td><td>Online-এ Create Portable Backup → file download → Offline-এ এই tab → Restore</td></tr>
-<tr><td>Offline → Online</td><td>Offline-এ Create Portable Backup → file নিয়ে Online-এ এই tab → Restore</td></tr>
-<tr><td>Data নিরাপত্তা</td><td>Restore-এর আগে বর্তমান database-এর safety backup তৈরি হবে</td></tr>
-<tr><td>Database</td><td>Online PostgreSQL এবং Offline SQLite—দুই ধরনের database support করবে</td></tr>
+<tr><th>à¦•à¦¾à¦œ</th><th>à¦¯à§‡à¦­à¦¾à¦¬à§‡ à¦•à¦°à¦¬à§‡à¦¨</th></tr>
+<tr><td>Online â†’ Offline</td><td>Online-à¦ Create Portable Backup â†’ file download â†’ Offline-à¦ à¦à¦‡ tab â†’ Restore</td></tr>
+<tr><td>Offline â†’ Online</td><td>Offline-à¦ Create Portable Backup â†’ file à¦¨à¦¿à§Ÿà§‡ Online-à¦ à¦à¦‡ tab â†’ Restore</td></tr>
+<tr><td>Data à¦¨à¦¿à¦°à¦¾à¦ªà¦¤à§à¦¤à¦¾</td><td>Restore-à¦à¦° à¦†à¦—à§‡ à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ database-à¦à¦° safety backup à¦¤à§ˆà¦°à¦¿ à¦¹à¦¬à§‡</td></tr>
+<tr><td>Database</td><td>Online PostgreSQL à¦à¦¬à¦‚ Offline SQLiteâ€”à¦¦à§à¦‡ à¦§à¦°à¦¨à§‡à¦° database support à¦•à¦°à¦¬à§‡</td></tr>
 </table>
 </div>
 
 <div class="box">
-<a class="btn secondary" href="{{ url_for('backup_maintenance') }}">← Backup & Maintenance</a>
+<a class="btn secondary" href="{{ url_for('backup_maintenance') }}">â† Backup & Maintenance</a>
 <a class="btn secondary" href="{{ url_for('dashboard') }}">Dashboard</a>
 </div>
 </main>
@@ -4327,7 +4382,7 @@ th{background:#f8fafc}
 </div>
 
 <div class="box">
-<a class="btn secondary" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+<a class="btn secondary" href="{{ url_for('dashboard') }}">â† Back to Dashboard</a>
 </div>
 </main>
 </body>
@@ -4362,17 +4417,17 @@ button,.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10p
 <main class="wrap">
 <div class="box filters"><h1>Payroll Reports</h1><p class="muted">Monthly payroll overview and department-wise summary.</p>
 <form method="get" action="{{ url_for('reports') }}"><div class="grid"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.split()[1]|int==y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div><div class="field" style="align-self:end"><button type="submit">Generate Report</button></div><div class="field actions" style="align-self:end"><a class="btn green" href="{{ url_for('export_reports',month=month.split()[0],year=month.split()[1]) }}">Export Excel</a> <button class="btn secondary" type="button" onclick="window.print()">Print Report</button></div></div></form></div>
-<div class="box"><h2>{{ month }} — Payroll Summary</h2><div class="cards">
+<div class="box"><h2>{{ month }} â€” Payroll Summary</h2><div class="cards">
 <div class="card"><div class="label">Workers</div><div class="value">{{ totals.workers }}</div></div>
-<div class="card"><div class="label">Basic Salary</div><div class="value">৳ {{ '%.2f'|format(totals.basic|float) }}</div></div>
-<div class="card"><div class="label">Absent Deduction</div><div class="value">৳ {{ '%.2f'|format(totals.absent_cut|float) }}</div></div>
-<div class="card"><div class="label">OT Amount</div><div class="value">৳ {{ '%.2f'|format(totals.ot_amt|float) }}</div></div>
-<div class="card"><div class="label">Gross Salary</div><div class="value">৳ {{ '%.2f'|format(totals.gross|float) }}</div></div>
-<div class="card"><div class="label">Net Payable</div><div class="value">৳ {{ '%.2f'|format(totals.net|float) }}</div></div>
+<div class="card"><div class="label">Basic Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.basic|float) }}</div></div>
+<div class="card"><div class="label">Absent Deduction</div><div class="value">à§³ {{ '%.2f'|format(totals.absent_cut|float) }}</div></div>
+<div class="card"><div class="label">OT Amount</div><div class="value">à§³ {{ '%.2f'|format(totals.ot_amt|float) }}</div></div>
+<div class="card"><div class="label">Gross Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.gross|float) }}</div></div>
+<div class="card"><div class="label">Net Payable</div><div class="value">à§³ {{ '%.2f'|format(totals.net|float) }}</div></div>
 </div></div>
 <div class="box tablewrap"><h2>Department Summary</h2><table><thead><tr><th>Department</th><th>Workers</th><th>Basic Salary</th><th>Present</th><th>Absent</th><th>OT Hours</th><th>Absent Ded.</th><th>OT Amount</th><th>Nasta</th><th>Gross</th><th>Advance</th><th>Net Payable</th></tr></thead><tbody>{% for row in departments_summary %}<tr><td class="dept">{{ row.department }}</td><td>{{ row.workers }}</td><td>{{ '%.2f'|format(row.basic|float) }}</td><td>{{ '%.2f'|format(row.present|float) }}</td><td>{{ '%.2f'|format(row.absent|float) }}</td><td>{{ '%.2f'|format(row.ot|float) }}</td><td>{{ '%.2f'|format(row.absent_cut|float) }}</td><td>{{ '%.2f'|format(row.ot_amt|float) }}</td><td>{{ '%.2f'|format(row.nasta|float) }}</td><td>{{ '%.2f'|format(row.gross|float) }}</td><td>{{ '%.2f'|format(row.advance|float) }}</td><td>{{ '%.2f'|format(row.net|float) }}</td></tr>{% else %}<tr><td colspan="12">No department data found.</td></tr>{% endfor %}<tr><th>Total</th><th>{{ totals.workers }}</th><th>{{ '%.2f'|format(totals.basic|float) }}</th><th>{{ '%.2f'|format(totals.present|float) }}</th><th>{{ '%.2f'|format(totals.absent|float) }}</th><th>{{ '%.2f'|format(totals.ot|float) }}</th><th>{{ '%.2f'|format(totals.absent_cut|float) }}</th><th>{{ '%.2f'|format(totals.ot_amt|float) }}</th><th>{{ '%.2f'|format(totals.nasta|float) }}</th><th>{{ '%.2f'|format(totals.gross|float) }}</th><th>{{ '%.2f'|format(totals.advance|float) }}</th><th>{{ '%.2f'|format(totals.net|float) }}</th></tr></tbody></table></div>
 <div class="box tablewrap"><h2>Worker Payroll Detail</h2><table><thead><tr><th>ID</th><th class="name">Worker Name</th><th class="dept">Department</th><th>Basic</th><th>Present</th><th>Absent</th><th>OT Hours</th><th>Absent Ded.</th><th>OT Amount</th><th>Nasta</th><th>Gross</th><th>Advance</th><th>Net Payable</th></tr></thead><tbody>{% for row in rows %}<tr><td>{{ row.id }}</td><td class="name">{{ row.bangla_name if language=='bn' and row.bangla_name else row.name }}</td><td class="dept">{{ row.department or '' }}</td><td>{{ '%.2f'|format(row.basic_salary|float) }}</td><td>{{ '%.2f'|format(row.present|float) }}</td><td>{{ '%.2f'|format(row.absent|float) }}</td><td>{{ '%.2f'|format(row.ot|float) }}</td><td>{{ '%.2f'|format(row.absent_cut|float) }}</td><td>{{ '%.2f'|format(row.ot_amt|float) }}</td><td>{{ '%.2f'|format(row.nasta|float) }}</td><td>{{ '%.2f'|format(row.gross|float) }}</td><td>{{ '%.2f'|format(row.advance|float) }}</td><td>{{ '%.2f'|format(row.net|float) }}</td></tr>{% endfor %}</tbody></table></div>
-<div class="box actions"><a class="btn secondary" href="{{ url_for('dashboard') }}">← Back to Dashboard</a></div>
+<div class="box actions"><a class="btn secondary" href="{{ url_for('dashboard') }}">â† Back to Dashboard</a></div>
 </main><script>
 document.addEventListener('DOMContentLoaded', function(){
   function addSelectSearch(sel){
@@ -4380,7 +4435,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -4396,11 +4451,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -4448,7 +4503,7 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 <div class="box">
 <strong>{{ results|length }}</strong> worker(s) found.
 <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>ID</th><th>English Name</th><th>Bangla Name</th><th>Department</th><th>Designation</th><th>Phone</th><th>Basic Salary</th><th>Status</th><th>Quick Actions</th></tr></thead>
-<tbody>{% for w in results %}<tr><td>{{ w.id }}</td><td>{{ w.name or '' }}</td><td>{{ w.bangla_name or '' }}</td><td>{{ w.department or '' }}</td><td>{{ w.designation or '' }}</td><td>{{ w.phone or '' }}</td><td>৳ {{ '%.2f'|format((w.basic_salary or 0)|float) }}</td><td><span class="badge {{ 'active' if (w.status or 'Active')=='Active' else 'inactive' }}">{{ w.status or 'Active' }}</span></td><td class="actions"><a class="btn small" href="{{ url_for('edit_worker', worker_id=w.id) }}">Edit</a><form method="post" action="{{ url_for('toggle_worker_status', worker_id=w.id) }}" style="display:inline"><input type="hidden" name="q" value="{{ q or '' }}"><input type="hidden" name="department" value="{{ department or '' }}"><input type="hidden" name="status" value="{{ status or '' }}"><button class="btn small {{ 'secondary' if (w.status or 'Active')=='Inactive' else '' }}" type="submit" onclick="return confirm('Change status for {{ w.name }}?');">{{ 'Set Active' if (w.status or 'Active')=='Inactive' else 'Set Inactive' }}</button></form><a class="btn small secondary" href="{{ url_for('attendance', worker_id=w.id) }}">Attendance</a><a class="btn small" href="{{ url_for('payslip', worker_id=w.id) }}">Payslip</a><a class="btn small" href="{{ url_for('advance', worker_id=w.id) }}">Advance</a><a class="btn small secondary" href="{{ url_for('payments', worker_id=w.id) }}">Payment</a></td></tr>{% else %}<tr><td colspan="9">No matching worker found.</td></tr>{% endfor %}</tbody></table></div>
+<tbody>{% for w in results %}<tr><td>{{ w.id }}</td><td>{{ w.name or '' }}</td><td>{{ w.bangla_name or '' }}</td><td>{{ w.department or '' }}</td><td>{{ w.designation or '' }}</td><td>{{ w.phone or '' }}</td><td>à§³ {{ '%.2f'|format((w.basic_salary or 0)|float) }}</td><td><span class="badge {{ 'active' if (w.status or 'Active')=='Active' else 'inactive' }}">{{ w.status or 'Active' }}</span></td><td class="actions"><a class="btn small" href="{{ url_for('edit_worker', worker_id=w.id) }}">Edit</a><form method="post" action="{{ url_for('toggle_worker_status', worker_id=w.id) }}" style="display:inline"><input type="hidden" name="q" value="{{ q or '' }}"><input type="hidden" name="department" value="{{ department or '' }}"><input type="hidden" name="status" value="{{ status or '' }}"><button class="btn small {{ 'secondary' if (w.status or 'Active')=='Inactive' else '' }}" type="submit" onclick="return confirm('Change status for {{ w.name }}?');">{{ 'Set Active' if (w.status or 'Active')=='Inactive' else 'Set Inactive' }}</button></form><a class="btn small secondary" href="{{ url_for('attendance', worker_id=w.id) }}">Attendance</a><a class="btn small" href="{{ url_for('payslip', worker_id=w.id) }}">Payslip</a><a class="btn small" href="{{ url_for('advance', worker_id=w.id) }}">Advance</a><a class="btn small secondary" href="{{ url_for('payments', worker_id=w.id) }}">Payment</a></td></tr>{% else %}<tr><td colspan="9">No matching worker found.</td></tr>{% endfor %}</tbody></table></div>
 </div>
 </main></body></html>
 """
@@ -4612,10 +4667,9 @@ def workers():
              OR LOWER(COALESCE(name, '')) LIKE ?
              OR LOWER(COALESCE(bangla_name, '')) LIKE ?
              OR LOWER(COALESCE(department, '')) LIKE ?
-             OR LOWER(COALESCE(designation, '')) LIKE ?
-             OR LOWER(COALESCE(department, '')) LIKE ?)
+             OR LOWER(COALESCE(designation, '')) LIKE ?)
         """)
-        params.extend([like_value] * 6)
+        params.extend([like_value] * 5)
 
     if status_filter:
         conditions.append("COALESCE(NULLIF(TRIM(status), ''), 'Active')=?")
@@ -4708,10 +4762,10 @@ def add_worker():
             0
         )
 
-        ot_rate = parse_num(
-            form.get("ot_rate"),
-            0
-        )
+        # Auto OT Rate for new worker
+        # Formula = Basic Salary / 30 / 12
+        # Rounded to nearest whole BDT
+        ot_rate = int((basic_salary / 30 / 12) + 0.5) if basic_salary > 0 else 0
 
         refreshment_bill = parse_num(
             form.get(
@@ -4880,10 +4934,26 @@ def edit_worker(worker_id):
             0
         )
 
-        ot_rate = parse_num(
+        # OT Rate is recalculated automatically when Basic Salary changes.
+        # If Basic Salary is unchanged, keep the manually entered OT Rate.
+        submitted_ot_rate = parse_num(
             form.get("ot_rate"),
             0
         )
+
+        old_basic_salary = parse_num(
+            worker.get("basic_salary"),
+            0
+        )
+
+        if abs(basic_salary - old_basic_salary) > 0.000001:
+            ot_rate = (
+                int((basic_salary / 30 / 12) + 0.5)
+                if basic_salary > 0
+                else 0
+            )
+        else:
+            ot_rate = submitted_ot_rate
 
         refreshment_bill = parse_num(
             form.get(
@@ -5352,6 +5422,21 @@ def save_attendance():
             ))
 
         status_text = str(status or "").strip().upper()
+
+        # Friday is the weekly holiday. Keep it as Absent in the
+        # attendance calendar, while salary calculation separately
+        # ignores Friday for absent deduction.
+        try:
+            current_date = datetime.date(
+                attendance_year,
+                attendance_month,
+                day_number,
+            )
+            if current_date.weekday() == 4:
+                status_text = "A"
+        except Exception:
+            pass
+
         if not status_text or status_text in {"-", "NOT SET", "NONE"}:
             # Explicitly clear an existing daily attendance record.
             # A blank/Not Set selection means the user wants that day's P/A record removed, if one exists.
@@ -8422,6 +8507,136 @@ except Exception as e:
 # LOCAL DEVELOPMENT
 # ============================================================
 
+
+
+# ============================================================
+# TEMPORARY READ-ONLY ONLINE WORKERS DIAGNOSTIC
+# ============================================================
+
+@app.route("/diagnostic/online-workers")
+@login_required
+def diagnostic_online_workers():
+    if not is_postgres():
+        return """
+        <h2>Online Workers Diagnostic</h2>
+        <p>DATABASE_URL is not configured. This app is currently using SQLite.</p>
+        """, 400
+
+    try:
+        conn = db_connect()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT column_name, data_type
+            FROM information_schema.columns
+            WHERE table_schema='public'
+              AND table_name='workers'
+            ORDER BY ordinal_position
+        """)
+
+        columns = cur.fetchall()
+
+        cur.execute("SELECT COUNT(*) FROM workers")
+        worker_count = cur.fetchone()[0]
+
+        cur.execute("""
+            SELECT id, name
+            FROM workers
+            ORDER BY id
+            LIMIT 10
+        """)
+
+        samples = cur.fetchall()
+
+        db_release(conn)
+
+        html = """
+        <!doctype html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Online Workers Diagnostic</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 30px;
+                    line-height: 1.6;
+                }
+                table {
+                    border-collapse: collapse;
+                    margin-top: 10px;
+                }
+                th, td {
+                    border: 1px solid #ccc;
+                    padding: 7px 12px;
+                    text-align: left;
+                }
+                th {
+                    background: #eee;
+                }
+                .ok {
+                    color: green;
+                    font-weight: bold;
+                }
+            </style>
+        </head>
+        <body>
+            <h2>Reedoy v49 - Online Workers Diagnostic</h2>
+            <p class="ok">PostgreSQL connection: OK</p>
+            <p><b>Online Worker Count:</b> {{ worker_count }}</p>
+
+            <h3>Workers Table Columns</h3>
+            <table>
+                <tr>
+                    <th>Column</th>
+                    <th>Data Type</th>
+                </tr>
+                {% for row in columns %}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <h3>First 10 Workers</h3>
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                </tr>
+                {% for row in samples %}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <p><b>READ-ONLY CHECK — NO DATA WAS MODIFIED.</b></p>
+        </body>
+        </html>
+        """
+
+        return render_template_string(
+            html,
+            worker_count=worker_count,
+            columns=columns,
+            samples=samples,
+        )
+
+    except Exception as e:
+        try:
+            db_release(conn)
+        except Exception:
+            pass
+
+        return f"""
+        <h2>Online Workers Diagnostic</h2>
+        <p><b>ERROR:</b> {type(e).__name__}: {e}</p>
+        """, 500
+
+
 if __name__ == "__main__":
 
     app.run(
@@ -8434,6 +8649,7 @@ if __name__ == "__main__":
         ),
         debug=False,
     )
+
 
 
 
