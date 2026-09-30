@@ -1,0 +1,98 @@
+
+<!doctype html>
+<html lang="{{ 'bn' if language == 'bn' else 'en' }}">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Online ↔ Offline Data Sync | REEDOY PAYROLL</title>
+<style>
+body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}
+.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}
+.wrap{max-width:1100px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}
+h1,h2{margin-top:0}.btn{display:inline-block;background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 15px;text-decoration:none;cursor:pointer;font-size:14px}
+.btn.danger{background:#b42318}.btn.secondary{background:#475569}.file{padding:12px;border:1px solid #cbd5e1;border-radius:8px;width:100%;box-sizing:border-box;margin:8px 0 12px}
+.note{background:#eff6ff;border-left:4px solid #1764c0;padding:12px;border-radius:6px}.warn{background:#fff7ed;border-left:4px solid #ea580c;padding:12px;border-radius:6px}
+.msg{padding:11px;border-radius:8px;margin-bottom:12px}.success{background:#dcfce7;color:#166534}.danger-msg{background:#fee2e2;color:#991b1b}
+table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid #e2e8f0;text-align:left}th{background:#f8fafc}
+</style>
+</head>
+<body>
+<header class="top">
+<div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div>
+<nav class="nav">
+<a href="{{ url_for('dashboard') }}">Dashboard</a>
+<a href="{{ url_for('workers') }}">Workers</a>
+<a href="{{ url_for('attendance') }}">Attendance</a>
+<a href="{{ url_for('payslip') }}">Payslip</a>
+<a href="{{ url_for('advance') }}">Advance Salary</a>
+<a href="{{ url_for('department') }}">Department Salary</a>
+<a href="{{ url_for('reports') }}">Reports</a>
+<a href="{{ url_for('backup_maintenance') }}">Backup</a>
+<a href="{{ url_for('data_sync') }}">↔ Sync</a>
+<a href="{{ url_for('logout') }}">Logout</a>
+</nav>
+</header>
+<main class="wrap">
+{% with messages=get_flashed_messages(with_categories=true) %}
+{% for category,message in messages %}
+<div class="msg {{ 'success' if category=='success' else 'danger-msg' }}">{{message}}</div>
+{% endfor %}
+{% endwith %}
+
+<div class="box">
+<h1>Online ↔ Offline Data Sync</h1>
+<p>এই tab দিয়ে Online এবং Offline software-এর সম্পূর্ণ payroll data এক backup file-এর মাধ্যমে একে অপরের মধ্যে নেওয়া যাবে।</p>
+<div class="note">
+<strong>Backup file:</strong> Reedoy portable backup (.rdb)<br>
+Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Salary/Payment, Payroll Lock, Settings, Users ও Activity data backup-এর মধ্যে রাখা হবে।
+</div>
+</div>
+
+<div class="box">
+<h2>1. Current Database → Backup File</h2>
+<p>এই software-এর বর্তমান data একটি portable backup file-এ নিন। তারপর সেই file অন্য Online/Offline software-এ Restore করা যাবে।</p>
+<p><strong>Current database:</strong> {{ 'ONLINE / PostgreSQL' if is_online else 'OFFLINE / SQLite' }}</p>
+<form method="post" action="{{ url_for('create_portable_backup') }}">
+<button class="btn" type="submit">Create Portable Backup & Download</button>
+</form>
+</div>
+
+<div class="box">
+<h2>Workers Two-Way Sync — Step 1</h2>
+<p>প্রথমে Workers-এর Online ও Offline data field-by-field মিলিয়ে দেখা হবে। এই Check কোনো database data পরিবর্তন করবে না। Difference থাকলে Sync এখনই করা হবে না।</p>
+{% if is_online %}
+<a class="btn" href="{{ url_for('compare_online_workers') }}">Check Workers Before Sync</a>
+{% else %}
+<div class="note">এই Check Online software থেকে চালাতে হবে, কারণ সেখানে PostgreSQL Workers data যাচাই করা হবে।</div>
+{% endif %}
+</div>
+
+<div class="box">
+<h2>2. Backup File → Current Database</h2>
+<div class="warn">
+<strong>সতর্কতা:</strong> Restore করলে এই software-এর বর্তমান data backup file-এর data দিয়ে replace হবে। Restore করার আগে বর্তমান data-এর একটি safety backup স্বয়ংক্রিয়ভাবে তৈরি হবে। Worker ID ও পুরোনো record ID অপরিবর্তিত রাখার চেষ্টা করা হবে।
+</div>
+<form method="post" action="{{ url_for('restore_portable_backup') }}" enctype="multipart/form-data" onsubmit="return confirm('Restore করলে বর্তমান database-এর data backup file-এর data দিয়ে replace হবে। Continue?');">
+<input class="file" type="file" name="backup_file" accept=".rdb,.zip" required>
+<button class="btn danger" type="submit">Restore Backup to This Software</button>
+</form>
+</div>
+
+<div class="box">
+<h2>ব্যবহারের নিয়ম</h2>
+<table>
+<tr><th>কাজ</th><th>যেভাবে করবেন</th></tr>
+<tr><td>Online → Offline</td><td>Online-এ Create Portable Backup → file download → Offline-এ এই tab → Restore</td></tr>
+<tr><td>Offline → Online</td><td>Offline-এ Create Portable Backup → file নিয়ে Online-এ এই tab → Restore</td></tr>
+<tr><td>Data নিরাপত্তা</td><td>Restore-এর আগে বর্তমান database-এর safety backup তৈরি হবে</td></tr>
+<tr><td>Database</td><td>Online PostgreSQL এবং Offline SQLite—দুই ধরনের database support করবে</td></tr>
+</table>
+</div>
+
+<div class="box">
+<a class="btn secondary" href="{{ url_for('backup_maintenance') }}">← Backup & Maintenance</a>
+<a class="btn secondary" href="{{ url_for('dashboard') }}">Dashboard</a>
+</div>
+</main>
+</body>
+</html>
