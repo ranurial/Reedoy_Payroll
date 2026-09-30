@@ -6,6 +6,7 @@ import hashlib
 import calendar
 import datetime
 import json
+import re
 import zipfile
 import base64
 from decimal import Decimal
@@ -6116,11 +6117,21 @@ def ot_report_export():
 @app.route("/reports")
 @login_required
 def reports():
+    # Reports must accept both the new Month + Year selectors and the
+    # older HTML5 <input type="month"> format (YYYY-MM).
+    raw_month = (request.args.get("month") or "").strip()
+    raw_year = (request.args.get("year") or "").strip()
 
-    month = month_name_year(
-        request.args.get("month"),
-        request.args.get("year"),
-    )
+    if re.match(r"^\\d{4}-\\d{1,2}$", raw_month):
+        try:
+            y, m = raw_month.split("-")
+            raw_year = y
+            raw_month = MONTHS[int(m) - 1]
+        except Exception:
+            raw_month = ""
+            raw_year = ""
+
+    month = month_name_year(raw_month, raw_year)
 
     workers_list = fetch_all(
         """
@@ -6153,16 +6164,12 @@ def reports():
     department_map = {}
 
     for worker in workers_list:
-
         salary = salary_map.get(worker["id"], {})
         row = dict(worker)
         row.update(salary)
         rows.append(row)
 
-        department_name = (
-            worker.get("department")
-            or "Unassigned"
-        )
+        department_name = worker.get("department") or "Unassigned"
 
         if department_name not in department_map:
             department_map[department_name] = {
@@ -6206,8 +6213,10 @@ def reports():
         key=lambda item: str(item["department"]).lower()
     )
 
-    return safe_render_template(
-        "reports.html",
+    # Use the built-in reports template deliberately so an older
+    # templates/reports.html cannot hide the Month/Year controls.
+    return render_template_string(
+        BUILTIN_REPORTS_TEMPLATE,
         rows=rows,
         totals=totals,
         departments_summary=departments_summary,
@@ -9712,6 +9721,7 @@ def compare_online_workers():
     import json
     import hashlib
     from pathlib import Path
+    from collections import Counter
 
     if not is_postgres():
         return """
@@ -9746,6 +9756,10 @@ def compare_online_workers():
     def canonical(value):
         if value is None:
             return ""
+
+        if isinstance(value, float):
+            return str(round(value, 10)).strip()
+
         return str(value).strip()
 
     def field_hash(value):
@@ -9824,13 +9838,74 @@ def compare_online_workers():
                 if online_hash != local_hash:
                     differences.append({
                         "id": worker_id,
-                        "field": field
+                        "field": field,
+                        "online": canonical(online_values[field]),
+                        "local_hash": local_hash,
                     })
 
         db_release(conn)
         conn = None
 
-        difference_count = len(differences)
+        # Build a read-only field summary.
+        field_counts = Counter(
+            item["field"] for item in differences
+        )
+
+        # Read the local database separately to obtain the actual
+        # local values for the differing fields.
+        local_conn = None
+
+        try:
+            local_conn = sqlite3.connect(DB_PATH)
+            local_conn.row_factory = sqlite3.Row
+
+            local_cur = local_conn.cursor()
+
+            local_cur.execute("""
+                SELECT id,
+                       name,
+                       bangla_name,
+                       department,
+                       designation,
+                       basic_salary,
+                       ot_rate,
+                       refreshment_bill,
+                       phone,
+                       address,
+                       joining_date,
+                       status
+                FROM workers
+                ORDER BY id
+            """)
+
+            local_rows = local_cur.fetchall()
+
+            local_value_map = {
+                int(row["id"]): dict(row)
+                for row in local_rows
+            }
+
+        finally:
+            if local_conn is not None:
+                local_conn.close()
+
+        detailed_differences = []
+
+        for item in differences:
+            worker_id = item["id"]
+            field = item["field"]
+
+            local_row = local_value_map.get(worker_id, {})
+            local_value = canonical(local_row.get(field, ""))
+
+            detailed_differences.append({
+                "id": worker_id,
+                "field": field,
+                "local": local_value,
+                "online": item["online"],
+            })
+
+        difference_count = len(detailed_differences)
 
         if (
             len(rows) == 169
@@ -9887,19 +9962,41 @@ def compare_online_workers():
             </tr>
         </table>
 
-        {% if differences %}
-        <h3>Differences</h3>
+        {% if field_counts %}
+        <h3>Differences by Field</h3>
+
+        <table border="1" cellpadding="8">
+            <tr>
+                <th>Field</th>
+                <th>Difference Count</th>
+            </tr>
+
+            {% for field, count in field_counts %}
+            <tr>
+                <td>{{ field }}</td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+
+        {% if detailed_differences %}
+        <h3>Detailed Differences</h3>
 
         <table border="1" cellpadding="8">
             <tr>
                 <th>Worker ID</th>
                 <th>Different Field</th>
+                <th>Local Value</th>
+                <th>Online Value</th>
             </tr>
 
-            {% for item in differences %}
+            {% for item in detailed_differences %}
             <tr>
                 <td>{{ item.id }}</td>
                 <td>{{ item.field }}</td>
+                <td>{{ item.local }}</td>
+                <td>{{ item.online }}</td>
             </tr>
             {% endfor %}
         </table>
@@ -9922,7 +10019,11 @@ def compare_online_workers():
         missing_online=missing_online,
         extra_online=extra_online,
         difference_count=difference_count,
-        differences=differences
+        field_counts=sorted(
+            field_counts.items(),
+            key=lambda x: (-x[1], x[0])
+        ),
+        detailed_differences=detailed_differences
         )
 
     except Exception as e:
