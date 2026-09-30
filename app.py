@@ -8951,43 +8951,97 @@ def prepare_online_workers_sync():
 
 
 
+
 @app.route("/diagnostic/online-worker-337")
 @login_required
 def diagnostic_online_worker_337():
     if not is_postgres():
         return "ERROR: PostgreSQL connection is not active.", 400
 
+    conn = None
+
     try:
-        row = fetch_one("""
+        conn = db_connect()
+        cur = conn.cursor()
+
+        cur.execute("""
             SELECT id, name, bangla_name, department,
                    designation, basic_salary, ot_rate,
                    refreshment_bill, status
             FROM workers
-            WHERE id=337
-        """)
+            WHERE id = %s
+        """, (337,))
 
-        if not row:
+        raw = cur.fetchone()
+
+        if raw is None:
+            db_release(conn)
+            conn = None
             return "<h2>Online Worker ID 337 NOT FOUND</h2>", 404
+
+        # Read values by column position from the actual PostgreSQL cursor.
+        values = list(raw)
+
+        fields = [
+            "ID",
+            "English Name",
+            "Bangla Name",
+            "Department",
+            "Designation",
+            "Basic Salary",
+            "OT Rate",
+            "Refreshment Bill",
+            "Status"
+        ]
+
+        data = []
+
+        for i, field in enumerate(fields):
+            value = values[i] if i < len(values) else None
+
+            if value is None:
+                value = ""
+
+            data.append((field, value))
+
+        db_release(conn)
+        conn = None
 
         return render_template_string("""
         <h2>Reedoy v49 - Online Worker ID 337</h2>
+
         <table border="1" cellpadding="8">
-            <tr><th>Field</th><th>Value</th></tr>
-            <tr><td>ID</td><td>{{ row[0] }}</td></tr>
-            <tr><td>English Name</td><td>{{ row[1] }}</td></tr>
-            <tr><td>Bangla Name</td><td>{{ row[2] }}</td></tr>
-            <tr><td>Department</td><td>{{ row[3] }}</td></tr>
-            <tr><td>Designation</td><td>{{ row[4] }}</td></tr>
-            <tr><td>Basic Salary</td><td>{{ row[5] }}</td></tr>
-            <tr><td>OT Rate</td><td>{{ row[6] }}</td></tr>
-            <tr><td>Refreshment Bill</td><td>{{ row[7] }}</td></tr>
-            <tr><td>Status</td><td>{{ row[8] }}</td></tr>
+            <tr>
+                <th>Field</th>
+                <th>Value</th>
+            </tr>
+
+            {% for field, value in data %}
+            <tr>
+                <td><b>{{ field }}</b></td>
+                <td>{{ value }}</td>
+            </tr>
+            {% endfor %}
         </table>
-        <p><b>READ ONLY — no database changes were made.</b></p>
-        """, row=row)
+
+        <p>
+            <b>READ ONLY — no database changes were made.</b>
+        </p>
+        """, data=data)
 
     except Exception as e:
-        return f"<h2>ERROR</h2><p>{type(e).__name__}: {e}</p>", 500
+
+        if conn is not None:
+            try:
+                db_release(conn)
+            except Exception:
+                pass
+
+        return f"""
+        <h2>Worker 337 Diagnostic Error</h2>
+        <p>{type(e).__name__}: {e}</p>
+        <p><b>READ ONLY — no database changes were made.</b></p>
+        """, 500
 
 
 if __name__ == "__main__":
