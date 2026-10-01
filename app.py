@@ -9919,6 +9919,12 @@ def apply_worker_local_to_online():
 @app.route("/sync/compare-online-workers")
 @login_required
 def compare_online_workers():
+    """READ-ONLY comparison. Never opens Render's local SQLite DB.
+    Local values come from workers_sync_values.json; all online values
+    come from PostgreSQL. The comparison seed is used for the complete
+    11-field hash comparison, while the sync payload supplies the local
+    display values for fields that differ.
+    """
     import json
     import hashlib
     from pathlib import Path
@@ -9929,317 +9935,174 @@ def compare_online_workers():
         <h2>Full Worker Comparison</h2>
         <h3 style="color:red">ERROR</h3>
         <p>PostgreSQL connection is not active.</p>
+        <p><b>READ ONLY — no database changes were made.</b></p>
         """, 400
 
-    seed_path = Path(__file__).resolve().parent / "workers_compare_seed.json"
+    base = Path(__file__).resolve().parent
+    seed_path = base / "workers_compare_seed.json"
+    payload_path = base / "workers_sync_values.json"
 
     if not seed_path.exists():
         return """
         <h2>Full Worker Comparison</h2>
         <h3 style="color:red">ERROR</h3>
         <p>workers_compare_seed.json was not found.</p>
+        <p><b>READ ONLY — no database changes were made.</b></p>
+        """, 500
+
+    if not payload_path.exists():
+        return """
+        <h2>Full Worker Comparison</h2>
+        <h3 style="color:red">ERROR</h3>
+        <p>workers_sync_values.json was not found.</p>
+        <p>Push the verified local Worker sync payload first.</p>
+        <p><b>READ ONLY — no database changes were made.</b></p>
         """, 500
 
     fields = [
-        "name",
-        "bangla_name",
-        "department",
-        "designation",
-        "basic_salary",
-        "ot_rate",
-        "refreshment_bill",
-        "phone",
-        "address",
-        "joining_date",
-        "status",
+        "name", "bangla_name", "department", "designation",
+        "basic_salary", "ot_rate", "refreshment_bill", "phone",
+        "address", "joining_date", "status"
     ]
+    payload_display_fields = {"name", "bangla_name", "designation", "status", "ot_rate"}
 
     def canonical(value):
         if value is None:
             return ""
-
         if isinstance(value, float):
             return str(round(value, 10)).strip()
-
         return str(value).strip()
 
     def field_hash(value):
-        return hashlib.sha256(
-            canonical(value).encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha256(canonical(value).encode("utf-8")).hexdigest()
 
     conn = None
-
     try:
         with open(seed_path, "r", encoding="utf-8") as f:
             seed = json.load(f)
+        with open(payload_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
 
-        if len(seed) != 169:
-            raise RuntimeError(
-                f"Comparison seed contains {len(seed)} workers; expected 169."
-            )
+        if not isinstance(seed, list) or len(seed) != 169:
+            raise RuntimeError("Comparison seed must contain exactly 169 workers.")
+        if not isinstance(payload, list) or len(payload) != 169:
+            raise RuntimeError("Sync payload must contain exactly 169 workers.")
 
-        local_map = {}
-
+        seed_map = {}
+        payload_map = {}
         for item in seed:
-            worker_id = int(item["id"])
+            wid = int(item["id"])
+            if wid in seed_map:
+                raise RuntimeError(f"Duplicate Worker ID in comparison seed: {wid}")
+            seed_map[wid] = item["hashes"]
+        for item in payload:
+            wid = int(item["id"])
+            if wid in payload_map:
+                raise RuntimeError(f"Duplicate Worker ID in sync payload: {wid}")
+            payload_map[wid] = item
 
-            if worker_id in local_map:
-                raise RuntimeError(
-                    f"Duplicate worker ID in comparison seed: {worker_id}"
-                )
-
-            local_map[worker_id] = item["hashes"]
+        if set(seed_map) != set(payload_map):
+            raise RuntimeError("Comparison seed and sync payload Worker IDs do not match.")
 
         conn = db_connect()
         cur = conn.cursor()
-
         cur.execute("""
-            SELECT id,
-                   name,
-                   bangla_name,
-                   department,
-                   designation,
-                   basic_salary,
-                   ot_rate,
-                   refreshment_bill,
-                   phone,
-                   address,
-                   joining_date,
-                   status
-            FROM workers
-            ORDER BY id
+            SELECT id, name, bangla_name, department, designation,
+                   basic_salary, ot_rate, refreshment_bill, phone,
+                   address, joining_date, status
+            FROM workers ORDER BY id
         """)
-
         rows = cur.fetchall()
-
-        online_ids = {int(row[0]) for row in rows}
-        local_ids = set(local_map.keys())
-
+        online_ids = {int(r[0]) for r in rows}
+        local_ids = set(seed_map)
         missing_online = sorted(local_ids - online_ids)
         extra_online = sorted(online_ids - local_ids)
 
         differences = []
-
         for row in rows:
-            worker_id = int(row[0])
-
-            if worker_id not in local_map:
+            wid = int(row[0])
+            if wid not in seed_map:
                 continue
-
-            online_values = {
-                field: row[i + 1]
-                for i, field in enumerate(fields)
-            }
-
+            online_values = {field: row[i + 1] for i, field in enumerate(fields)}
             for field in fields:
-                online_hash = field_hash(online_values[field])
-                local_hash = local_map[worker_id].get(field, "")
-
-                if online_hash != local_hash:
+                if field_hash(online_values[field]) != seed_map[wid].get(field, ""):
+                    local_display = "Unavailable on Render (offline value is in local SQLite)"
+                    if field in payload_display_fields:
+                        local_display = canonical(payload_map[wid].get(field))
                     differences.append({
-                        "id": worker_id,
+                        "id": wid,
                         "field": field,
+                        "local": local_display,
                         "online": canonical(online_values[field]),
-                        "local_hash": local_hash,
                     })
 
-        db_release(conn)
-        conn = None
+        online_count = len(rows)
+        difference_count = len(differences)
+        field_counts = Counter(item["field"] for item in differences)
 
-        # Build a read-only field summary.
-        field_counts = Counter(
-            item["field"] for item in differences
-        )
-
-        # Read the local database separately to obtain the actual
-        # local values for the differing fields.
-        local_conn = None
-
-        try:
-            local_conn = sqlite3.connect(DB_PATH)
-            local_conn.row_factory = sqlite3.Row
-
-            local_cur = local_conn.cursor()
-
-            local_cur.execute("""
-                SELECT id,
-                       name,
-                       bangla_name,
-                       department,
-                       designation,
-                       basic_salary,
-                       ot_rate,
-                       refreshment_bill,
-                       phone,
-                       address,
-                       joining_date,
-                       status
-                FROM workers
-                ORDER BY id
-            """)
-
-            local_rows = local_cur.fetchall()
-
-            local_value_map = {
-                int(row["id"]): dict(row)
-                for row in local_rows
-            }
-
-        finally:
-            if local_conn is not None:
-                local_conn.close()
-
-        detailed_differences = []
-
-        for item in differences:
-            worker_id = item["id"]
-            field = item["field"]
-
-            local_row = local_value_map.get(worker_id, {})
-            local_value = canonical(local_row.get(field, ""))
-
-            detailed_differences.append({
-                "id": worker_id,
-                "field": field,
-                "local": local_value,
-                "online": item["online"],
-            })
-
-        difference_count = len(detailed_differences)
-
-        if (
-            len(rows) == 169
-            and not missing_online
-            and not extra_online
-            and difference_count == 0
-        ):
-            status_html = """
-            <h2 style="color:green">
-                ALL WORKER DATA MATCH
-            </h2>
-            """
+        if online_count == 169 and not missing_online and not extra_online and difference_count == 0:
+            status_html = '<h2 style="color:green">ALL WORKER DATA MATCH</h2>'
         else:
-            status_html = """
-            <h2 style="color:#b00000">
-                WORKER DATA DIFFERENCES FOUND
-            </h2>
-            """
+            status_html = '<h2 style="color:#b00000">WORKER DATA DIFFERENCES FOUND</h2>'
 
         return render_template_string("""
         <h2>Reedoy v49 - Full Worker Comparison</h2>
-
         {{ status_html|safe }}
-
+        <p style="color:#555"><b>READ ONLY:</b> This comparison does not use Render's local SQLite database and performs no database writes.</p>
         <table border="1" cellpadding="8">
-            <tr>
-                <th>Check</th>
-                <th>Result</th>
-            </tr>
-
-            <tr>
-                <td>Local Workers</td>
-                <td>169</td>
-            </tr>
-
-            <tr>
-                <td>Online Workers</td>
-                <td>{{ online_count }}</td>
-            </tr>
-
-            <tr>
-                <td>Missing Online IDs</td>
-                <td>{{ missing_online }}</td>
-            </tr>
-
-            <tr>
-                <td>Extra Online IDs</td>
-                <td>{{ extra_online }}</td>
-            </tr>
-
-            <tr>
-                <td>Total Field Differences</td>
-                <td>{{ difference_count }}</td>
-            </tr>
+            <tr><th>Check</th><th>Result</th></tr>
+            <tr><td>Local Workers</td><td>169</td></tr>
+            <tr><td>Online Workers</td><td>{{ online_count }}</td></tr>
+            <tr><td>Missing Online IDs</td><td>{{ missing_online }}</td></tr>
+            <tr><td>Extra Online IDs</td><td>{{ extra_online }}</td></tr>
+            <tr><td>Total Field Differences</td><td>{{ difference_count }}</td></tr>
         </table>
-
         {% if field_counts %}
         <h3>Differences by Field</h3>
-
         <table border="1" cellpadding="8">
-            <tr>
-                <th>Field</th>
-                <th>Difference Count</th>
-            </tr>
-
+            <tr><th>Field</th><th>Difference Count</th></tr>
             {% for field, count in field_counts %}
-            <tr>
-                <td>{{ field }}</td>
-                <td>{{ count }}</td>
-            </tr>
+            <tr><td>{{ field }}</td><td>{{ count }}</td></tr>
             {% endfor %}
         </table>
         {% endif %}
-
-        {% if detailed_differences %}
+        {% if differences %}
         <h3>Detailed Differences</h3>
-
         <table border="1" cellpadding="8">
-            <tr>
-                <th>Worker ID</th>
-                <th>Different Field</th>
-                <th>Local Value</th>
-                <th>Online Value</th>
-            </tr>
-
-            {% for item in detailed_differences %}
-            <tr>
-                <td>{{ item.id }}</td>
-                <td>{{ item.field }}</td>
-                <td>{{ item.local }}</td>
-                <td>{{ item.online }}</td>
-            </tr>
+            <tr><th>Worker ID</th><th>Different Field</th><th>Local Value</th><th>Online Value</th></tr>
+            {% for item in differences %}
+            <tr><td>{{ item.id }}</td><td>{{ item.field }}</td><td>{{ item.local }}</td><td>{{ item.online }}</td></tr>
             {% endfor %}
         </table>
         {% endif %}
-
-        <p>
-        Compared fields:
-        Name, Bangla Name, Department, Designation,
-        Basic Salary, OT Rate, Refreshment Bill,
-        Phone, Address, Joining Date, Status.
-        </p>
-
-        <p>
-        <b>READ ONLY — no database changes were made.</b>
-        </p>
-
+        <p><b>Compared fields:</b> Name, Bangla Name, Department, Designation, Basic Salary, OT Rate, Refreshment Bill, Phone, Address, Joining Date, Status.</p>
+        <p><b>READ ONLY — no database changes were made.</b></p>
         """,
         status_html=status_html,
-        online_count=len(rows),
+        online_count=online_count,
         missing_online=missing_online,
         extra_online=extra_online,
         difference_count=difference_count,
-        field_counts=sorted(
-            field_counts.items(),
-            key=lambda x: (-x[1], x[0])
-        ),
-        detailed_differences=detailed_differences
-        )
+        field_counts=sorted(field_counts.items(), key=lambda x: (-x[1], x[0])),
+        differences=differences)
 
     except Exception as e:
-
         if conn is not None:
             try:
                 db_release(conn)
             except Exception:
                 pass
-
         return f"""
         <h2>Full Worker Comparison Error</h2>
-        <p>{type(e).__name__}: {e}</p>
+        <p><b>{type(e).__name__}:</b> {e}</p>
         <p><b>READ ONLY — no database changes were made.</b></p>
         """, 500
+    finally:
+        if conn is not None:
+            try:
+                db_release(conn)
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
