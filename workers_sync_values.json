@@ -1,0 +1,1523 @@
+[
+  {
+    "id": 224,
+    "sync_uuid": "d4cbdae6-ed4e-405e-821e-e8ecbe197834",
+    "name": "Md. Kabir Hossain",
+    "bangla_name": "",
+    "designation": "Master",
+    "status": "",
+    "ot_rate": 556.0
+  },
+  {
+    "id": 225,
+    "sync_uuid": "12c199dd-cec9-4f79-bfa6-414a85c4117f",
+    "name": "Md. Ariful Islam",
+    "bangla_name": "",
+    "designation": "Asst. Master",
+    "status": "",
+    "ot_rate": 139.0
+  },
+  {
+    "id": 226,
+    "sync_uuid": "aac00ff3-62d1-4953-b9f0-7e4925079c98",
+    "name": "Md. Sagor",
+    "bangla_name": "",
+    "designation": "Designer",
+    "status": "",
+    "ot_rate": 97.0
+  },
+  {
+    "id": 227,
+    "sync_uuid": "aa7a7a32-3581-411e-9a67-55bc59b28f3d",
+    "name": "Md. Aslam",
+    "bangla_name": "",
+    "designation": "Designer",
+    "status": "",
+    "ot_rate": 139.0
+  },
+  {
+    "id": 228,
+    "sync_uuid": "1294ad72-53ff-4510-b59d-6805f090b132",
+    "name": "Md. Shahin",
+    "bangla_name": "",
+    "designation": "Sample Man",
+    "status": "",
+    "ot_rate": 72.0
+  },
+  {
+    "id": 229,
+    "sync_uuid": "52eb1194-7992-43e3-a608-0368449a82eb",
+    "name": "MD. Faisal",
+    "bangla_name": "",
+    "designation": "Sample Man",
+    "status": "",
+    "ot_rate": 39.0
+  },
+  {
+    "id": 230,
+    "sync_uuid": "8080ae41-fb58-446e-8bdf-dcaa68d17066",
+    "name": "Md. Akkas",
+    "bangla_name": "",
+    "designation": "Code",
+    "status": "",
+    "ot_rate": 61.0
+  },
+  {
+    "id": 231,
+    "sync_uuid": "409cf180-f166-43a4-be3f-6db63b3f0595",
+    "name": "Md. Mostafa",
+    "bangla_name": "",
+    "designation": "Code",
+    "status": "",
+    "ot_rate": 47.0
+  },
+  {
+    "id": 232,
+    "sync_uuid": "6b3cda5e-b7ec-4542-82af-9de352c21a3d",
+    "name": "Md. Shamim",
+    "bangla_name": "",
+    "designation": "Code",
+    "status": "",
+    "ot_rate": 47.0
+  },
+  {
+    "id": 233,
+    "sync_uuid": "9f101d8e-d90e-4cf3-8516-fdbb1a8b5e54",
+    "name": "Rony Mondol",
+    "bangla_name": "",
+    "designation": "Code",
+    "status": "",
+    "ot_rate": 47.0
+  },
+  {
+    "id": 234,
+    "sync_uuid": "71543f28-6bb2-47e5-aeae-c1299ecec936",
+    "name": "Md. Touhidul",
+    "bangla_name": "",
+    "designation": "Manager",
+    "status": "",
+    "ot_rate": 69.0
+  },
+  {
+    "id": 235,
+    "sync_uuid": "ad5aec47-43a1-41b1-9a3f-ab03daaf8812",
+    "name": "Md. Jalal Uddin",
+    "bangla_name": "",
+    "designation": "Asst Manager",
+    "status": "",
+    "ot_rate": 56.0
+  },
+  {
+    "id": 236,
+    "sync_uuid": "29ee3b2f-247d-4873-82f1-e149c6c93d36",
+    "name": "A.S.M Kamrul Hassan",
+    "bangla_name": "A.S.M Kamrul Hassan",
+    "designation": "Accounts OfficerAccounts Officer",
+    "status": "",
+    "ot_rate": 56.0
+  },
+  {
+    "id": 237,
+    "sync_uuid": "d3b89240-ab21-4401-9665-18ffbdbda38c",
+    "name": "MD. Haider Ali",
+    "bangla_name": "",
+    "designation": "Maketing Officer",
+    "status": "",
+    "ot_rate": 56.0
+  },
+  {
+    "id": 238,
+    "sync_uuid": "e7e07459-b366-4e7c-8b9f-b785f68c35d9",
+    "name": "Md. Abdul Barek",
+    "bangla_name": "",
+    "designation": "Electrician",
+    "status": "",
+    "ot_rate": 69.0
+  },
+  {
+    "id": 239,
+    "sync_uuid": "f2570715-0e37-4d9e-9c29-b46e7e5ff11b",
+    "name": "Md. Momin",
+    "bangla_name": "",
+    "designation": "Electrician",
+    "status": "",
+    "ot_rate": 47.0
+  },
+  {
+    "id": 240,
+    "sync_uuid": "c623e75c-fd3b-46b4-9d67-2789f50644a7",
+    "name": "Md. Masud",
+    "bangla_name": "",
+    "designation": "Boiler Operator",
+    "status": "",
+    "ot_rate": 58.0
+  },
+  {
+    "id": 241,
+    "sync_uuid": "640cbd24-b74e-46e7-a582-3ea031d2704b",
+    "name": "Md.Nasir",
+    "bangla_name": "",
+    "designation": "Boiler Operator",
+    "status": "",
+    "ot_rate": 50.0
+  },
+  {
+    "id": 242,
+    "sync_uuid": "0c02a7a0-d620-4958-81ba-c23802b6764d",
+    "name": "Md. Sohrap",
+    "bangla_name": "",
+    "designation": "Guard",
+    "status": "",
+    "ot_rate": 35.0
+  },
+  {
+    "id": 243,
+    "sync_uuid": "f849f9de-d8cb-4da0-af37-267541c236a2",
+    "name": "Md. Wayes Koroni",
+    "bangla_name": "",
+    "designation": "Guard",
+    "status": "",
+    "ot_rate": 35.0
+  },
+  {
+    "id": 244,
+    "sync_uuid": "ee3e4119-c1ca-42bc-af89-5a0c1a9218af",
+    "name": "Md. Jobair",
+    "bangla_name": "",
+    "designation": "ETP Operator",
+    "status": "",
+    "ot_rate": 50.0
+  },
+  {
+    "id": 245,
+    "sync_uuid": "8c185825-3b8e-498f-b863-817bc09b2f6b",
+    "name": "Md. Ali",
+    "bangla_name": "",
+    "designation": "Cleaner",
+    "status": "",
+    "ot_rate": 19.0
+  },
+  {
+    "id": 246,
+    "sync_uuid": "d35f29c8-7883-4384-9bd3-3dc3168940cb",
+    "name": "Ms. Hafsa",
+    "bangla_name": "",
+    "designation": "Guard",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 247,
+    "sync_uuid": "803b2a87-6881-49e5-b38b-edbc6c88125a",
+    "name": "Md. Nur Nabi",
+    "bangla_name": "",
+    "designation": "Loader",
+    "status": "",
+    "ot_rate": 33.0
+  },
+  {
+    "id": 248,
+    "sync_uuid": "c0acd070-3087-4f2f-acb6-f9fa18537cad",
+    "name": "Md. Abdur Razzak",
+    "bangla_name": "",
+    "designation": "Loader",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 249,
+    "sync_uuid": "add92435-d7ca-424b-8714-242e8a04abc6",
+    "name": "Md. Nazmul",
+    "bangla_name": "",
+    "designation": "Operator",
+    "status": "",
+    "ot_rate": 58.0
+  },
+  {
+    "id": 250,
+    "sync_uuid": "7e91a123-566c-42a4-8930-f18e958be649",
+    "name": "Md. Masud",
+    "bangla_name": "Md. Masud",
+    "designation": "Clipper",
+    "status": "",
+    "ot_rate": 35.0
+  },
+  {
+    "id": 251,
+    "sync_uuid": "5e80fbdb-9672-4717-9a08-7fbc2a4e0b76",
+    "name": "Md. Shahjahan",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 252,
+    "sync_uuid": "1d6536ff-eef5-4dbe-98fe-0fd706d53d74",
+    "name": "Md. Siam",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 253,
+    "sync_uuid": "5e87074e-866d-4dbd-bc90-33404a6e8bec",
+    "name": "Md. Ahmed",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 254,
+    "sync_uuid": "4ae98dd8-0599-4f34-9a81-932b30427d47",
+    "name": "Ms. Sima",
+    "bangla_name": "Ms. Sima",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 255,
+    "sync_uuid": "893f9823-1b34-4369-8406-104a312bd9c5",
+    "name": "Ms. Hasina",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 256,
+    "sync_uuid": "fdf69cdc-8418-4449-8b4e-0abdc022ff81",
+    "name": "Ms. Jesmin",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 257,
+    "sync_uuid": "d40cae88-6e94-44fc-b0a7-bcc2b7b2cac0",
+    "name": "Ms. Halima",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 33.0
+  },
+  {
+    "id": 258,
+    "sync_uuid": "6441f826-db98-4007-b9a5-95a087968dae",
+    "name": "Md. Helal",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 259,
+    "sync_uuid": "43d17ec2-4db7-47b7-9229-df105badecba",
+    "name": "Md. Jobair",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 260,
+    "sync_uuid": "32d9c8fa-8a0e-448b-9e8d-a0af38b89cfa",
+    "name": "Md. Mizan",
+    "bangla_name": "",
+    "designation": "Operator",
+    "status": "",
+    "ot_rate": 78.0
+  },
+  {
+    "id": 261,
+    "sync_uuid": "081c34b2-392f-4cca-8ed9-382f3f8d4e89",
+    "name": "Md. Rassel",
+    "bangla_name": "Md. Rassel",
+    "designation": "Clipper",
+    "status": "",
+    "ot_rate": 56.0
+  },
+  {
+    "id": 262,
+    "sync_uuid": "6cdee08f-1810-4e44-9307-2010035e39f8",
+    "name": "Md. Yasin",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 36.0
+  },
+  {
+    "id": 263,
+    "sync_uuid": "24544403-9aec-4e76-9d5f-45a0cfe0d0c7",
+    "name": "Md. Onik",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 35.0
+  },
+  {
+    "id": 264,
+    "sync_uuid": "de8421e6-5e4a-4bca-90d3-02b0ae7d8386",
+    "name": "Md. Ripon",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 265,
+    "sync_uuid": "85132f4a-bf65-4223-a51f-ea44ec66dd37",
+    "name": "Md. Rahman",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 266,
+    "sync_uuid": "e8ece789-6beb-4c33-9862-f5b7d0e18b53",
+    "name": "Md. Rabbi",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 267,
+    "sync_uuid": "f64f3233-fa2a-41df-9713-801ee84355f2",
+    "name": "Md. Simanto",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 268,
+    "sync_uuid": "77df008e-600d-4b8a-85c7-2baeb34799c4",
+    "name": "Ms. Sima",
+    "bangla_name": "মিস সিমা",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 29.0
+  },
+  {
+    "id": 269,
+    "sync_uuid": "de0ae95b-6069-4df7-b8c3-9e123a3d5684",
+    "name": "Ms. Surma",
+    "bangla_name": "মিস সুরমা",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 270,
+    "sync_uuid": "a0995496-6ebf-46af-b9c0-80d7ed32da95",
+    "name": "Ms. Rabeya",
+    "bangla_name": "মিস রাবেয়া",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 271,
+    "sync_uuid": "13c402e2-1527-4136-a768-0a6c1dac6916",
+    "name": "Md. Sojib",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 39.0
+  },
+  {
+    "id": 272,
+    "sync_uuid": "934ce46f-b8f6-466f-8047-64d02c8ddf08",
+    "name": "Md. Imran",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 33.0
+  },
+  {
+    "id": 273,
+    "sync_uuid": "67aa8c75-efa9-44f3-ae68-d879d319a591",
+    "name": "Md. Jakaria",
+    "bangla_name": "মোঃ জাকারিয়া",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 274,
+    "sync_uuid": "a5e7047f-0c42-4167-b994-970dbe2a552f",
+    "name": "Md. Shaon",
+    "bangla_name": "মোঃ শাওন",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 275,
+    "sync_uuid": "c3da82ca-60aa-477b-a993-4df791a1e96a",
+    "name": "Ms. Anisa",
+    "bangla_name": "মিস আনিশা",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 276,
+    "sync_uuid": "da9c7f35-c557-4a09-821f-6bcabb591b57",
+    "name": "Md. Saikat",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 277,
+    "sync_uuid": "ba38db63-eba0-413e-86e3-b751d384939f",
+    "name": "Md. Afzal",
+    "bangla_name": "মোঃ আফজাল",
+    "designation": "Supervisor",
+    "status": "",
+    "ot_rate": 72.0
+  },
+  {
+    "id": 278,
+    "sync_uuid": "b2c9f41f-39a3-43be-a447-7fbc963d96b3",
+    "name": "Md. Jisan",
+    "bangla_name": "",
+    "designation": "Operator",
+    "status": "",
+    "ot_rate": 50.0
+  },
+  {
+    "id": 279,
+    "sync_uuid": "bef48c25-ed1f-4cd2-b6de-7883047ed397",
+    "name": "Md. Jikrul",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 280,
+    "sync_uuid": "97f4ad2d-32f2-4840-817d-89d5d7ac14a8",
+    "name": "Md. Luthfor",
+    "bangla_name": "মোঃ লুৎফর",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 281,
+    "sync_uuid": "da2d9594-8656-4535-abde-ddbe022353af",
+    "name": "Md. Rubel",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 39.0
+  },
+  {
+    "id": 282,
+    "sync_uuid": "90bfe01a-ccb0-4640-9af6-494941bafd1c",
+    "name": "Md. Shekhor",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 44.0
+  },
+  {
+    "id": 283,
+    "sync_uuid": "e9661108-6fdc-4060-8d1a-9c1d8b51fda6",
+    "name": "Md. Shohag",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 50.0
+  },
+  {
+    "id": 284,
+    "sync_uuid": "fec0e270-5a5b-447a-bd2b-cc3525eadd4f",
+    "name": "Md. Shipon",
+    "bangla_name": "মোঃ শিপন",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 285,
+    "sync_uuid": "64a86506-1891-4134-a854-3f0bcf404d00",
+    "name": "Md. Riaz",
+    "bangla_name": "মোঃ রিয়াজ",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 286,
+    "sync_uuid": "d2900d4e-53cd-4c5c-aa97-9e0770875533",
+    "name": "Md. Zafor",
+    "bangla_name": "মোঃ জাফর",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 47.0
+  },
+  {
+    "id": 287,
+    "sync_uuid": "c3ac9464-0eb1-48fe-b9e5-791eaff484e3",
+    "name": "Md. Ruhul Amin",
+    "bangla_name": "Md. Ruhul Amin",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 47.0
+  },
+  {
+    "id": 288,
+    "sync_uuid": "85d7db86-1717-4b06-af55-d18a787e63f8",
+    "name": "Md. Onup",
+    "bangla_name": "Md. Onup",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 289,
+    "sync_uuid": "a82e08f6-15ff-4876-8bc2-dafcd3946114",
+    "name": "Md. Rejaul",
+    "bangla_name": "মোঃ রেজাউল",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 290,
+    "sync_uuid": "422bfc0a-ca69-4b5c-8163-13cf3570bac4",
+    "name": "Md. Nayon",
+    "bangla_name": "মোঃ নয়ন",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 291,
+    "sync_uuid": "20700839-9849-4eb4-9d0e-57946156b2c8",
+    "name": "Md. Zahidul",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 292,
+    "sync_uuid": "add39441-db70-4352-a688-afbbc12555e8",
+    "name": "Md. Mamun",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 50.0
+  },
+  {
+    "id": 293,
+    "sync_uuid": "bd3afbb3-a973-4861-9922-fce4b05d6ce1",
+    "name": "Md. Babu",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 294,
+    "sync_uuid": "d1df58d8-b011-437e-a7af-820f6d2598ad",
+    "name": "Md. Jahangir",
+    "bangla_name": "মোঃ জাহাঙ্গীর",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 295,
+    "sync_uuid": "e446d393-5e6d-4f85-88f2-3534e8cb62f7",
+    "name": "Md. Rassel",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 83.0
+  },
+  {
+    "id": 296,
+    "sync_uuid": "bc1f9b0a-f050-467d-a076-7258754c985b",
+    "name": "Md. Jishan (2)",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 297,
+    "sync_uuid": "fef064b6-03f2-4a3f-8079-ab119b9d707d",
+    "name": "Md. Hannan",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 298,
+    "sync_uuid": "3429b2d5-e235-4c74-a6ee-03d6b698d4aa",
+    "name": "Md. Atiful",
+    "bangla_name": "মোঃ আতিফুল",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 299,
+    "sync_uuid": "090b7173-0060-472d-99f3-dd14c93084c9",
+    "name": "Md. Azizul",
+    "bangla_name": "মোঃ আজিজুল",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 300,
+    "sync_uuid": "98807678-d750-4d59-9a46-9906195ae6fd",
+    "name": "Md. Rahat",
+    "bangla_name": "মোঃ রাহাত",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 33.0
+  },
+  {
+    "id": 301,
+    "sync_uuid": "804ac7ca-a326-4a56-8db9-e8dade92eee0",
+    "name": "Ms. Lamia",
+    "bangla_name": "মিস লামিয়া",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 302,
+    "sync_uuid": "9b60804c-a2fc-448e-8d2c-99849addd96c",
+    "name": "Ms. Runa",
+    "bangla_name": "মিস রুনা",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 303,
+    "sync_uuid": "a6da8994-f051-4845-a151-51fead2b7dd0",
+    "name": "Ms Vabna",
+    "bangla_name": "মিস ভাবনা",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 304,
+    "sync_uuid": "48dacf03-5858-43d2-a33f-d01839800bad",
+    "name": "Md. Ali",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 305,
+    "sync_uuid": "6db8a6a8-7c51-4bba-ba62-0ce674af696c",
+    "name": "Md. Alamgir",
+    "bangla_name": "মোঃ আলমগির",
+    "designation": "Supervisor",
+    "status": "",
+    "ot_rate": 111.0
+  },
+  {
+    "id": 306,
+    "sync_uuid": "dcdf5f9b-f527-4071-baf9-d813af88f317",
+    "name": "Ms. Fahima",
+    "bangla_name": "মিস ফাহিমা",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 307,
+    "sync_uuid": "2f34ffaa-feb0-460d-9697-4df94ee567ec",
+    "name": "Md. Roman",
+    "bangla_name": "",
+    "designation": "Operator",
+    "status": "",
+    "ot_rate": 67.0
+  },
+  {
+    "id": 308,
+    "sync_uuid": "470d268e-bc85-444c-8ca8-e30ea7c0c0a9",
+    "name": "Md. Habban",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 33.0
+  },
+  {
+    "id": 309,
+    "sync_uuid": "1fc0be79-53b9-42e2-aa62-57db68bfdd7b",
+    "name": "Md. Shanto",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 310,
+    "sync_uuid": "ef3f6fb2-2d89-48b1-a6f5-f4d88b86fc9f",
+    "name": "Md. Abdur Rahman",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 311,
+    "sync_uuid": "d816ea0c-942d-42ca-aeaa-93b5e667fecb",
+    "name": "Md. Mahadi",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 312,
+    "sync_uuid": "b248d4fc-4a5c-410d-91b3-f64141bef5ec",
+    "name": "Md. Rifat",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 313,
+    "sync_uuid": "7df8f808-6530-4478-90a7-7d059d4187d0",
+    "name": "Ms. Hena",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 314,
+    "sync_uuid": "b3344300-efdd-48b8-9201-f9686c6d0d16",
+    "name": "Ms. Taslima",
+    "bangla_name": "মিস তাসলিমা",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 315,
+    "sync_uuid": "2de8a237-4c3b-4366-82cf-b6dad25c028f",
+    "name": "Md. Osman",
+    "bangla_name": "মোঃ ওসমান",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 316,
+    "sync_uuid": "4b0f6d58-d092-4547-ac1c-b9a300a573c0",
+    "name": "Md. Minhaz",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 317,
+    "sync_uuid": "a8a22204-d4a1-4eaa-ac0e-b7b6e7511fd1",
+    "name": "Md. Wahid",
+    "bangla_name": "মোঃ ওয়াাহিদ",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 318,
+    "sync_uuid": "bbd13aab-57e3-4c8f-a037-a2fadaca330b",
+    "name": "Md. Nayim",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 319,
+    "sync_uuid": "9fc17320-1000-4edc-b884-abb81f1e5c3b",
+    "name": "Md. Munna",
+    "bangla_name": "",
+    "designation": "Operator",
+    "status": "",
+    "ot_rate": 50.0
+  },
+  {
+    "id": 320,
+    "sync_uuid": "59db919e-f671-4d82-8bda-f53fd08823de",
+    "name": "Md. Shohag",
+    "bangla_name": "মোঃ সোহাগ",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 321,
+    "sync_uuid": "ad4390fc-d05a-442a-a89f-f3b18c5300c0",
+    "name": "Md. Ariful",
+    "bangla_name": "মোঃ আরিফুল",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 33.0
+  },
+  {
+    "id": 322,
+    "sync_uuid": "673bf928-c55b-437f-9767-3f05ffaa6e3b",
+    "name": "Md. Mohammad",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 323,
+    "sync_uuid": "9b6ff54f-3696-47d7-b8f4-f9417e1f1c1e",
+    "name": "Md. Jisan",
+    "bangla_name": "Md. Jisan",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 324,
+    "sync_uuid": "9ba1d8e2-1aa2-464f-9681-353a07a3fe06",
+    "name": "Ms. Ruma",
+    "bangla_name": "মিস রুমা",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 325,
+    "sync_uuid": "8e977ccf-06b7-43e0-8aee-fad2e0612375",
+    "name": "Ms. Bilkis",
+    "bangla_name": "মিস বিলকিস",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 326,
+    "sync_uuid": "236bd52b-eb55-4beb-a40a-6ab19a737ffa",
+    "name": "Ms. Safia",
+    "bangla_name": "মিস সাফিয়া",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 327,
+    "sync_uuid": "e76cdfcd-6056-405c-bf9d-78def03b6d65",
+    "name": "Md. Deen Islam",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 328,
+    "sync_uuid": "c71929c2-22c6-4639-a1ef-5dccb6696851",
+    "name": "Md. Rashid",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 329,
+    "sync_uuid": "c9044765-37e7-4a02-958c-c21163325204",
+    "name": "Ms. Lamia",
+    "bangla_name": "মিস লামিয়া",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 331,
+    "sync_uuid": "1a32791d-40f8-4456-a8f8-9b019be8787e",
+    "name": "Md. Farid",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 78.0
+  },
+  {
+    "id": 332,
+    "sync_uuid": "c0582a2a-6d09-45af-a014-733db1818703",
+    "name": "Md. Liton",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 44.0
+  },
+  {
+    "id": 333,
+    "sync_uuid": "22c18dd7-12be-4f75-98b2-dd6f1e8ff54a",
+    "name": "Md. Fuad",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 33.0
+  },
+  {
+    "id": 334,
+    "sync_uuid": "397b734b-11fc-4c78-8940-99e6108dff4a",
+    "name": "Md. Rana",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 33.0
+  },
+  {
+    "id": 335,
+    "sync_uuid": "55c8a812-eb01-4ea0-8a5e-ec58c43f1534",
+    "name": "Ms. Morium",
+    "bangla_name": "মিস মরিয়াম",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 336,
+    "sync_uuid": "3073061c-5b4a-48e2-897e-f0787bf3b169",
+    "name": "Ms. Mim",
+    "bangla_name": "মিস মিম",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 337,
+    "sync_uuid": "4401de3e-c95f-4a65-aac1-909ca139fff4",
+    "name": "Ms. Lamia (1)",
+    "bangla_name": "মিস লামিয়া (1)",
+    "designation": "Labour",
+    "status": "Active",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 338,
+    "sync_uuid": "5989289b-bfe2-455f-b89f-82bda094787a",
+    "name": "Md. Faisal",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 69.0
+  },
+  {
+    "id": 339,
+    "sync_uuid": "57acfcbe-9858-4ace-985e-ea3101961b60",
+    "name": "Ms. Mukta Nupur (2)",
+    "bangla_name": "Ms. Mukta Nupur (2)",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 340,
+    "sync_uuid": "14b8be68-fd5b-487e-a353-9a4ecf25b31d",
+    "name": "Md. Roni",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 341,
+    "sync_uuid": "662b0d27-1268-4b6c-87ce-d5b9937d0492",
+    "name": "Ms. Sadia Nur",
+    "bangla_name": "মিস সাদিয়া নুর",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 342,
+    "sync_uuid": "8f3f5051-ee45-4c57-96b4-ce5451bc0e8d",
+    "name": "Ms. Jannat",
+    "bangla_name": "মিস জান্নাত",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 343,
+    "sync_uuid": "299b0f28-f807-4054-a075-4530e8469c38",
+    "name": "Md. Mamun",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 344,
+    "sync_uuid": "e1849a2e-f2f7-4f47-a59b-3727398f6997",
+    "name": "Md. Sagor",
+    "bangla_name": "Md. Sagor",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 345,
+    "sync_uuid": "6ec951f7-bfd6-437e-b60f-6b6b7049d515",
+    "name": "Md. Nur Mohammad",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 346,
+    "sync_uuid": "ab47a8d7-bab4-49f1-bb02-82bd21eca96c",
+    "name": "Md. Rifat",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 347,
+    "sync_uuid": "b6f847c3-45a8-435a-8569-5f670991b14c",
+    "name": "Ms. Nargis",
+    "bangla_name": "মিস নারগিস",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 348,
+    "sync_uuid": "72fa8e7f-5725-47a4-8aab-476b8eb8be23",
+    "name": "Ms. Lamia (2)",
+    "bangla_name": "মিস লামিয়া (2)",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 349,
+    "sync_uuid": "fc134984-b73b-4a10-ba2c-f2a179ffc65d",
+    "name": "Ms. Sanjida",
+    "bangla_name": "মিস সানজিদা",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 350,
+    "sync_uuid": "ffba589d-1a14-4700-8d95-cb020bf37bc5",
+    "name": "Md. Nahid",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 67.0
+  },
+  {
+    "id": 351,
+    "sync_uuid": "bcdea691-0cb7-4e0f-b1ab-1342a5f6a1f2",
+    "name": "Ms. Nupur (2)",
+    "bangla_name": "মিস নুপুর (2)",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 352,
+    "sync_uuid": "31d3e197-c67c-4453-a0a6-b6925e23822c",
+    "name": "Md. Mojahidul",
+    "bangla_name": "",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 353,
+    "sync_uuid": "aaf5ca22-4f46-4195-a17e-a6547447e4ca",
+    "name": "Md. Hasib (New)",
+    "bangla_name": "মোঃ হাসিব (নতুন)",
+    "designation": "Colour Asst.",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 354,
+    "sync_uuid": "cb79561b-b44a-4c70-9911-65617f5be260",
+    "name": "Md. Afzal",
+    "bangla_name": "Md. Afzal",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 355,
+    "sync_uuid": "cd51e35c-374b-4de8-8bb5-0c1260e69267",
+    "name": "Ms. Mukta",
+    "bangla_name": "মিস মুকতা",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 356,
+    "sync_uuid": "bb278ae0-57ce-4a64-9cfe-8e1af44025e8",
+    "name": "Md. Shakib",
+    "bangla_name": "Md. Shakib",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 357,
+    "sync_uuid": "2acc503e-84af-4008-8cc7-18788bbae6c4",
+    "name": "Md. Nazim Uddin",
+    "bangla_name": "Md. Nazim Uddin",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 358,
+    "sync_uuid": "b1dee1bf-6662-47b7-bdaa-8b9927de69c4",
+    "name": "Md. Limon",
+    "bangla_name": "Md. Limon",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 359,
+    "sync_uuid": "a7c68da1-a6eb-413d-9be8-266a80b4395f",
+    "name": "Md. Sujon",
+    "bangla_name": "Md. Sujon",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 360,
+    "sync_uuid": "95d4c86a-0a81-4a52-aab8-1eff29259a3f",
+    "name": "Md. Sourob",
+    "bangla_name": "Md. Sourob",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 361,
+    "sync_uuid": "517c1c69-b3e7-42ce-b90e-cd8cdf02944a",
+    "name": "Md. Sabbir",
+    "bangla_name": "Md. Sabbir",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 362,
+    "sync_uuid": "80b33037-2d2e-4f66-8027-d3e1ccb62ba9",
+    "name": "Md. Alamin",
+    "bangla_name": "Md. Alamin",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 363,
+    "sync_uuid": "10907123-3d56-4e6f-bf5a-5e299644d874",
+    "name": "Md. Sagor",
+    "bangla_name": "Md. Sagor",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 364,
+    "sync_uuid": "f01a6cc2-d217-4fad-8937-888b44196ecc",
+    "name": "Md. Roni",
+    "bangla_name": "Md. Roni",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 365,
+    "sync_uuid": "4ee840cd-cf9e-40e0-992f-8702ea84e1a0",
+    "name": "Md. Rubel",
+    "bangla_name": "Md. Rubel",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 366,
+    "sync_uuid": "3d203359-9258-4bfd-bc80-e538c4c8d740",
+    "name": "Md. Foridul",
+    "bangla_name": "Md. Foridul",
+    "designation": "Labour",
+    "status": "Active",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 367,
+    "sync_uuid": "df9627df-4f10-4c8f-a61d-6f7e77616143",
+    "name": "Md. Rahul",
+    "bangla_name": "Md. Rahul",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 368,
+    "sync_uuid": "42f9e626-4dc8-4d6e-81a8-a7b973d6a598",
+    "name": "Md. Hossain",
+    "bangla_name": "Md. Hossain",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 369,
+    "sync_uuid": "668b7c4d-a0dd-4242-9fe0-24f2d41b27dd",
+    "name": "Md. Shamim",
+    "bangla_name": "Md. Shamim",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 370,
+    "sync_uuid": "f8c3be6a-b409-45e7-a7f1-f47071a09e3f",
+    "name": "Md. Alamgir",
+    "bangla_name": "Md. Alamgir",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 371,
+    "sync_uuid": "8b1829ed-514b-4fff-8e5a-76608488a321",
+    "name": "Ms. Lima",
+    "bangla_name": "Ms. Lima",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 372,
+    "sync_uuid": "1aff11a7-e389-4f4e-86bd-0df08555d422",
+    "name": "Md. Romjan",
+    "bangla_name": "Md. Romjan",
+    "designation": "Labour",
+    "status": "Active",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 373,
+    "sync_uuid": "13cd040a-57d4-4715-a0e8-190f8c6aa08a",
+    "name": "Md. Jisan (2)",
+    "bangla_name": "Md. Jisan (2)",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 374,
+    "sync_uuid": "5c964c0e-9599-4989-bf13-a6b85fcdcea0",
+    "name": "Md. Sabbir",
+    "bangla_name": "Md. Sabbir",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 375,
+    "sync_uuid": "12e8e0db-9bf7-4d7c-b564-8e1e7c036cd3",
+    "name": "Md. Sumon",
+    "bangla_name": "Md. Sumon",
+    "designation": "Operator",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 376,
+    "sync_uuid": "499894ed-a5cd-4832-8fdc-cba026a17670",
+    "name": "Ms. Sumi",
+    "bangla_name": "Ms. Sumi",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 377,
+    "sync_uuid": "966ce22c-4265-4c2b-bbcf-17afea06e2e4",
+    "name": "Md. Sujon",
+    "bangla_name": "Md. Sujon",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 32.0
+  },
+  {
+    "id": 378,
+    "sync_uuid": "4e005aef-b01c-401f-86b6-388f1db3c29d",
+    "name": "Md. Sohan",
+    "bangla_name": "Md. Sohan",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 379,
+    "sync_uuid": "6fc3fcee-0641-45e2-b1c5-d76f9f1f3c3c",
+    "name": "Md. Nur",
+    "bangla_name": "Md. Nur",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 380,
+    "sync_uuid": "b2a4acaf-b64f-454b-8d6b-f687b0f1ddfe",
+    "name": "Md. Mojibor",
+    "bangla_name": "Md. Mojibor",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 381,
+    "sync_uuid": "76a78008-a567-4751-9a98-d72f42fe5c9f",
+    "name": "Md. Pakhi",
+    "bangla_name": "Md. Pakhi",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 382,
+    "sync_uuid": "483964a4-cb10-442f-9933-08aeaa013644",
+    "name": "Md. Faizul",
+    "bangla_name": "Md. Faizul",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 383,
+    "sync_uuid": "e7554b65-4cf9-4e47-9f6f-39ee0173d62f",
+    "name": "Md. Yasin",
+    "bangla_name": "Md. Yasin",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 384,
+    "sync_uuid": "f40165e6-4835-41e3-b1e2-ceae60feb38e",
+    "name": "Md. Siam",
+    "bangla_name": "Md. Siam",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 385,
+    "sync_uuid": "86ddc9ae-5eba-446e-aff2-abbdca7fcb9c",
+    "name": "Md. Maruf",
+    "bangla_name": "Md. Maruf",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 386,
+    "sync_uuid": "480a53c3-759f-403d-ba1b-37c9a1ad2ff3",
+    "name": "Ms. Sathi",
+    "bangla_name": "Ms. Sathi",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 28.0
+  },
+  {
+    "id": 388,
+    "sync_uuid": "9bd2313c-2023-4f6c-b507-66f525d8fa03",
+    "name": "Md. Zahid",
+    "bangla_name": "Md. Zahid",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 42.0
+  },
+  {
+    "id": 389,
+    "sync_uuid": "967af881-8bb5-478e-995f-97309d243c31",
+    "name": "Md. Nasir",
+    "bangla_name": "Md. Nasir",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 390,
+    "sync_uuid": "033ff873-e3a5-442c-8be0-32891cd4f57d",
+    "name": "Md. Shohag",
+    "bangla_name": "Md. Shohag",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 391,
+    "sync_uuid": "176f318c-3d2e-4b7b-be4b-6628cec1d9c1",
+    "name": "Md. Jakaria",
+    "bangla_name": "Md. Jakaria",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 392,
+    "sync_uuid": "8e101cbd-af3f-4a20-969d-c58ec5460e7e",
+    "name": "Md. Shahadat",
+    "bangla_name": "Md. Shahadat",
+    "designation": "Labour",
+    "status": "",
+    "ot_rate": 31.0
+  },
+  {
+    "id": 393,
+    "sync_uuid": "b7aef02a-bafc-44b2-90c5-1861564e66f5",
+    "name": "Md. Shipon",
+    "bangla_name": "মোঃ শিপন",
+    "designation": "Operator",
+    "status": "Active",
+    "ot_rate": 50.0
+  },
+  {
+    "id": 394,
+    "sync_uuid": "4715882f-683e-42ed-9254-a7f8f41e0191",
+    "name": "Md. Rabbi",
+    "bangla_name": "মোঃ রাব্বি",
+    "designation": "LabourLabour",
+    "status": "Active",
+    "ot_rate": 31.0
+  }
+]
