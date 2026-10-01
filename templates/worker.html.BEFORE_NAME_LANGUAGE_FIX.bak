@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ 'bn' if language == 'bn' else 'en' }}">
 <head>
     <meta charset="utf-8">
@@ -448,6 +448,10 @@
                         </th>
 
                         <th>
+                            {{ tr('Bangla Name') }}
+                        </th>
+
+                        <th>
                             {{ tr('Department') }}
                         </th>
 
@@ -490,12 +494,13 @@
 
 
                         <td>
-    {% if language == 'bn' %}
-        {{ w['bangla_name'] or w['name'] or '' }}
-    {% else %}
-        {{ w['name'] or '' }}
-    {% endif %}
-</td>
+                            {{ w['name'] or '' }}
+                        </td>
+
+
+                        <td>
+                            {{ w['bangla_name'] or '' }}
+                        </td>
 
 
                         <td>
@@ -559,24 +564,6 @@
                                 {{ tr('Attendance') }}
                             </a>
 
-                            <form
-                                method="post"
-                                action="{{ url_for('toggle_worker_status', worker_id=w['id']) }}"
-                                style="display:inline;"
-                            >
-                                <button
-                                    type="submit"
-                                    class="small-btn"
-                                    style="{% if (w['status'] or 'Active') == 'Active' %}background:#fee2e2;color:#991b1b;{% else %}background:#dcfce7;color:#166534;{% endif %}"
-                                >
-                                    {% if (w['status'] or 'Active') == 'Active' %}
-                                        Inactive
-                                    {% else %}
-                                        Active
-                                    {% endif %}
-                                </button>
-                            </form>
-
 
                             <a
                                 href="{{ url_for('payslip', worker_id=w['id']) }}"
@@ -637,4 +624,3 @@
 
 </body>
 </html>
-

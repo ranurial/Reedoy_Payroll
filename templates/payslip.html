@@ -1,37 +1,110 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="container mt-4">
-  <h2>Generate Payslip</h2>
-  <form method="get" action="{{ url_for('payslip') }}" class="row g-3 mb-4">
-    <div class="col-md-6"><label class="form-label">Worker</label><select name="worker_id" class="form-select" required>
-      <option value="">Select worker</option>
-      {% for w in workers %}<option value="{{ w.id }}" {% if worker and worker.id|string == w.id|string %}selected{% endif %}>{{ w.id }} - {{ w.name }}{% if w.department %} ({{ w.department }}){% endif %}</option>{% endfor %}
-    </select></div>
-    <div class="col-md-3 align-self-end"><button class="btn btn-primary" type="submit">Generate Payslip</button></div>
-  </form>
-  {% if worker %}
-  <div class="card"><div class="card-header"><h4>{{ settings.company_name if settings and settings.company_name else 'Reedoy Textile Dyeing Printing & Finishing' }}</h4><strong>Salary Payslip — {{ month }}</strong></div>
-    <div class="card-body">
-      <p><strong>Worker ID:</strong> {{ worker.id }} &nbsp; <strong>Name:</strong> {{ worker.name }} &nbsp; <strong>Department:</strong> {{ worker.department or '-' }}</p>
-      <table class="table table-bordered">
-        <thead><tr><th>Description</th><th class="text-end">Amount (BDT)</th></tr></thead>
-        <tbody>
-          <tr><td>Monthly Basic Salary</td><td class="text-end">{{ "%.2f"|format(worker.basic_salary|float) }}</td></tr>
-          <tr><td>Present Days</td><td class="text-end">{{ summary.present }}</td></tr>
-          <tr><td>Absent Days</td><td class="text-end">{{ summary.absent }}</td></tr>
-          <tr><td>Absent Deduction</td><td class="text-end">{{ "%.2f"|format(summary.absent_cut) }}</td></tr>
-          <tr><td>Earned Basic</td><td class="text-end">{{ "%.2f"|format(summary.earned_basic) }}</td></tr>
-          <tr><td>Overtime (hours: {{ summary.ot }})</td><td class="text-end">{{ "%.2f"|format(summary.ot_amt) }}</td></tr>
-          <tr><td>Refreshment / Nasta</td><td class="text-end">{{ "%.2f"|format(summary.nasta) }}</td></tr>
-          <tr><td>Gross Salary</td><td class="text-end">{{ "%.2f"|format(summary.gross) }}</td></tr>
-          <tr><td>Advance Deduction</td><td class="text-end">{{ "%.2f"|format(summary.advance) }}</td></tr>
-          <tr class="table-success"><th>Net Payable</th><th class="text-end">{{ "%.2f"|format(summary.net) }}</th></tr>
-        </tbody>
-      </table>
-      <button class="btn btn-secondary" onclick="window.print()">Print Payslip</button>
-    </div>
-  </div>
-  {% else %}<div class="alert alert-info">Select a worker and click Generate Payslip.</div>{% endif %}
-</div>
-{% endblock %}
+<!doctype html>
+<html lang="{{ 'bn' if language == 'bn' else 'en' }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>REEDOY PAYROLL - Payslip</title>
+<style>
+body{font-family:Arial,"Noto Sans Bengali",sans-serif;background:#f3f6fb;margin:0;color:#1f2937}
+.wrap{max-width:1100px;margin:28px auto;padding:0 18px}
+.box{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.05)}
+.nav a{margin-right:14px;color:#1764c0;text-decoration:none}
+h1{margin-top:0;color:#174a7e}
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;align-items:end}
+label{display:block;font-weight:600;margin-bottom:6px}
+select,button{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:7px;background:#fff}
+button,.btn{background:#1764c0;color:#fff;border:0;cursor:pointer;text-decoration:none;display:inline-block;text-align:center;padding:10px 14px;border-radius:7px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.btn.print{background:#0f766e}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.item{padding:12px;background:#f8fafc;border-radius:8px}
+.label{font-size:13px;color:#64748b}
+.value{font-size:18px;font-weight:700;margin-top:4px}
+.net{font-size:26px;color:#1764c0}
+@media(max-width:750px){.filters{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+@media print{body{background:#fff}.wrap{max-width:none;margin:0;padding:0}.box{box-shadow:none;border:0;border-radius:0}.nav,form,.actions{display:none}.item{background:#fff;border:1px solid #ddd}}
+</style>
+</head>
+<body>
+<main class="wrap">
 
+<div class="box">
+  <div class="nav">
+    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('attendance') }}">Attendance</a>
+    <a href="{{ url_for('payslip') }}">Payslip</a>
+  </div>
+
+  <h1>Generate Payslip</h1>
+
+  <form method="get" action="{{ url_for('payslip') }}">
+    <div class="filters">
+      <div>
+        <label>Worker</label>
+        <select name="worker_id" required>
+          <option value="">Select Worker</option>
+          {% for w in workers %}
+          <option value="{{ w.id }}" {% if worker and w.id|string == worker.id|string %}selected{% endif %}>
+            {{ w.id }} - {{ w.bangla_name if language == 'bn' and w.bangla_name else w.name }}{% if w.department %} ({{ display_dept(w.department) }}){% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label>Payroll Month</label>
+        <select name="month" required>
+          {% for m in ['January','February','March','April','May','June','July','August','September','October','November','December'] %}
+          <option value="{{ m }}" {% if month.startswith(m + ' ') %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label>Year</label>
+        <select name="year" required>
+          {% for y in range(2025, 2037) %}
+          <option value="{{ y }}" {% if month.endswith(y|string) %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <button type="submit">Generate Payslip</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if worker %}
+<div class="box">
+  <h2>REEDOY TEXTILE DYEING PRINTING & FINISHING</h2>
+  <p><b>Salary Payslip — {{ month }}</b></p>
+
+  <div class="actions">
+    <a class="btn" href="{{ url_for('export_payslip_pdf', worker_id=worker.id, month=month.split()[0], year=month.split()[1]) }}">Export PDF</a>
+    <button class="btn print" type="button" onclick="window.print()">Print Payslip</button>
+  </div>
+
+  <div class="grid">
+    <div class="item"><div class="label">Worker ID</div><div class="value">{{ worker.id }}</div></div>
+    <div class="item"><div class="label">English Name</div><div class="value">{{ worker.name }}</div></div>
+    <div class="item"><div class="label">Bangla Name</div><div class="value">{{ worker.bangla_name or '—' }}</div></div>
+    <div class="item"><div class="label">Department</div><div class="value">{{ display_dept(worker.department) }}</div></div>
+    <div class="item"><div class="label">Basic Salary</div><div class="value">BDT {{ '%.2f'|format(worker.basic_salary|float) }}</div></div>
+    <div class="item"><div class="label">Salary Basis</div><div class="value">30 Days</div></div>
+    <div class="item"><div class="label">Present Days</div><div class="value">{{ summary.present|default(0) }}</div></div>
+    <div class="item"><div class="label">Absent Days</div><div class="value">{{ summary.absent|default(0) }}</div></div>
+    <div class="item"><div class="label">Absent Deduction</div><div class="value">BDT {{ '%.2f'|format(summary.absent_cut|default(0)|float) }}</div></div>
+    <div class="item"><div class="label">Overtime</div><div class="value">{{ summary.ot|default(0) }} hours / BDT {{ '%.2f'|format(summary.ot_amt|default(0)|float) }}</div></div>
+    <div class="item"><div class="label">Refreshment / Nasta</div><div class="value">BDT {{ '%.2f'|format(summary.nasta|default(0)|float) }}</div></div>
+    <div class="item"><div class="label">Advance Salary</div><div class="value">BDT {{ '%.2f'|format(summary.advance|default(0)|float) }}</div></div>
+    <div class="item"><div class="label">Gross Salary</div><div class="value">BDT {{ '%.2f'|format(summary.gross|default(0)|float) }}</div></div>
+    <div class="item"><div class="label">Net Payable</div><div class="value net">BDT {{ '%.2f'|format(summary.net|default(0)|float) }}</div></div>
+  </div>
+</div>
+{% endif %}
+
+</main>
+</body>
+</html>

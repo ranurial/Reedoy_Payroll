@@ -489,18 +489,33 @@
   const basic = document.getElementById("basic_salary");
   const ot = document.getElementById("ot_rate");
   if (!basic || !ot) return;
+  let autoMode = true;
 
-  function updateOtRate() {
+  function setAutoRate() {
+    if (!autoMode) return;
     const b = parseFloat(basic.value);
     if (!Number.isFinite(b) || b < 0) {
       ot.value = "";
       return;
     }
-    ot.value = Math.round(b / 30 / 12);
+    ot.value = (b / 30 / 12).toFixed(2);
   }
 
-  basic.addEventListener("input", updateOtRate);
-  basic.addEventListener("change", updateOtRate);
+  basic.addEventListener("input", function () {
+    autoMode = true;
+    setAutoRate();
+  });
+
+  ot.addEventListener("input", function () {
+    autoMode = false;
+  });
+
+  const initialOt = parseFloat(ot.value);
+  if (!Number.isFinite(initialOt) || initialOt === 0) {
+    setAutoRate();
+  } else {
+    autoMode = false;
+  }
 })();
 </script>
 

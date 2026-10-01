@@ -24,7 +24,6 @@
     <a href="{{ url_for('payslip') }}">{{ tr('Payslip') }}</a>
     <a href="{{ url_for('advance') }}">{{ tr('Advance Salary') }}</a>
     <a href="{{ url_for('department') }}">{{ tr('Department') }}</a>
-    <a href="{{ url_for('data_sync') }}">Data Sync</a>
     <a href="{{ url_for('settings') }}">{{ tr('Settings') }}</a>
     <a href="{{ url_for('logout') }}">{{ tr('Logout') }}</a>
   </nav>
