@@ -6116,11 +6116,21 @@ def ot_report_export():
 @app.route("/reports")
 @login_required
 def reports():
+    # Reports must accept both the new Month + Year selectors and the
+    # older HTML5 <input type="month"> format (YYYY-MM).
+    raw_month = (request.args.get("month") or "").strip()
+    raw_year = (request.args.get("year") or "").strip()
 
-    month = month_name_year(
-        request.args.get("month"),
-        request.args.get("year"),
-    )
+    if re.match(r"^\d{4}-\d{1,2}$", raw_month):
+        try:
+            y, m = raw_month.split("-")
+            raw_year = y
+            raw_month = MONTHS[int(m) - 1]
+        except Exception:
+            raw_month = ""
+            raw_year = ""
+
+    month = month_name_year(raw_month, raw_year)
 
     workers_list = fetch_all(
         """
@@ -6153,16 +6163,12 @@ def reports():
     department_map = {}
 
     for worker in workers_list:
-
         salary = salary_map.get(worker["id"], {})
         row = dict(worker)
         row.update(salary)
         rows.append(row)
 
-        department_name = (
-            worker.get("department")
-            or "Unassigned"
-        )
+        department_name = worker.get("department") or "Unassigned"
 
         if department_name not in department_map:
             department_map[department_name] = {
@@ -6206,8 +6212,10 @@ def reports():
         key=lambda item: str(item["department"]).lower()
     )
 
-    return safe_render_template(
-        "reports.html",
+    # Use the built-in reports template deliberately so an older
+    # templates/reports.html cannot hide the Month/Year controls.
+    return render_template_string(
+        BUILTIN_REPORTS_TEMPLATE,
         rows=rows,
         totals=totals,
         departments_summary=departments_summary,
