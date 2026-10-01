@@ -6,7 +6,6 @@ import hashlib
 import calendar
 import datetime
 import json
-import re
 import zipfile
 import base64
 from decimal import Decimal
@@ -6117,21 +6116,11 @@ def ot_report_export():
 @app.route("/reports")
 @login_required
 def reports():
-    # Reports must accept both the new Month + Year selectors and the
-    # older HTML5 <input type="month"> format (YYYY-MM).
-    raw_month = (request.args.get("month") or "").strip()
-    raw_year = (request.args.get("year") or "").strip()
 
-    if re.match(r"^\\d{4}-\\d{1,2}$", raw_month):
-        try:
-            y, m = raw_month.split("-")
-            raw_year = y
-            raw_month = MONTHS[int(m) - 1]
-        except Exception:
-            raw_month = ""
-            raw_year = ""
-
-    month = month_name_year(raw_month, raw_year)
+    month = month_name_year(
+        request.args.get("month"),
+        request.args.get("year"),
+    )
 
     workers_list = fetch_all(
         """
@@ -6164,12 +6153,16 @@ def reports():
     department_map = {}
 
     for worker in workers_list:
+
         salary = salary_map.get(worker["id"], {})
         row = dict(worker)
         row.update(salary)
         rows.append(row)
 
-        department_name = worker.get("department") or "Unassigned"
+        department_name = (
+            worker.get("department")
+            or "Unassigned"
+        )
 
         if department_name not in department_map:
             department_map[department_name] = {
@@ -6213,10 +6206,8 @@ def reports():
         key=lambda item: str(item["department"]).lower()
     )
 
-    # Use the built-in reports template deliberately so an older
-    # templates/reports.html cannot hide the Month/Year controls.
-    return render_template_string(
-        BUILTIN_REPORTS_TEMPLATE,
+    return safe_render_template(
+        "reports.html",
         rows=rows,
         totals=totals,
         departments_summary=departments_summary,
@@ -9851,43 +9842,34 @@ def compare_online_workers():
             item["field"] for item in differences
         )
 
-        # Read the local database separately to obtain the actual
-        # local values for the differing fields.
-        local_conn = None
+        # Render has PostgreSQL, but the Offline SQLite database exists only
+        # on the user's Windows PC. Do not expect DB_PATH/workers to exist on
+        # the deployed server. The comparison seed already contains the local
+        # field hashes, which is enough to prove a difference.
+        local_value_map = {}
 
         try:
             local_conn = sqlite3.connect(DB_PATH)
             local_conn.row_factory = sqlite3.Row
-
             local_cur = local_conn.cursor()
-
             local_cur.execute("""
-                SELECT id,
-                       name,
-                       bangla_name,
-                       department,
-                       designation,
-                       basic_salary,
-                       ot_rate,
-                       refreshment_bill,
-                       phone,
-                       address,
-                       joining_date,
-                       status
+                SELECT id, name, bangla_name, department, designation,
+                       basic_salary, ot_rate, refreshment_bill, phone,
+                       address, joining_date, status
                 FROM workers
                 ORDER BY id
             """)
-
             local_rows = local_cur.fetchall()
-
             local_value_map = {
                 int(row["id"]): dict(row)
                 for row in local_rows
             }
-
-        finally:
-            if local_conn is not None:
-                local_conn.close()
+            local_conn.close()
+        except sqlite3.OperationalError:
+            # Expected on Render: Offline SQLite is not deployed there.
+            local_value_map = {}
+        except Exception:
+            local_value_map = {}
 
         detailed_differences = []
 
@@ -9896,7 +9878,10 @@ def compare_online_workers():
             field = item["field"]
 
             local_row = local_value_map.get(worker_id, {})
-            local_value = canonical(local_row.get(field, ""))
+            if local_row:
+                local_value = canonical(local_row.get(field, ""))
+            else:
+                local_value = "Unavailable on Render (offline value is in local SQLite)"
 
             detailed_differences.append({
                 "id": worker_id,
