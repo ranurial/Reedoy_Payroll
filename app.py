@@ -9842,34 +9842,43 @@ def compare_online_workers():
             item["field"] for item in differences
         )
 
-        # Render has PostgreSQL, but the Offline SQLite database exists only
-        # on the user's Windows PC. Do not expect DB_PATH/workers to exist on
-        # the deployed server. The comparison seed already contains the local
-        # field hashes, which is enough to prove a difference.
-        local_value_map = {}
+        # Read the local database separately to obtain the actual
+        # local values for the differing fields.
+        local_conn = None
 
         try:
             local_conn = sqlite3.connect(DB_PATH)
             local_conn.row_factory = sqlite3.Row
+
             local_cur = local_conn.cursor()
+
             local_cur.execute("""
-                SELECT id, name, bangla_name, department, designation,
-                       basic_salary, ot_rate, refreshment_bill, phone,
-                       address, joining_date, status
+                SELECT id,
+                       name,
+                       bangla_name,
+                       department,
+                       designation,
+                       basic_salary,
+                       ot_rate,
+                       refreshment_bill,
+                       phone,
+                       address,
+                       joining_date,
+                       status
                 FROM workers
                 ORDER BY id
             """)
+
             local_rows = local_cur.fetchall()
+
             local_value_map = {
                 int(row["id"]): dict(row)
                 for row in local_rows
             }
-            local_conn.close()
-        except sqlite3.OperationalError:
-            # Expected on Render: Offline SQLite is not deployed there.
-            local_value_map = {}
-        except Exception:
-            local_value_map = {}
+
+        finally:
+            if local_conn is not None:
+                local_conn.close()
 
         detailed_differences = []
 
@@ -9878,10 +9887,7 @@ def compare_online_workers():
             field = item["field"]
 
             local_row = local_value_map.get(worker_id, {})
-            if local_row:
-                local_value = canonical(local_row.get(field, ""))
-            else:
-                local_value = "Unavailable on Render (offline value is in local SQLite)"
+            local_value = canonical(local_row.get(field, ""))
 
             detailed_differences.append({
                 "id": worker_id,
@@ -10044,3 +10050,175 @@ if __name__ == "__main__":
 
 
 
+
+
+# ============================================================
+# READ-ONLY WORKER REVIEW — LOCAL VALUES VS ONLINE VALUES
+# ============================================================
+@app.route("/sync/review-worker-differences")
+@login_required
+def review_worker_differences():
+    import json
+    from pathlib import Path
+
+    if not is_postgres():
+        return """
+        <h2>Worker Review</h2>
+        <p style="color:red"><b>ERROR:</b> PostgreSQL connection is not active.</p>
+        """, 400
+
+    review_path = Path(__file__).resolve().parent / "workers_review_values.json"
+    if not review_path.exists():
+        return """
+        <h2>Worker Review</h2>
+        <p style="color:red"><b>ERROR:</b> workers_review_values.json was not found.</p>
+        <p>Push the JSON file to the same GitHub branch as app.py, then wait for Render deployment.</p>
+        """, 500
+
+    fields = ["name", "bangla_name", "designation", "status"]
+
+    def norm(v):
+        return "" if v is None else str(v).strip()
+
+    conn = None
+    try:
+        with open(review_path, "r", encoding="utf-8") as f:
+            local_rows = json.load(f)
+
+        if not isinstance(local_rows, list):
+            raise RuntimeError("workers_review_values.json must contain a list.")
+
+        local_map = {}
+        for item in local_rows:
+            worker_id = int(item["id"])
+            if worker_id in local_map:
+                raise RuntimeError(f"Duplicate worker ID in review file: {worker_id}")
+            local_map[worker_id] = {
+                field: norm(item.get(field, "")) for field in fields
+            }
+
+        if len(local_map) != 169:
+            raise RuntimeError(
+                f"Review file contains {len(local_map)} workers; expected 169."
+            )
+
+        conn = db_connect()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, name, bangla_name, designation, status
+            FROM workers
+            ORDER BY id
+        """)
+        rows = cur.fetchall()
+
+        online_map = {}
+        for row in rows:
+            worker_id = int(row[0])
+            online_map[worker_id] = {
+                field: norm(row[i + 1]) for i, field in enumerate(fields)
+            }
+
+        local_ids = set(local_map)
+        online_ids = set(online_map)
+        missing_online = sorted(local_ids - online_ids)
+        extra_online = sorted(online_ids - local_ids)
+
+        differences = []
+        for worker_id in sorted(local_ids & online_ids):
+            for field in fields:
+                local_value = local_map[worker_id][field]
+                online_value = online_map[worker_id][field]
+                if local_value != online_value:
+                    differences.append({
+                        "id": worker_id,
+                        "field": field,
+                        "local": local_value,
+                        "online": online_value,
+                    })
+
+        db_release(conn)
+        conn = None
+
+        html = """
+        <!doctype html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Worker Review — Read Only</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 28px; color: #111; }
+                h1 { color: #123b67; }
+                .ok { color: #087a2f; font-weight: bold; }
+                .note { background: #eef6ff; border-left: 5px solid #1769c2; padding: 12px; margin: 14px 0; }
+                .warn { background: #fff4e5; border-left: 5px solid #f57c00; padding: 12px; margin: 14px 0; }
+                table { border-collapse: collapse; margin-top: 12px; width: 100%; max-width: 1100px; }
+                th, td { border: 1px solid #aaa; padding: 8px 10px; text-align: left; vertical-align: top; }
+                th { background: #eee; }
+                .diff { background: #fff8dc; }
+                .small { color: #555; font-size: 13px; }
+            </style>
+        </head>
+        <body>
+            <h1>Worker Review — Local vs Online</h1>
+            <p class="ok">READ ONLY — NO DATABASE CHANGES WERE MADE.</p>
+            <div class="note">
+                This page checks only Name, Bangla Name, Designation and Status.
+                Salary, OT, phone, address, attendance, advance and payment data are not modified.
+            </div>
+
+            <table>
+                <tr><th>Check</th><th>Result</th></tr>
+                <tr><td>Local Workers</td><td>{{ local_count }}</td></tr>
+                <tr><td>Online Workers</td><td>{{ online_count }}</td></tr>
+                <tr><td>Missing Online IDs</td><td>{{ missing_online }}</td></tr>
+                <tr><td>Extra Online IDs</td><td>{{ extra_online }}</td></tr>
+                <tr><td>Non-OT Field Differences</td><td><b>{{ differences|length }}</b></td></tr>
+            </table>
+
+            {% if differences %}
+            <h2>Differences to Review</h2>
+            <table>
+                <tr>
+                    <th>Worker ID</th>
+                    <th>Field</th>
+                    <th>Local Value</th>
+                    <th>Online Value</th>
+                </tr>
+                {% for item in differences %}
+                <tr class="diff">
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.field }}</td>
+                    <td>{{ item.local if item.local else '(blank)' }}</td>
+                    <td>{{ item.online if item.online else '(blank)' }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p class="ok"><b>No differences found in the four review fields.</b></p>
+            {% endif %}
+
+            <p class="small">No INSERT, UPDATE, DELETE, ALTER or other database write operation is performed by this page.</p>
+        </body>
+        </html>
+        """
+
+        return render_template_string(
+            html,
+            local_count=len(local_map),
+            online_count=len(online_map),
+            missing_online=missing_online,
+            extra_online=extra_online,
+            differences=differences,
+        )
+
+    except Exception as e:
+        if conn is not None:
+            try:
+                db_release(conn)
+            except Exception:
+                pass
+        return f"""
+        <h2>Worker Review Error</h2>
+        <p style="color:red"><b>{type(e).__name__}:</b> {e}</p>
+        <p><b>READ ONLY — no database changes were made.</b></p>
+        """, 500
