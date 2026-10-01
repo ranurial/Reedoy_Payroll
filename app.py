@@ -9706,6 +9706,216 @@ def migrate_online_workers_by_id():
 
 
 
+@app.route("/sync/apply-worker-local-to-online", methods=["GET", "POST"])
+@login_required
+def apply_worker_local_to_online():
+    import json
+    from pathlib import Path
+    from datetime import datetime
+
+    if not is_postgres():
+        return """
+        <h2>Worker Local → Online Sync</h2>
+        <h3 style="color:red">ERROR</h3>
+        <p>PostgreSQL connection is not active.</p>
+        """, 400
+
+    payload_path = Path(__file__).resolve().parent / "workers_sync_values.json"
+    if not payload_path.exists():
+        return """
+        <h2>Worker Local → Online Sync</h2>
+        <h3 style="color:red">SYNC PAYLOAD NOT FOUND</h3>
+        <p>workers_sync_values.json was not found.</p>
+        <p>Export the verified Local Worker sync values first and push that file.</p>
+        """, 500
+
+    fields = ["name", "bangla_name", "designation", "status", "ot_rate"]
+    conn = None
+
+    def canon(v):
+        if v is None:
+            return ""
+        if isinstance(v, float):
+            return str(round(v, 10)).strip()
+        return str(v).strip()
+
+    try:
+        with open(payload_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+
+        if not isinstance(payload, list) or len(payload) != 169:
+            raise RuntimeError(
+                f"Sync payload must contain exactly 169 workers; found {len(payload) if isinstance(payload, list) else 'invalid'}"
+            )
+
+        ids = [int(x["id"]) for x in payload]
+        uuids = [str(x["sync_uuid"]).strip() for x in payload]
+        if len(set(ids)) != 169 or len(set(uuids)) != 169:
+            raise RuntimeError("Duplicate Worker ID or sync_uuid found in sync payload.")
+        if any(not u for u in uuids):
+            raise RuntimeError("One or more workers have an empty sync_uuid.")
+
+        conn = db_connect()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, sync_uuid, name, bangla_name, designation, status, ot_rate
+            FROM workers
+            ORDER BY id
+        """)
+        rows = cur.fetchall()
+
+        if len(rows) != 169:
+            raise RuntimeError(f"Online workers count is {len(rows)}; expected 169.")
+
+        online = {int(r[0]): r for r in rows}
+        if set(online.keys()) != set(ids):
+            missing = sorted(set(ids) - set(online.keys()))
+            extra = sorted(set(online.keys()) - set(ids))
+            raise RuntimeError(f"Worker ID mismatch. Missing online: {missing}; Extra online: {extra}")
+
+        # Verify the identity pairing before ANY write.
+        for item in payload:
+            wid = int(item["id"])
+            expected_uuid = str(item["sync_uuid"]).strip()
+            actual_uuid = str(online[wid][1] or "").strip()
+            if expected_uuid != actual_uuid:
+                raise RuntimeError(
+                    f"sync_uuid mismatch for Worker {wid}. No data was changed."
+                )
+
+        # Build the exact preview first.
+        changes = []
+        for item in payload:
+            wid = int(item["id"])
+            row = online[wid]
+            for idx, field in enumerate(fields, start=2):
+                old = row[idx]
+                new = item.get(field)
+                if canon(old) != canon(new):
+                    changes.append({"id": wid, "field": field, "old": canon(old), "new": canon(new)})
+
+        if request.method == "GET":
+            by_field = {}
+            for c in changes:
+                by_field[c["field"]] = by_field.get(c["field"], 0) + 1
+            rows_html = "".join(
+                f"<tr><td>{c['id']}</td><td>{c['field']}</td><td>{c['old'] or '(blank)'}</td><td>{c['new'] or '(blank)'}</td></tr>"
+                for c in changes
+            )
+            summary_html = "".join(
+                f"<li><b>{k}</b>: {v}</li>" for k, v in sorted(by_field.items())
+            ) or "<li>No changes detected.</li>"
+            return f"""
+            <h2>Worker Local → Online Sync</h2>
+            <p style="color:green;font-weight:bold">PREVIEW ONLY — no database changes were made.</p>
+            <p>Verified Worker IDs: 169 &nbsp; | &nbsp; UUID matches: 169</p>
+            <h3>Planned field changes: {len(changes)}</h3>
+            <ul>{summary_html}</ul>
+            <p><b>Only these fields will be updated:</b> Name, Bangla Name, Designation, Status, OT Rate.</p>
+            <p><b>Not touched:</b> Department, Basic Salary, Refreshment Bill, Phone, Address, Joining Date, Attendance, Advances, Salary, Payments, Payroll Locks.</p>
+            <p style="color:#b00000"><b>Before applying, an Online Worker backup will be stored in reedoy_sync_worker_backup.</b></p>
+            <table border="1" cellpadding="6" cellspacing="0">
+                <tr><th>Worker ID</th><th>Field</th><th>Current Online</th><th>Local Value to Apply</th></tr>
+                {rows_html}
+            </table>
+            <br>
+            <form method="post" onsubmit="return confirm('Apply the verified Local → Online Worker changes? This will update only the 5 listed Worker fields after creating an online backup.');">
+                <button type="submit" style="padding:10px 18px;background:#c62828;color:white;border:0;border-radius:5px;font-weight:bold;">APPLY VERIFIED WORKER SYNC</button>
+            </form>
+            """
+
+        # POST: re-read the database and perform one atomic transaction.
+        backup_run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS reedoy_sync_worker_backup (
+                backup_run_id VARCHAR(32) NOT NULL,
+                worker_id INTEGER NOT NULL,
+                sync_uuid VARCHAR(100),
+                name TEXT,
+                bangla_name TEXT,
+                designation TEXT,
+                status TEXT,
+                ot_rate NUMERIC,
+                backed_up_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cur.execute("""
+            INSERT INTO reedoy_sync_worker_backup
+            (backup_run_id, worker_id, sync_uuid, name, bangla_name, designation, status, ot_rate)
+            SELECT %s, id, sync_uuid, name, bangla_name, designation, status, ot_rate
+            FROM workers
+            ORDER BY id
+        """, (backup_run_id,))
+
+        for item in payload:
+            cur.execute("""
+                UPDATE workers
+                SET name=%s,
+                    bangla_name=%s,
+                    designation=%s,
+                    status=%s,
+                    ot_rate=%s
+                WHERE id=%s AND sync_uuid=%s
+            """, (
+                item.get("name"),
+                item.get("bangla_name"),
+                item.get("designation"),
+                item.get("status"),
+                item.get("ot_rate"),
+                int(item["id"]),
+                str(item["sync_uuid"]).strip(),
+            ))
+            if cur.rowcount != 1:
+                raise RuntimeError(f"Worker {item['id']} update did not affect exactly one row.")
+
+        # Verify every requested field before commit.
+        cur.execute("""
+            SELECT id, name, bangla_name, designation, status, ot_rate
+            FROM workers ORDER BY id
+        """)
+        verify_rows = {int(r[0]): r for r in cur.fetchall()}
+        for item in payload:
+            wid = int(item["id"])
+            r = verify_rows[wid]
+            for idx, field in enumerate(fields, start=1):
+                if canon(r[idx]) != canon(item.get(field)):
+                    raise RuntimeError(f"Post-update verification failed for Worker {wid}, field {field}.")
+
+        conn.commit()
+        conn = None
+
+        return f"""
+        <h2>Worker Local → Online Sync Completed</h2>
+        <p style="color:green;font-weight:bold">SUCCESS — transaction committed.</p>
+        <p>Workers checked: <b>169</b></p>
+        <p>Field changes applied: <b>{len(changes)}</b></p>
+        <p>Online backup run ID: <b>{backup_run_id}</b></p>
+        <p>The backup is stored in <b>reedoy_sync_worker_backup</b>.</p>
+        <p><b>Attendance, advances, salary and payments were not modified.</b></p>
+        <p><a href="/sync/compare-online-workers">Run the Worker comparison again</a></p>
+        """
+
+    except Exception as e:
+        if conn is not None:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        return f"""
+        <h2>Worker Local → Online Sync STOPPED</h2>
+        <p style="color:red;font-weight:bold">NO DATABASE CHANGES WERE COMMITTED.</p>
+        <p><b>{type(e).__name__}:</b> {e}</p>
+        <p>Any transaction was rolled back.</p>
+        """, 409
+    finally:
+        if conn is not None:
+            try:
+                db_release(conn)
+            except Exception:
+                pass
+
+
 @app.route("/sync/compare-online-workers")
 @login_required
 def compare_online_workers():
@@ -10050,175 +10260,3 @@ if __name__ == "__main__":
 
 
 
-
-
-# ============================================================
-# READ-ONLY WORKER REVIEW — LOCAL VALUES VS ONLINE VALUES
-# ============================================================
-@app.route("/sync/review-worker-differences")
-@login_required
-def review_worker_differences():
-    import json
-    from pathlib import Path
-
-    if not is_postgres():
-        return """
-        <h2>Worker Review</h2>
-        <p style="color:red"><b>ERROR:</b> PostgreSQL connection is not active.</p>
-        """, 400
-
-    review_path = Path(__file__).resolve().parent / "workers_review_values.json"
-    if not review_path.exists():
-        return """
-        <h2>Worker Review</h2>
-        <p style="color:red"><b>ERROR:</b> workers_review_values.json was not found.</p>
-        <p>Push the JSON file to the same GitHub branch as app.py, then wait for Render deployment.</p>
-        """, 500
-
-    fields = ["name", "bangla_name", "designation", "status"]
-
-    def norm(v):
-        return "" if v is None else str(v).strip()
-
-    conn = None
-    try:
-        with open(review_path, "r", encoding="utf-8") as f:
-            local_rows = json.load(f)
-
-        if not isinstance(local_rows, list):
-            raise RuntimeError("workers_review_values.json must contain a list.")
-
-        local_map = {}
-        for item in local_rows:
-            worker_id = int(item["id"])
-            if worker_id in local_map:
-                raise RuntimeError(f"Duplicate worker ID in review file: {worker_id}")
-            local_map[worker_id] = {
-                field: norm(item.get(field, "")) for field in fields
-            }
-
-        if len(local_map) != 169:
-            raise RuntimeError(
-                f"Review file contains {len(local_map)} workers; expected 169."
-            )
-
-        conn = db_connect()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT id, name, bangla_name, designation, status
-            FROM workers
-            ORDER BY id
-        """)
-        rows = cur.fetchall()
-
-        online_map = {}
-        for row in rows:
-            worker_id = int(row[0])
-            online_map[worker_id] = {
-                field: norm(row[i + 1]) for i, field in enumerate(fields)
-            }
-
-        local_ids = set(local_map)
-        online_ids = set(online_map)
-        missing_online = sorted(local_ids - online_ids)
-        extra_online = sorted(online_ids - local_ids)
-
-        differences = []
-        for worker_id in sorted(local_ids & online_ids):
-            for field in fields:
-                local_value = local_map[worker_id][field]
-                online_value = online_map[worker_id][field]
-                if local_value != online_value:
-                    differences.append({
-                        "id": worker_id,
-                        "field": field,
-                        "local": local_value,
-                        "online": online_value,
-                    })
-
-        db_release(conn)
-        conn = None
-
-        html = """
-        <!doctype html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Worker Review — Read Only</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 28px; color: #111; }
-                h1 { color: #123b67; }
-                .ok { color: #087a2f; font-weight: bold; }
-                .note { background: #eef6ff; border-left: 5px solid #1769c2; padding: 12px; margin: 14px 0; }
-                .warn { background: #fff4e5; border-left: 5px solid #f57c00; padding: 12px; margin: 14px 0; }
-                table { border-collapse: collapse; margin-top: 12px; width: 100%; max-width: 1100px; }
-                th, td { border: 1px solid #aaa; padding: 8px 10px; text-align: left; vertical-align: top; }
-                th { background: #eee; }
-                .diff { background: #fff8dc; }
-                .small { color: #555; font-size: 13px; }
-            </style>
-        </head>
-        <body>
-            <h1>Worker Review — Local vs Online</h1>
-            <p class="ok">READ ONLY — NO DATABASE CHANGES WERE MADE.</p>
-            <div class="note">
-                This page checks only Name, Bangla Name, Designation and Status.
-                Salary, OT, phone, address, attendance, advance and payment data are not modified.
-            </div>
-
-            <table>
-                <tr><th>Check</th><th>Result</th></tr>
-                <tr><td>Local Workers</td><td>{{ local_count }}</td></tr>
-                <tr><td>Online Workers</td><td>{{ online_count }}</td></tr>
-                <tr><td>Missing Online IDs</td><td>{{ missing_online }}</td></tr>
-                <tr><td>Extra Online IDs</td><td>{{ extra_online }}</td></tr>
-                <tr><td>Non-OT Field Differences</td><td><b>{{ differences|length }}</b></td></tr>
-            </table>
-
-            {% if differences %}
-            <h2>Differences to Review</h2>
-            <table>
-                <tr>
-                    <th>Worker ID</th>
-                    <th>Field</th>
-                    <th>Local Value</th>
-                    <th>Online Value</th>
-                </tr>
-                {% for item in differences %}
-                <tr class="diff">
-                    <td>{{ item.id }}</td>
-                    <td>{{ item.field }}</td>
-                    <td>{{ item.local if item.local else '(blank)' }}</td>
-                    <td>{{ item.online if item.online else '(blank)' }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-            {% else %}
-            <p class="ok"><b>No differences found in the four review fields.</b></p>
-            {% endif %}
-
-            <p class="small">No INSERT, UPDATE, DELETE, ALTER or other database write operation is performed by this page.</p>
-        </body>
-        </html>
-        """
-
-        return render_template_string(
-            html,
-            local_count=len(local_map),
-            online_count=len(online_map),
-            missing_online=missing_online,
-            extra_online=extra_online,
-            differences=differences,
-        )
-
-    except Exception as e:
-        if conn is not None:
-            try:
-                db_release(conn)
-            except Exception:
-                pass
-        return f"""
-        <h2>Worker Review Error</h2>
-        <p style="color:red"><b>{type(e).__name__}:</b> {e}</p>
-        <p><b>READ ONLY — no database changes were made.</b></p>
-        """, 500
