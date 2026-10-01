@@ -10096,14 +10096,28 @@ def apply_worker_sync():
 
     payload_path = Path(__file__).resolve().parent / "workers_sync_values.json"
     if not payload_path.exists():
-        return "<h2>Worker Sync Apply</h2><p style='color:red'>workers_sync_values.json was not found.</p>", 500
+        return "<h2>Worker Sync Apply</h2><p style='color:red'>workers_sync_values.json was not found. No database changes were made.</p>", 500
 
     fields = ["name", "bangla_name", "designation", "status", "ot_rate"]
+    protected_fields = [
+        "basic_salary", "department", "refreshment_bill",
+        "phone", "address", "joining_date"
+    ]
     conn = None
     backup_run = str(uuid_module.uuid4())
+
+    def norm(v):
+        return "" if v is None else str(v)
+
+    def num(v):
+        if v is None or v == "":
+            return 0.0
+        return float(v)
+
     try:
         with open(payload_path, "r", encoding="utf-8") as f:
             payload = json.load(f)
+
         if len(payload) != 169:
             raise RuntimeError(f"Sync payload contains {len(payload)} workers; expected 169.")
 
@@ -10119,23 +10133,56 @@ def apply_worker_sync():
 
         conn = db_connect()
         cur = conn.cursor()
+
         cur.execute("""
             SELECT id, sync_uuid, name, bangla_name, designation, status, ot_rate,
                    basic_salary, department, refreshment_bill, phone, address, joining_date
-            FROM workers ORDER BY id
+            FROM workers
+            ORDER BY id
         """)
         rows = cur.fetchall()
+
         if len(rows) != 169:
-            raise RuntimeError(f"Online worker count is {len(rows)}; expected 169. Nothing was changed.")
+            raise RuntimeError(
+                f"Online worker count is {len(rows)}; expected 169. Nothing was changed."
+            )
 
         online_ids = {int(r[0]) for r in rows}
         if online_ids != set(local_map):
-            raise RuntimeError("Online Worker IDs do not exactly match the verified local payload. Nothing was changed.")
+            raise RuntimeError(
+                "Online Worker IDs do not exactly match the verified local payload. Nothing was changed."
+            )
 
+        # Identity gate: ID + sync_uuid must match before ANY UPDATE.
         for r in rows:
             wid = int(r[0])
-            if str(r[1] or "").strip() != str(local_map[wid]["sync_uuid"]).strip():
-                raise RuntimeError(f"sync_uuid mismatch for Worker {wid}. Nothing was changed.")
+            expected_uuid = str(local_map[wid]["sync_uuid"]).strip()
+            if str(r[1] or "").strip() != expected_uuid:
+                raise RuntimeError(
+                    f"sync_uuid mismatch for Worker {wid}. Nothing was changed."
+                )
+
+        # Calculate the exact number of field changes before touching the database.
+        expected_changes = 0
+        for r in rows:
+            wid = int(r[0])
+            item = local_map[wid]
+            if norm(r[2]) != norm(item.get("name")):
+                expected_changes += 1
+            if norm(r[3]) != norm(item.get("bangla_name")):
+                expected_changes += 1
+            if norm(r[4]) != norm(item.get("designation")):
+                expected_changes += 1
+            if norm(r[5]) != norm(item.get("status")):
+                expected_changes += 1
+            if abs(num(r[6]) - num(item.get("ot_rate"))) > 0.000001:
+                expected_changes += 1
+
+        if expected_changes != 179:
+            raise RuntimeError(
+                f"Safety stop: current Online differences are {expected_changes}, "
+                "not the verified 179-change preview. Nothing was changed."
+            )
 
         # Safety snapshot of ALL 169 current Online worker records.
         cur.execute("""
@@ -10157,6 +10204,7 @@ def apply_worker_sync():
                 joining_date TEXT
             )
         """)
+
         cur.execute("""
             INSERT INTO reedoy_sync_worker_backup
             (backup_run,id,sync_uuid,name,bangla_name,designation,status,ot_rate,
@@ -10167,18 +10215,34 @@ def apply_worker_sync():
             ORDER BY id
         """, (backup_run,))
 
-        changed = 0
+        cur.execute(
+            "SELECT COUNT(*) FROM reedoy_sync_worker_backup WHERE backup_run=%s",
+            (backup_run,)
+        )
+        backup_count = int(cur.fetchone()[0])
+        if backup_count != 169:
+            raise RuntimeError(
+                f"Safety snapshot contains {backup_count} workers instead of 169. Transaction will be rolled back."
+            )
+
+        # Apply only the five approved fields, paired by ID + sync_uuid.
+        changed_workers = 0
         for r in rows:
             wid = int(r[0])
             item = local_map[wid]
-            vals = (
-                item.get("name") or "",
-                item.get("bangla_name") or "",
-                item.get("designation") or "",
-                item.get("status") or "",
-                float(item.get("ot_rate") or 0),
-                wid,
+            before = (
+                norm(r[2]), norm(r[3]), norm(r[4]), norm(r[5]), num(r[6])
             )
+            after = (
+                norm(item.get("name")),
+                norm(item.get("bangla_name")),
+                norm(item.get("designation")),
+                norm(item.get("status")),
+                num(item.get("ot_rate")),
+            )
+            if before == after:
+                continue
+
             cur.execute("""
                 UPDATE workers
                 SET name=%s,
@@ -10186,11 +10250,81 @@ def apply_worker_sync():
                     designation=%s,
                     status=%s,
                     ot_rate=%s
-                WHERE id=%s AND sync_uuid=%s
-            """, vals[:-1] + (wid, str(item["sync_uuid"]).strip()))
+                WHERE id=%s
+                  AND sync_uuid=%s
+            """, (
+                item.get("name") or "",
+                item.get("bangla_name") or "",
+                item.get("designation") or "",
+                item.get("status") or "",
+                num(item.get("ot_rate")),
+                wid,
+                str(item["sync_uuid"]).strip(),
+            ))
+
             if cur.rowcount != 1:
-                raise RuntimeError(f"Worker {wid} update failed. Transaction will be rolled back.")
-            changed += 1
+                raise RuntimeError(
+                    f"Worker {wid} update affected {cur.rowcount} rows. Transaction will be rolled back."
+                )
+            changed_workers += 1
+
+        # Verify the transaction state BEFORE COMMIT.
+        cur.execute("""
+            SELECT id, sync_uuid, name, bangla_name, designation, status, ot_rate,
+                   basic_salary, department, refreshment_bill, phone, address, joining_date
+            FROM workers
+            ORDER BY id
+        """)
+        after_rows = cur.fetchall()
+
+        remaining = []
+        protected_mismatches = []
+        for r in after_rows:
+            wid = int(r[0])
+            item = local_map[wid]
+            if str(r[1] or "").strip() != str(item["sync_uuid"]).strip():
+                remaining.append((wid, "sync_uuid"))
+            if norm(r[2]) != norm(item.get("name")):
+                remaining.append((wid, "name"))
+            if norm(r[3]) != norm(item.get("bangla_name")):
+                remaining.append((wid, "bangla_name"))
+            if norm(r[4]) != norm(item.get("designation")):
+                remaining.append((wid, "designation"))
+            if norm(r[5]) != norm(item.get("status")):
+                remaining.append((wid, "status"))
+            if abs(num(r[6]) - num(item.get("ot_rate"))) > 0.000001:
+                remaining.append((wid, "ot_rate"))
+
+        # Confirm protected fields are identical to the pre-transaction snapshot.
+        # We compare against the original rows captured before UPDATE.
+        before_by_id = {int(r[0]): r for r in rows}
+        after_by_id = {int(r[0]): r for r in after_rows}
+        protected_indexes = {
+            "basic_salary": 7,
+            "department": 8,
+            "refreshment_bill": 9,
+            "phone": 10,
+            "address": 11,
+            "joining_date": 12,
+        }
+        for wid, before_row in before_by_id.items():
+            after_row = after_by_id[wid]
+            for fname, idx in protected_indexes.items():
+                if norm(before_row[idx]) != norm(after_row[idx]):
+                    protected_mismatches.append((wid, fname))
+
+        if remaining:
+            raise RuntimeError(
+                f"Post-update verification failed: {len(remaining)} approved-field differences remain."
+            )
+        if protected_mismatches:
+            raise RuntimeError(
+                f"SAFETY STOP: {len(protected_mismatches)} protected-field changes detected."
+            )
+        if changed_workers != 169:
+            raise RuntimeError(
+                f"Expected 169 workers to contain changes, but updated {changed_workers}."
+            )
 
         conn.commit()
         db_release(conn)
@@ -10199,36 +10333,28 @@ def apply_worker_sync():
         return f"""
         <h2>Reedoy v49 - Worker Sync Apply</h2>
         <h2 style='color:green'>SUCCESS — WORKER SYNC COMPLETED</h2>
-        <p>Workers updated: <b>{changed}</b></p>
+        <p>Workers changed: <b>{changed_workers}</b></p>
+        <p>Fields changed: <b>{expected_changes}</b></p>
+        <p>Safety snapshot rows: <b>{backup_count}</b></p>
         <p>Backup run ID: <b>{backup_run}</b></p>
-        <p>A safety snapshot of all 169 Online workers was stored before the update.</p>
-        <p>Changed fields only: <b>name, bangla_name, designation, status, ot_rate</b>.</p>
-        <p>Salary, department, refreshment bill, phone, address, joining date, attendance, advances and payments were not updated.</p>
+        <p>Only these fields were changed: <b>name, bangla_name, designation, status, ot_rate</b>.</p>
+        <p>Basic salary, department, refreshment bill, phone, address, joining date, attendance, advances and payments were not changed.</p>
         <p><a href='/sync/compare-online-workers'>Run Full Worker Comparison</a></p>
         """
+
     except Exception as e:
         if conn is not None:
-            try: conn.rollback()
-            except Exception: pass
-            try: db_release(conn)
-            except Exception: pass
-        return f"<h2>Worker Sync Apply STOPPED</h2><p style='color:red'>{type(e).__name__}: {e}</p><p><b>TRANSACTION ROLLED BACK — NO WORKER CHANGES WERE COMMITTED.</b></p>", 409
-
-if __name__ == "__main__":
-
-    app.run(
-        host="0.0.0.0",
-        port=int(
-            os.environ.get(
-                "PORT",
-                5000
-            )
-        ),
-        debug=False,
-    )
-
-
-
-
-
-
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            try:
+                db_release(conn)
+            except Exception:
+                pass
+        return (
+            f"<h2>Worker Sync Apply STOPPED</h2>"
+            f"<p style='color:red'>{type(e).__name__}: {e}</p>"
+            f"<p><b>TRANSACTION ROLLED BACK — NO WORKER CHANGES WERE COMMITTED.</b></p>",
+            409,
+        )
