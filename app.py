@@ -3572,11 +3572,11 @@ def index():
 BUILTIN_OT_REPORT_TEMPLATE = r"""
 <!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OT Report | REEDOY PAYROLL</title>
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1500px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.filters{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}.field select{padding:9px;border:1px solid #cbd5e1;border-radius:7px}.btn{display:inline-block;background:#1764c0;color:#fff;border:0;border-radius:8px;padding:9px 14px;text-decoration:none;cursor:pointer}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:#f8fafc;padding:14px;border-radius:10px}.label{color:#64748b;font-size:13px}.value{font-size:21px;font-weight:800;color:#1764c0;margin-top:5px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1000px}th,td{padding:8px;border-bottom:1px solid #e2e8f0;text-align:right;white-space:nowrap}th{background:#f8fafc}th:nth-child(1),td:nth-child(1),th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){text-align:left}.msg{padding:9px;background:#ecfdf5;color:#166534;border-radius:7px;margin-bottom:12px}.actions{display:flex;gap:10px;flex-wrap:wrap}@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.cards{grid-template-columns:1fr}}@media print{@page{size:A4 landscape;margin:6mm}.nav,.filters,.actions{display:none!important}.wrap{max-width:none;width:100%;margin:0;padding:0}.box{box-shadow:none;border:0;padding:2px;margin-bottom:6px}.cards{grid-template-columns:repeat(4,1fr)}table{min-width:0;font-size:7px}th,td{padding:3px 2px}tr{page-break-inside:avoid}}</style></head><body>
-<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('worker_search') }}">Worker Search</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('ot_report') }}">OT Report</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
+<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('worker_search') }}">Worker Search</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('ot_report') }}">OT Report</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap"><div class="box filters"><div><h1 style="margin:0">Overtime Report</h1><p style="color:#64748b">Monthly OT hours and OT amount by worker and department.</p></div><form method="get" action="{{ url_for('ot_report') }}"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{m}}" {% if month.split()[0]==m %}selected{% endif %}>{{m}}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{y}}" {% if month.split()[1]|int==y %}selected{% endif %}>{{y}}</option>{% endfor %}</select></div><button class="btn" type="submit">Generate</button></form></div>
-<div class="cards"><div class="card"><div class="label">Workers with OT</div><div class="value">{{ totals.workers }}</div></div><div class="card"><div class="label">Total OT Hours</div><div class="value">{{ '%.2f'|format(totals.hours) }}</div></div><div class="card"><div class="label">Total OT Amount</div><div class="value">৳ {{ '%.2f'|format(totals.amount) }}</div></div><div class="card"><div class="label">Payroll Month</div><div class="value">{{ month }}</div></div></div>
-<div class="box"><h2>Worker-wise OT — {{ month }}</h2><div class="tablewrap"><table><tr><th>Worker ID</th><th>Worker Name</th><th>Department</th><th>Designation</th><th>Basic Salary</th><th>OT Rate</th><th>OT Hours</th><th>OT Amount</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.bangla_name if language == 'bn' and r.bangla_name else r.name}}</td><td>{{display_dept(r.department)}}</td><td>{{r.designation or ''}}</td><td>৳ {{'%.2f'|format((r.basic_salary or 0)|float)}}</td><td>৳ {{'%.2f'|format((r.ot_rate or 0)|float)}}</td><td>{{'%.2f'|format((r.ot or 0)|float)}}</td><td>৳ {{'%.2f'|format((r.ot_amt or 0)|float)}}</td></tr>{% else %}<tr><td colspan="9">No workers found.</td></tr>{% endfor %}<tr><th colspan="6">Total</th><th>{{'%.2f'|format(totals.hours)}}</th><th>৳ {{'%.2f'|format(totals.amount)}}</th></tr></table></div></div>
-<div class="box"><h2>Department-wise OT Summary</h2><div class="tablewrap"><table><tr><th>Department</th><th>Workers with OT</th><th>OT Hours</th><th>OT Amount</th></tr>{% for d in departments_summary %}<tr><td>{{display_dept(d.department)}}</td><td>{{d.workers}}</td><td>{{'%.2f'|format(d.hours)}}</td><td>৳ {{'%.2f'|format(d.amount)}}</td></tr>{% endfor %}<tr><th>Total</th><th>{{totals.workers}}</th><th>{{'%.2f'|format(totals.hours)}}</th><th>৳ {{'%.2f'|format(totals.amount)}}</th></tr></table></div></div>
+<div class="cards"><div class="card"><div class="label">Workers with OT</div><div class="value">{{ totals.workers }}</div></div><div class="card"><div class="label">Total OT Hours</div><div class="value">{{ '%.2f'|format(totals.hours) }}</div></div><div class="card"><div class="label">Total OT Amount</div><div class="value">à§³ {{ '%.2f'|format(totals.amount) }}</div></div><div class="card"><div class="label">Payroll Month</div><div class="value">{{ month }}</div></div></div>
+<div class="box"><h2>Worker-wise OT â€” {{ month }}</h2><div class="tablewrap"><table><tr><th>Worker ID</th><th>Worker Name</th><th>Department</th><th>Designation</th><th>Basic Salary</th><th>OT Rate</th><th>OT Hours</th><th>OT Amount</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.bangla_name if language == 'bn' and r.bangla_name else r.name}}</td><td>{{display_dept(r.department)}}</td><td>{{r.designation or ''}}</td><td>à§³ {{'%.2f'|format((r.basic_salary or 0)|float)}}</td><td>à§³ {{'%.2f'|format((r.ot_rate or 0)|float)}}</td><td>{{'%.2f'|format((r.ot or 0)|float)}}</td><td>à§³ {{'%.2f'|format((r.ot_amt or 0)|float)}}</td></tr>{% else %}<tr><td colspan="9">No workers found.</td></tr>{% endfor %}<tr><th colspan="6">Total</th><th>{{'%.2f'|format(totals.hours)}}</th><th>à§³ {{'%.2f'|format(totals.amount)}}</th></tr></table></div></div>
+<div class="box"><h2>Department-wise OT Summary</h2><div class="tablewrap"><table><tr><th>Department</th><th>Workers with OT</th><th>OT Hours</th><th>OT Amount</th></tr>{% for d in departments_summary %}<tr><td>{{display_dept(d.department)}}</td><td>{{d.workers}}</td><td>{{'%.2f'|format(d.hours)}}</td><td>à§³ {{'%.2f'|format(d.amount)}}</td></tr>{% endfor %}<tr><th>Total</th><th>{{totals.workers}}</th><th>{{'%.2f'|format(totals.hours)}}</th><th>à§³ {{'%.2f'|format(totals.amount)}}</th></tr></table></div></div>
 <div class="box actions"><a class="btn" href="{{url_for('ot_report_export',month=month.split()[0],year=month.split()[1])}}">Export CSV</a><button class="btn" onclick="window.print()">Print OT Report</button><a class="btn" href="{{url_for('dashboard')}}">Dashboard</a></div></main>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
@@ -3585,7 +3585,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3601,11 +3601,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3630,20 +3630,20 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 @media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.cards{grid-template-columns:1fr}}
 </style></head><body>
 <header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div>
-<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance & Calendar</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('ot_report') }}">OT Report</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a></nav></header>
+<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance & Calendar</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('data_sync') }}">â†” Sync</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('ot_report') }}">OT Report</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a></nav></header>
 <main class="wrap"><h1>{{ tr('Dashboard') }}</h1><p>{{ month }}</p>
-<section class="cards"><div class="card"><div class="label">Total Workers</div><div class="value">{{ total_workers|default(0) }}</div></div><div class="card"><div class="label">Present Today</div><div class="value">{{ today_present|default(0) }}</div></div><div class="card"><div class="label">Absent Today</div><div class="value">{{ today_absent|default(0) }}</div></div><div class="card"><div class="label">Gross Salary</div><div class="value">৳ {{ '%.2f'|format(gross|default(0)|float) }}</div></div></section>
-<section class="box"><h2>Attendance</h2><p>Attendance & Calendar module is ready.</p><a href="{{ url_for('attendance') }}">Open Attendance & Calendar →</a></section><section class="box"><h2>Payslip</h2><p>View the selected worker monthly payslip.</p><a href="{{ url_for('payslip') }}">Open Payslip →</a></section><section class="box"><h2>Advance Salary</h2><p>Add, edit and delete worker advance salary records.</p><a href="{{ url_for('advance') }}">Open Advance Salary →</a></section><section class="box"><h2>Backup & Maintenance</h2><p>Create and download a safe backup of the payroll database.</p><a href="{{ url_for('backup_maintenance') }}">Open Backup & Maintenance →</a></section><section class="box"><h2>Reports</h2><p>View monthly payroll totals, department summary and worker payroll details.</p><a href="{{ url_for('reports') }}">Open Reports →</a></section><section class="box"><h2>Payment History</h2><p>View saved payment transactions by month and worker.</p><a href="{{ url_for('payment_history') }}">Open Payment History →</a></section><section class="box"><h2>Accounts / Financial Summary</h2><p>View monthly payroll financial summary and department-wise financial totals.</p><a href="{{ url_for('accounts') }}">Open Accounts →</a></section><section class="box"><h2>OT Report</h2><p>View monthly overtime hours and OT amount by worker and department.</p><a href="{{ url_for('ot_report') }}">Open OT Report →</a></section><section class="box"><h2>Payment Management</h2><p>Track paid, unpaid and partially paid monthly salaries.</p><a href="{{ url_for('payments') }}">Open Payments →</a></section><section class="box"><h2>Payroll Closing</h2><p>Lock a completed payroll month so attendance, advances and payments cannot be changed accidentally.</p><a href="{{ url_for('payroll_closing') }}">Open Payroll Closing →</a></section>
+<section class="cards"><div class="card"><div class="label">Total Workers</div><div class="value">{{ total_workers|default(0) }}</div></div><div class="card"><div class="label">Present Today</div><div class="value">{{ today_present|default(0) }}</div></div><div class="card"><div class="label">Absent Today</div><div class="value">{{ today_absent|default(0) }}</div></div><div class="card"><div class="label">Gross Salary</div><div class="value">à§³ {{ '%.2f'|format(gross|default(0)|float) }}</div></div></section>
+<section class="box"><h2>Attendance</h2><p>Attendance & Calendar module is ready.</p><a href="{{ url_for('attendance') }}">Open Attendance & Calendar â†’</a></section><section class="box"><h2>Payslip</h2><p>View the selected worker monthly payslip.</p><a href="{{ url_for('payslip') }}">Open Payslip â†’</a></section><section class="box"><h2>Advance Salary</h2><p>Add, edit and delete worker advance salary records.</p><a href="{{ url_for('advance') }}">Open Advance Salary â†’</a></section><section class="box"><h2>Backup & Maintenance</h2><p>Create and download a safe backup of the payroll database.</p><a href="{{ url_for('backup_maintenance') }}">Open Backup & Maintenance â†’</a></section><section class="box"><h2>Reports</h2><p>View monthly payroll totals, department summary and worker payroll details.</p><a href="{{ url_for('reports') }}">Open Reports â†’</a></section><section class="box"><h2>Payment History</h2><p>View saved payment transactions by month and worker.</p><a href="{{ url_for('payment_history') }}">Open Payment History â†’</a></section><section class="box"><h2>Accounts / Financial Summary</h2><p>View monthly payroll financial summary and department-wise financial totals.</p><a href="{{ url_for('accounts') }}">Open Accounts â†’</a></section><section class="box"><h2>OT Report</h2><p>View monthly overtime hours and OT amount by worker and department.</p><a href="{{ url_for('ot_report') }}">Open OT Report â†’</a></section><section class="box"><h2>Payment Management</h2><p>Track paid, unpaid and partially paid monthly salaries.</p><a href="{{ url_for('payments') }}">Open Payments â†’</a></section><section class="box"><h2>Payroll Closing</h2><p>Lock a completed payroll month so attendance, advances and payments cannot be changed accidentally.</p><a href="{{ url_for('payroll_closing') }}">Open Payroll Closing â†’</a></section>
 </main></body></html>
 """
 
 BUILTIN_PAYMENTS_TEMPLATE = r"""
 <!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payment Management | REEDOY PAYROLL</title>
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1500px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}.card{background:#f8fafc;padding:14px;border-radius:10px}.label{color:#64748b;font-size:13px}.value{font-size:20px;font-weight:800;color:#1764c0;margin-top:5px}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}.field select,.field input{padding:8px;border:1px solid #cbd5e1;border-radius:7px}.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:8px 12px;text-decoration:none;cursor:pointer}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1200px}th,td{padding:7px;border-bottom:1px solid #e2e8f0;text-align:right;white-space:nowrap}th{background:#f8fafc}th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){text-align:left}input.small,select.small{padding:5px;font-size:12px;width:105px}.save{padding:6px 9px;font-size:12px}.paid{font-weight:700}.partial{font-weight:700}.unpaid{font-weight:700}.danger{background:#dc2626}@media(max-width:1000px){.cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:600px){.cards{grid-template-columns:1fr 1fr}}@media print{@page{size:A4 landscape;margin:6mm}.nav,.filters,.actions,.editcol{display:none!important}.wrap{max-width:none;width:100%;margin:0;padding:0}.box{box-shadow:none;border:0;padding:2px}.cards{grid-template-columns:repeat(6,1fr)}table{min-width:0;font-size:7px}th,td{padding:3px 2px}}
-</style></head><body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
+</style></head><body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap"><div class="box filters"><form method="get" action="{{ url_for('payments') }}"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{m}}" {% if month.split()[0]==m %}selected{% endif %}>{{m}}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{y}}" {% if month.split()[1]|int==y %}selected{% endif %}>{{y}}</option>{% endfor %}</select></div><button class="btn">Load</button></form></div>
-<div class="cards"><div class="card"><div class="label">Workers</div><div class="value">{{totals.workers}}</div></div><div class="card"><div class="label">Net Payable</div><div class="value">৳ {{'%.2f'|format(totals.net)}}</div></div><div class="card"><div class="label">Paid</div><div class="value">৳ {{'%.2f'|format(totals.paid)}}</div></div><div class="card"><div class="label">Due</div><div class="value">৳ {{'%.2f'|format(totals.due)}}</div></div><div class="card"><div class="label">Paid Workers</div><div class="value">{{totals.paid_count}}</div></div><div class="card"><div class="label">Unpaid/Partial</div><div class="value">{{totals.unpaid_count}}</div></div></div>
-<div class="box"><h1>Payment Management — {{month}}</h1><div class="tablewrap"><table><tr><th>ID</th><th>Worker</th><th>Department</th><th>Net Payable</th><th>Paid Amount</th><th>Due</th><th>Status</th><th class="editcol">Payment Date</th><th class="editcol">Method</th><th class="editcol">Note</th><th class="editcol">Actions</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.bangla_name or r.name}}</td><td>{{r.department or ''}}</td><td>{{'%.2f'|format(r.net)}}</td><td>{{'%.2f'|format(r.paid_amount)}}</td><td>{{'%.2f'|format(r.due)}}</td><td class="{{r.status|lower}}">{{r.status}}</td><form class="payment-edit-form" method="post" action="{{url_for('save_payment')}}"><input type="hidden" name="worker_id" value="{{r.id}}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><td class="editcol"><input class="small payment-field" type="date" name="payment_date" value="{{r.payment_date or ''}}" disabled></td><td class="editcol"><select class="small payment-field" name="payment_method" disabled><option {% if r.payment_method=='Cash' %}selected{% endif %}>Cash</option><option {% if r.payment_method=='Bank' %}selected{% endif %}>Bank</option><option {% if r.payment_method=='Mobile Banking' %}selected{% endif %}>Mobile Banking</option><option {% if r.payment_method=='Cheque' %}selected{% endif %}>Cheque</option></select></td><td class="editcol"><input class="small payment-field" name="note" value="{{r.note or ''}}" disabled></td><td class="editcol"><input class="small payment-field" type="number" step="0.01" min="0" max="{{r.net}}" name="paid_amount" value="{{'%.2f'|format(r.paid_amount)}}" disabled><button class="btn edit-btn" type="button" onclick="togglePaymentEdit(this)">Edit</button><button class="btn save save-btn" type="submit" style="display:none">Save</button></form> <form method="post" action="{{url_for('delete_payment')}}" style="display:inline" onsubmit="return confirm('Delete this payment record for {{r.bangla_name or r.name}} — {{month}}?');"><input type="hidden" name="worker_id" value="{{r.id}}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><button class="btn danger delete-btn" type="submit">Delete</button></form></td></tr>{% endfor %}</table></div></div><div class="box actions"><a class="btn" href="{{url_for('payments_export',month=month.split()[0],year=month.split()[1])}}">Export CSV</a> <button class="btn" onclick="window.print()">Print Payment Report</button></div></main>
+<div class="cards"><div class="card"><div class="label">Workers</div><div class="value">{{totals.workers}}</div></div><div class="card"><div class="label">Net Payable</div><div class="value">à§³ {{'%.2f'|format(totals.net)}}</div></div><div class="card"><div class="label">Paid</div><div class="value">à§³ {{'%.2f'|format(totals.paid)}}</div></div><div class="card"><div class="label">Due</div><div class="value">à§³ {{'%.2f'|format(totals.due)}}</div></div><div class="card"><div class="label">Paid Workers</div><div class="value">{{totals.paid_count}}</div></div><div class="card"><div class="label">Unpaid/Partial</div><div class="value">{{totals.unpaid_count}}</div></div></div>
+<div class="box"><h1>Payment Management â€” {{month}}</h1><div class="tablewrap"><table><tr><th>ID</th><th>Worker</th><th>Department</th><th>Net Payable</th><th>Paid Amount</th><th>Due</th><th>Status</th><th class="editcol">Payment Date</th><th class="editcol">Method</th><th class="editcol">Note</th><th class="editcol">Actions</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.bangla_name or r.name}}</td><td>{{r.department or ''}}</td><td>{{'%.2f'|format(r.net)}}</td><td>{{'%.2f'|format(r.paid_amount)}}</td><td>{{'%.2f'|format(r.due)}}</td><td class="{{r.status|lower}}">{{r.status}}</td><form class="payment-edit-form" method="post" action="{{url_for('save_payment')}}"><input type="hidden" name="worker_id" value="{{r.id}}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><td class="editcol"><input class="small payment-field" type="date" name="payment_date" value="{{r.payment_date or ''}}" disabled></td><td class="editcol"><select class="small payment-field" name="payment_method" disabled><option {% if r.payment_method=='Cash' %}selected{% endif %}>Cash</option><option {% if r.payment_method=='Bank' %}selected{% endif %}>Bank</option><option {% if r.payment_method=='Mobile Banking' %}selected{% endif %}>Mobile Banking</option><option {% if r.payment_method=='Cheque' %}selected{% endif %}>Cheque</option></select></td><td class="editcol"><input class="small payment-field" name="note" value="{{r.note or ''}}" disabled></td><td class="editcol"><input class="small payment-field" type="number" step="0.01" min="0" max="{{r.net}}" name="paid_amount" value="{{'%.2f'|format(r.paid_amount)}}" disabled><button class="btn edit-btn" type="button" onclick="togglePaymentEdit(this)">Edit</button><button class="btn save save-btn" type="submit" style="display:none">Save</button></form> <form method="post" action="{{url_for('delete_payment')}}" style="display:inline" onsubmit="return confirm('Delete this payment record for {{r.bangla_name or r.name}} â€” {{month}}?');"><input type="hidden" name="worker_id" value="{{r.id}}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><button class="btn danger delete-btn" type="submit">Delete</button></form></td></tr>{% endfor %}</table></div></div><div class="box actions"><a class="btn" href="{{url_for('payments_export',month=month.split()[0],year=month.split()[1])}}">Export CSV</a> <button class="btn" onclick="window.print()">Print Payment Report</button></div></main>
 <script>
 function togglePaymentEdit(btn){
   var row=btn.closest('tr');
@@ -3663,7 +3663,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3679,11 +3679,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3697,7 +3697,7 @@ document.addEventListener('DOMContentLoaded', function(){
 BUILTIN_PAYMENT_HISTORY_TEMPLATE = r"""
 <!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payment History | REEDOY PAYROLL</title>
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1450px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}.field select,.field input{padding:9px;border:1px solid #cbd5e1;border-radius:7px}.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:9px 14px;text-decoration:none;cursor:pointer}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:#f8fafc;padding:14px;border-radius:10px}.label{color:#64748b;font-size:13px}.value{font-size:21px;font-weight:800;color:#1764c0;margin-top:5px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1000px}th,td{padding:8px;border-bottom:1px solid #e2e8f0;text-align:left;white-space:nowrap}th{background:#f8fafc}td.amount,th.amount{text-align:right}.actions{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}}@media print{.nav,.filters,.actions{display:none!important}.box{box-shadow:none;border:0}}
-</style></head><body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a></nav></header><main class="wrap"><div class="box filters"><form method="get" action="{{ url_for('payment_history') }}"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{m}}" {% if month.split()[0]==m %}selected{% endif %}>{{m}}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{y}}" {% if month.split()[1]|int==y %}selected{% endif %}>{{y}}</option>{% endfor %}</select></div><div class="field"><label>Worker ID (optional)</label><input name="worker_id" value="{{worker_id or ''}}" placeholder="e.g. 224"></div><button class="btn">Load History</button></form></div><div class="cards"><div class="card"><div class="label">Transactions</div><div class="value">{{totals.count}}</div></div><div class="card"><div class="label">Total Paid</div><div class="value">৳ {{'%.2f'|format(totals.amount)}}</div></div><div class="card"><div class="label">Workers Paid</div><div class="value">{{totals.workers}}</div></div><div class="card"><div class="label">Selected Month</div><div class="value">{{month}}</div></div></div><div class="box"><h1>Payment History — {{month}}</h1><p>Every saved payment transaction is recorded here. Editing a payment creates a new history entry.</p><div class="tablewrap"><table><tr><th>ID</th><th>Worker ID</th><th>Worker Name</th><th>Department</th><th class="amount">Amount</th><th>Payment Date</th><th>Method</th><th>Note</th><th>Created At</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.worker_id}}</td><td>{{r.bangla_name or r.name}}</td><td>{{r.department or ''}}</td><td class="amount">৳ {{'%.2f'|format((r.amount or 0)|float)}}</td><td>{{r.payment_date or ''}}</td><td>{{r.payment_method or ''}}</td><td>{{r.note or ''}}</td><td>{{r.created_at or ''}}</td></tr>{% else %}<tr><td colspan="9">No payment transactions found.</td></tr>{% endfor %}</table></div></div><div class="box actions"><a class="btn" href="{{url_for('payment_history_export',month=month.split()[0],year=month.split()[1],worker_id=worker_id or '')}}">Export CSV</a><button class="btn" onclick="window.print()">Print History</button><a class="btn" href="{{url_for('payments',month=month.split()[0],year=month.split()[1])}}">Back to Payments</a></div></main>
+</style></head><body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('logout') }}">Logout</a></nav></header><main class="wrap"><div class="box filters"><form method="get" action="{{ url_for('payment_history') }}"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{m}}" {% if month.split()[0]==m %}selected{% endif %}>{{m}}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{y}}" {% if month.split()[1]|int==y %}selected{% endif %}>{{y}}</option>{% endfor %}</select></div><div class="field"><label>Worker ID (optional)</label><input name="worker_id" value="{{worker_id or ''}}" placeholder="e.g. 224"></div><button class="btn">Load History</button></form></div><div class="cards"><div class="card"><div class="label">Transactions</div><div class="value">{{totals.count}}</div></div><div class="card"><div class="label">Total Paid</div><div class="value">à§³ {{'%.2f'|format(totals.amount)}}</div></div><div class="card"><div class="label">Workers Paid</div><div class="value">{{totals.workers}}</div></div><div class="card"><div class="label">Selected Month</div><div class="value">{{month}}</div></div></div><div class="box"><h1>Payment History â€” {{month}}</h1><p>Every saved payment transaction is recorded here. Editing a payment creates a new history entry.</p><div class="tablewrap"><table><tr><th>ID</th><th>Worker ID</th><th>Worker Name</th><th>Department</th><th class="amount">Amount</th><th>Payment Date</th><th>Method</th><th>Note</th><th>Created At</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.worker_id}}</td><td>{{r.bangla_name or r.name}}</td><td>{{r.department or ''}}</td><td class="amount">à§³ {{'%.2f'|format((r.amount or 0)|float)}}</td><td>{{r.payment_date or ''}}</td><td>{{r.payment_method or ''}}</td><td>{{r.note or ''}}</td><td>{{r.created_at or ''}}</td></tr>{% else %}<tr><td colspan="9">No payment transactions found.</td></tr>{% endfor %}</table></div></div><div class="box actions"><a class="btn" href="{{url_for('payment_history_export',month=month.split()[0],year=month.split()[1],worker_id=worker_id or '')}}">Export CSV</a><button class="btn" onclick="window.print()">Print History</button><a class="btn" href="{{url_for('payments',month=month.split()[0],year=month.split()[1])}}">Back to Payments</a></div></main>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   function addSelectSearch(sel){
@@ -3705,7 +3705,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3721,11 +3721,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3739,19 +3739,19 @@ document.addEventListener('DOMContentLoaded', function(){
 BUILTIN_PAYROLL_CLOSING_TEMPLATE = r"""
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payroll Closing | REEDOY PAYROLL</title>
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1100px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}label{font-weight:600;display:block;margin-bottom:6px}select,input,textarea{padding:10px;border:1px solid #cbd5e1;border-radius:7px;width:100%;box-sizing:border-box}button,.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;text-decoration:none;display:inline-block}.danger{background:#dc2626}.success{background:#16a34a}.msg{padding:10px;border-radius:7px;margin-bottom:10px;background:#fef3c7}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%}th,td{padding:9px;border-bottom:1px solid #e2e8f0;text-align:left}th{background:#f8fafc}.locked{color:#b91c1c;font-weight:700}.open{color:#15803d;font-weight:700}@media(max-width:700px){.grid{grid-template-columns:1fr}}@media print{.nav,.actions,.filters{display:none!important}.box{box-shadow:none}}</style></head><body>
-<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
+<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap"><div class="box filters"><h1>Payroll Closing / Monthly Lock</h1>{% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="msg">{{ message }}</div>{% endfor %}{% endwith %}<form method="get"><div class="grid"><div><label>Month</label><select name="month">{% for m in months %}<option value="{{m}}" {% if month.split()[0]==m %}selected{% endif %}>{{m}}</option>{% endfor %}</select></div><div><label>Year</label><select name="year">{% for y in years %}<option value="{{y}}" {% if month.split()[1]|int==y %}selected{% endif %}>{{y}}</option>{% endfor %}</select></div></div><br><button type="submit">Load Month</button></form></div>
-<div class="box"><h2>{{ month }}</h2>{% if selected_lock %}<p class="locked">🔒 Payroll is LOCKED</p><p>Locked at: {{ selected_lock.locked_at or '' }}<br>Locked by: {{ selected_lock.locked_by or '' }}<br>Note: {{ selected_lock.note or '' }}</p><form method="post" action="{{ url_for('payroll_unlock') }}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><button class="btn danger" type="submit">Unlock Payroll</button></form>{% else %}<p class="open">🟢 Payroll is OPEN</p><form method="post" action="{{ url_for('payroll_close') }}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><label>Lock Note</label><textarea name="note" rows="3" placeholder="Optional note"></textarea><br><br><button class="btn success" type="submit">Lock This Month</button></form>{% endif %}</div>
+<div class="box"><h2>{{ month }}</h2>{% if selected_lock %}<p class="locked">ðŸ”’ Payroll is LOCKED</p><p>Locked at: {{ selected_lock.locked_at or '' }}<br>Locked by: {{ selected_lock.locked_by or '' }}<br>Note: {{ selected_lock.note or '' }}</p><form method="post" action="{{ url_for('payroll_unlock') }}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><button class="btn danger" type="submit">Unlock Payroll</button></form>{% else %}<p class="open">ðŸŸ¢ Payroll is OPEN</p><form method="post" action="{{ url_for('payroll_close') }}"><input type="hidden" name="month" value="{{month.split()[0]}}"><input type="hidden" name="year" value="{{month.split()[1]}}"><label>Lock Note</label><textarea name="note" rows="3" placeholder="Optional note"></textarea><br><br><button class="btn success" type="submit">Lock This Month</button></form>{% endif %}</div>
 <div class="box"><h2>Recent Payroll Months</h2><div class="tablewrap"><table><tr><th>Month</th><th>Status</th><th>Locked At</th><th>Locked By</th></tr>{% for r in recent %}<tr><td>{{r.month}}</td><td>{% if r.locked %}<span class="locked">LOCKED</span>{% else %}<span class="open">OPEN</span>{% endif %}</td><td>{{r.locked_at}}</td><td>{{r.locked_by}}</td></tr>{% endfor %}</table></div></div></main></body></html>
 """
 
 BUILTIN_ACCOUNTS_TEMPLATE = r"""
 <!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Accounts | REEDOY PAYROLL</title>
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1400px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.card{background:#f8fafc;padding:14px;border-radius:10px}.label{color:#64748b;font-size:13px}.value{font-size:21px;font-weight:800;color:#1764c0;margin-top:5px}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}.field select{padding:9px;border:1px solid #cbd5e1;border-radius:7px}.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:9px 14px;text-decoration:none;cursor:pointer}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:800px}th,td{padding:8px;border-bottom:1px solid #e2e8f0;text-align:right;white-space:nowrap}th{background:#f8fafc}th:first-child,td:first-child{text-align:left}@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.grid{grid-template-columns:1fr}}@media print{@page{size:A4 landscape;margin:6mm}.nav,.filters,.actions{display:none!important}.wrap{max-width:none;width:100%;margin:0;padding:0}.box{box-shadow:none;border:0}.grid{grid-template-columns:repeat(5,1fr)}table{min-width:0;font-size:7px}th,td{padding:3px}}</style></head><body>
-<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
+<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap"><div class="box filters"><div><h1 style="margin:0">Accounts / Financial Summary</h1><p style="color:#64748b">Monthly payroll financial summary based on existing payroll records.</p></div><form method="get" action="{{ url_for('accounts') }}"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select><label style="margin-top:6px">Year</label><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.split()[1]|int==y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div><button class="btn" type="submit">Generate</button></form></div>
-<div class="grid"><div class="card"><div class="label">Workers</div><div class="value">{{ totals.workers }}</div></div><div class="card"><div class="label">Basic Salary</div><div class="value">৳ {{ '%.2f'|format(totals.basic) }}</div></div><div class="card"><div class="label">Gross Salary</div><div class="value">৳ {{ '%.2f'|format(totals.gross) }}</div></div><div class="card"><div class="label">Advance</div><div class="value">৳ {{ '%.2f'|format(totals.advance) }}</div></div><div class="card"><div class="label">Net Payable</div><div class="value">৳ {{ '%.2f'|format(totals.net) }}</div></div></div>
-<div class="box"><h2>Financial Breakdown — {{ month }}</h2><div class="tablewrap"><table><tr><th>Item</th><th>Amount (BDT)</th></tr><tr><td>Basic Salary</td><td>{{ '%.2f'|format(totals.basic) }}</td></tr><tr><td>Absent Deduction</td><td>- {{ '%.2f'|format(totals.absent_cut) }}</td></tr><tr><td>OT Amount</td><td>+ {{ '%.2f'|format(totals.ot_amt) }}</td></tr><tr><td>Nasta</td><td>+ {{ '%.2f'|format(totals.nasta) }}</td></tr><tr><td><strong>Gross Salary</strong></td><td><strong>{{ '%.2f'|format(totals.gross) }}</strong></td></tr><tr><td>Advance Deduction</td><td>- {{ '%.2f'|format(totals.advance) }}</td></tr><tr><td><strong>Net Payable</strong></td><td><strong>{{ '%.2f'|format(totals.net) }}</strong></td></tr></table></div></div>
+<div class="grid"><div class="card"><div class="label">Workers</div><div class="value">{{ totals.workers }}</div></div><div class="card"><div class="label">Basic Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.basic) }}</div></div><div class="card"><div class="label">Gross Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.gross) }}</div></div><div class="card"><div class="label">Advance</div><div class="value">à§³ {{ '%.2f'|format(totals.advance) }}</div></div><div class="card"><div class="label">Net Payable</div><div class="value">à§³ {{ '%.2f'|format(totals.net) }}</div></div></div>
+<div class="box"><h2>Financial Breakdown â€” {{ month }}</h2><div class="tablewrap"><table><tr><th>Item</th><th>Amount (BDT)</th></tr><tr><td>Basic Salary</td><td>{{ '%.2f'|format(totals.basic) }}</td></tr><tr><td>Absent Deduction</td><td>- {{ '%.2f'|format(totals.absent_cut) }}</td></tr><tr><td>OT Amount</td><td>+ {{ '%.2f'|format(totals.ot_amt) }}</td></tr><tr><td>Nasta</td><td>+ {{ '%.2f'|format(totals.nasta) }}</td></tr><tr><td><strong>Gross Salary</strong></td><td><strong>{{ '%.2f'|format(totals.gross) }}</strong></td></tr><tr><td>Advance Deduction</td><td>- {{ '%.2f'|format(totals.advance) }}</td></tr><tr><td><strong>Net Payable</strong></td><td><strong>{{ '%.2f'|format(totals.net) }}</strong></td></tr></table></div></div>
 <div class="box"><h2>Department Financial Summary</h2><div class="tablewrap"><table><tr><th>Department</th><th>Workers</th><th>Basic</th><th>Gross</th><th>Advance</th><th>Net Payable</th></tr>{% for d in departments_summary %}<tr><td>{{ d.department }}</td><td>{{ d.workers }}</td><td>{{ '%.2f'|format(d.basic) }}</td><td>{{ '%.2f'|format(d.gross) }}</td><td>{{ '%.2f'|format(d.advance) }}</td><td>{{ '%.2f'|format(d.net) }}</td></tr>{% endfor %}<tr><th>Total</th><th>{{ totals.workers }}</th><th>{{ '%.2f'|format(totals.basic) }}</th><th>{{ '%.2f'|format(totals.gross) }}</th><th>{{ '%.2f'|format(totals.advance) }}</th><th>{{ '%.2f'|format(totals.net) }}</th></tr></table></div></div>
 <div class="box actions"><a class="btn" href="{{ url_for('accounts_export', month=month.split()[0], year=month.split()[1]) }}">Export CSV</a> <button class="btn" onclick="window.print()">Print Accounts</button></div></main>
 <script>
@@ -3761,7 +3761,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3777,11 +3777,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3801,15 +3801,15 @@ BUILTIN_ATTENDANCE_TEMPLATE = r"""
 <style>
 body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1400px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}label{font-weight:600;font-size:14px;display:block;margin-bottom:6px}select,input{padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:14px}button,.btn{background:#1764c0;color:white;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;text-decoration:none;display:inline-block}.grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#f8fafc;padding:14px;border-radius:9px}.stat b{display:block;font-size:22px;margin-top:4px}.calendar{overflow:auto}table{border-collapse:collapse;width:100%;min-width:850px}th,td{border:1px solid #e2e8f0;padding:8px;text-align:center}th{background:#f8fafc}.day{font-weight:700}.weekend{background:#fff7ed}.msg{padding:10px;border-radius:7px;margin-bottom:10px}.danger{background:#fee2e2;color:#991b1b}.success{background:#dcfce7;color:#166534}.workername{font-size:18px;font-weight:700}.muted{color:#64748b;font-size:13px}@media(max-width:800px){.grid,.summary{grid-template-columns:1fr 1fr}}
 </style></head><body>
-<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a></nav></header>
+<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a></nav></header>
 <main class="wrap">
 <div class="box"><h1>Attendance & Calendar</h1>
 {% with messages = get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="msg {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
 <form method="get" action="{{ url_for('attendance') }}"><div class="grid"><div><label>Worker</label><select name="worker_id"><option value="">-- Select Worker --</option>{% for w in workers %}<option value="{{ w.id }}" {% if worker and w.id|string == worker.id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language=='bn' and w.bangla_name else w.name }}{% if w.department %} ({{ w.department }}){% endif %}</option>{% endfor %}</select></div><div><label>Month</label><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select></div><div><label>Year</label><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.split()[1]|int==y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div><div style="align-self:end"><button type="submit">Load Attendance</button></div></div></form></div>
 {% if worker %}<div class="box"><div class="workername">{{ worker.bangla_name if language=='bn' and worker.bangla_name else worker.name }}</div><div class="muted">ID: {{ worker.id }} &nbsp; | &nbsp; Department: {{ worker.department or '' }} &nbsp; | &nbsp; Designation: {{ worker.designation or '' }} &nbsp; | &nbsp; Month: {{ month }}</div></div>
 <form method="post" action="{{ url_for('save_attendance') }}"><input type="hidden" name="worker_id" value="{{ worker.id }}"><input type="hidden" name="month" value="{{ month.split()[0] }}"><input type="hidden" name="year" value="{{ month.split()[1] }}">
-<div class="box"><h2>Monthly Summary</h2><div class="summary"><div class="stat"><label>Present Days</label><input type="number" min="0" name="present_days" value="{{ summary.get('present',0) }}"></div><div class="stat"><label>Absent Days</label><input type="number" min="0" name="absent_days" value="{{ summary.get('absent',0) }}"></div><div class="stat"><label>Overtime Hours</label><input type="number" min="0" step="0.01" name="ot_hours" value="{{ summary.get('ot',0) }}"></div><div class="stat"><label>Net Salary</label><b>৳ {{ '%.2f'|format(summary.get('net',0)|float) }}</b></div></div></div>
-<div class="box calendar"><h2>Daily Attendance — {{ month }}</h2><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><button type="button" class="btn" onclick="markAllAttendance('P')">✓ Mark All Present</button><button type="button" class="btn" style="background:#b91c1c" onclick="markAllAttendance('A')">✕ Mark All Absent</button><button type="button" class="btn" style="background:#64748b" onclick="markAllAttendance('')">↪ Clear All / Not Set</button></div><table><thead><tr><th>Day</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for d in days %}<tr class="{% if d.date.weekday()==4 %}weekend{% endif %}"><td class="day">{{ d.day }}</td><td>{{ d.date.strftime('%d-%b-%Y') }}</td><td><select name="day_{{ d.day }}"><option value="" {% if not d.status %}selected{% endif %}>-- Not Set --</option><option value="P" {% if d.status=='P' %}selected{% endif %}>P - Present</option><option value="A" {% if d.status=='A' %}selected{% endif %}>A - Absent</option></select></td></tr>{% endfor %}</tbody></table></div>
+<div class="box"><h2>Monthly Summary</h2><div class="summary"><div class="stat"><label>Present Days</label><input type="number" min="0" name="present_days" value="{{ summary.get('present',0) }}"></div><div class="stat"><label>Absent Days</label><input type="number" min="0" name="absent_days" value="{{ summary.get('absent',0) }}"></div><div class="stat"><label>Overtime Hours</label><input type="number" min="0" step="0.01" name="ot_hours" value="{{ summary.get('ot',0) }}"></div><div class="stat"><label>Net Salary</label><b>à§³ {{ '%.2f'|format(summary.get('net',0)|float) }}</b></div></div></div>
+<div class="box calendar"><h2>Daily Attendance â€” {{ month }}</h2><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><button type="button" class="btn" onclick="markAllAttendance('P')">âœ“ Mark All Present</button><button type="button" class="btn" style="background:#b91c1c" onclick="markAllAttendance('A')">âœ• Mark All Absent</button><button type="button" class="btn" style="background:#64748b" onclick="markAllAttendance('')">â†º Clear All / Not Set</button></div><table><thead><tr><th>Day</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for d in days %}<tr class="{% if d.date.weekday()==4 %}weekend{% endif %}"><td class="day">{{ d.day }}</td><td>{{ d.date.strftime('%d-%b-%Y') }}</td><td><select name="day_{{ d.day }}"><option value="" {% if not d.status %}selected{% endif %}>-- Not Set --</option><option value="P" {% if d.status=='P' %}selected{% endif %}>P - Present</option><option value="A" {% if d.status=='A' %}selected{% endif %}>A - Absent</option></select></td></tr>{% endfor %}</tbody></table></div>
 <div class="box"><button type="submit">Save Attendance</button> <a class="btn" style="background:#64748b" href="{{ url_for('attendance') }}">Clear</a></div></form>{% endif %}
 </main>
 <script>
@@ -3819,7 +3819,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3835,11 +3835,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3872,12 +3872,12 @@ BUILTIN_ADVANCE_TEMPLATE = r"""
 <style>
 body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1250px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.grid{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:12px}.field label{font-weight:600;font-size:13px;display:block;margin-bottom:6px}.field input,.field select{width:100%;box-sizing:border-box;padding:9px;border:1px solid #cbd5e1;border-radius:7px}.btn,button{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 15px;text-decoration:none;cursor:pointer;display:inline-block}.btn.edit{background:#0f766e}.btn.delete{background:#b91c1c}.msg{padding:10px;border-radius:7px;margin-bottom:10px}.danger{background:#fee2e2;color:#991b1b}.success{background:#dcfce7;color:#166534}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:800px}th,td{padding:10px;border-bottom:1px solid #e2e8f0;text-align:left}th{background:#f8fafc}.amount{font-weight:700;text-align:right}.actions{white-space:nowrap}@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}
 </style></head><body>
-<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a></nav></header>
+<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a></nav></header>
 <main class="wrap"><div class="box"><h1>Advance Salary</h1>
 {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="msg {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
 <form method="get"><div class="grid"><div class="field"><label>Worker</label><select name="worker_id"><option value="">All Workers</option>{% for w in workers %}<option value="{{ w.id }}" {% if request.args.get('worker_id','')|string == w.id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language=='bn' and w.bangla_name else w.name }}</option>{% endfor %}</select></div><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.split()[1]|int==y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div><div class="field" style="align-self:end"><button type="submit">View Advances</button></div></div></form></div>
 <div class="box"><h2>Add Advance Salary</h2><form method="post" action="{{ url_for('save_advance') }}"><div class="grid"><div class="field"><label>Worker</label><select name="worker_id" required><option value="">Select Worker</option>{% for w in workers %}<option value="{{ w.id }}">{{ w.id }} - {{ w.bangla_name if language=='bn' and w.bangla_name else w.name }}</option>{% endfor %}</select></div><div class="field"><label>Date</label><input type="date" name="advance_date" value="{{ today_date }}" required></div><div class="field"><label>Amount (BDT)</label><input type="number" name="amount" min="0.01" step="0.01" required></div><div class="field"><label>Note</label><input type="text" name="note"></div><div class="field" style="align-self:end"><input type="hidden" name="month_year" value="{{ month }}"><button type="submit">Save Advance</button></div></div></form></div>
-<div class="box"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h2 style="margin:0">Advance Records — {{ month }}</h2><div style="font-size:18px;font-weight:700;color:#1764c0">Total Advance: BDT {{ '%.2f'|format(total_advance|float) }}</div></div></div><div class="box" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" onclick="window.print()">Print</button><a class="btn" href="{{ url_for('advance_export', month=month.split(' ')[0], year=month.split(' ')[1], worker_id=request.args.get('worker_id','')) }}">Export Excel</a><a class="btn edit" href="{{ url_for('advance_pdf', month=month.split(' ')[0], year=month.split(' ')[1], worker_id=request.args.get('worker_id','')) }}">Export PDF</a></div><div class="box tablewrap"><table><thead><tr><th>ID</th><th>Worker</th><th>Department</th><th>Date</th><th>Amount</th><th>Note</th><th>Actions</th></tr></thead><tbody>{% if rows %}{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.worker_id }} - {{ r.bangla_name if language=='bn' and r.bangla_name else r.worker_name }}</td><td>{{ display_dept(r.department) }}</td><td>{{ r.advance_date or '' }}</td><td class="amount">BDT {{ '%.2f'|format(r.amount|float) }}</td><td>{{ r.note or '' }}</td><td class="actions"><a class="btn edit" href="{{ url_for('edit_advance', aid=r.id) }}">Edit</a> <a class="btn delete" href="{{ url_for('delete_advance', aid=r.id) }}" onclick="return confirm('Delete this advance record?')">Delete</a></td></tr>{% endfor %}{% else %}<tr><td colspan="7">No advance records found.</td></tr>{% endif %}</tbody></table></div></main>
+<div class="box"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h2 style="margin:0">Advance Records â€” {{ month }}</h2><div style="font-size:18px;font-weight:700;color:#1764c0">Total Advance: BDT {{ '%.2f'|format(total_advance|float) }}</div></div></div><div class="box" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" onclick="window.print()">Print</button><a class="btn" href="{{ url_for('advance_export', month=month.split(' ')[0], year=month.split(' ')[1], worker_id=request.args.get('worker_id','')) }}">Export Excel</a><a class="btn edit" href="{{ url_for('advance_pdf', month=month.split(' ')[0], year=month.split(' ')[1], worker_id=request.args.get('worker_id','')) }}">Export PDF</a></div><div class="box tablewrap"><table><thead><tr><th>ID</th><th>Worker</th><th>Department</th><th>Date</th><th>Amount</th><th>Note</th><th>Actions</th></tr></thead><tbody>{% if rows %}{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.worker_id }} - {{ r.bangla_name if language=='bn' and r.bangla_name else r.worker_name }}</td><td>{{ display_dept(r.department) }}</td><td>{{ r.advance_date or '' }}</td><td class="amount">BDT {{ '%.2f'|format(r.amount|float) }}</td><td>{{ r.note or '' }}</td><td class="actions"><a class="btn edit" href="{{ url_for('edit_advance', aid=r.id) }}">Edit</a> <a class="btn delete" href="{{ url_for('delete_advance', aid=r.id) }}" onclick="return confirm('Delete this advance record?')">Delete</a></td></tr>{% endfor %}{% else %}<tr><td colspan="7">No advance records found.</td></tr>{% endif %}</tbody></table></div></main>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   function addSelectSearch(sel){
@@ -3885,7 +3885,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3901,11 +3901,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3917,12 +3917,12 @@ document.addEventListener('DOMContentLoaded', function(){
 """
 
 BUILTIN_ADVANCE_EDIT_TEMPLATE = r"""
-<!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Edit Advance | REEDOY PAYROLL</title><style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.wrap{max-width:700px;margin:30px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:24px;box-shadow:0 4px 14px rgba(0,0,0,.04)}label{display:block;font-weight:600;margin:12px 0 6px}input,select{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:7px}button,.btn{margin-top:16px;background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 15px;text-decoration:none;cursor:pointer;display:inline-block}.cancel{background:#64748b;margin-left:8px}.nav{margin-bottom:18px}.nav a{color:#1764c0;text-decoration:none;margin-right:12px}</style></head><body><main class="wrap"><div class="box"><div class="nav"><a href="{{ url_for('advance') }}">← Advance Salary</a><a href="{{ url_for('dashboard') }}">Dashboard</a></div><h1>Edit Advance Salary</h1><form method="post"><label>Worker</label><select name="worker_id" required>{% for w in workers %}<option value="{{ w.id }}" {% if w.id|string == record.worker_id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language=='bn' and w.bangla_name else w.name }}</option>{% endfor %}</select><label>Date</label><input type="date" name="advance_date" value="{{ record.advance_date or '' }}" required><label>Amount (BDT)</label><input type="number" name="amount" min="0.01" step="0.01" value="{{ record.amount or 0 }}" required><label>Note</label><input type="text" name="note" value="{{ record.note or '' }}"><input type="hidden" name="month_year" value="{{ record.month_year or '' }}"><button type="submit">Update Advance</button><a class="btn cancel" href="{{ url_for('advance', month=record.month_year) }}">Cancel</a></form></div></main></body></html>
+<!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Edit Advance | REEDOY PAYROLL</title><style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.wrap{max-width:700px;margin:30px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:24px;box-shadow:0 4px 14px rgba(0,0,0,.04)}label{display:block;font-weight:600;margin:12px 0 6px}input,select{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:7px}button,.btn{margin-top:16px;background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 15px;text-decoration:none;cursor:pointer;display:inline-block}.cancel{background:#64748b;margin-left:8px}.nav{margin-bottom:18px}.nav a{color:#1764c0;text-decoration:none;margin-right:12px}</style></head><body><main class="wrap"><div class="box"><div class="nav"><a href="{{ url_for('advance') }}">â† Advance Salary</a><a href="{{ url_for('dashboard') }}">Dashboard</a></div><h1>Edit Advance Salary</h1><form method="post"><label>Worker</label><select name="worker_id" required>{% for w in workers %}<option value="{{ w.id }}" {% if w.id|string == record.worker_id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language=='bn' and w.bangla_name else w.name }}</option>{% endfor %}</select><label>Date</label><input type="date" name="advance_date" value="{{ record.advance_date or '' }}" required><label>Amount (BDT)</label><input type="number" name="amount" min="0.01" step="0.01" value="{{ record.amount or 0 }}" required><label>Note</label><input type="text" name="note" value="{{ record.note or '' }}"><input type="hidden" name="month_year" value="{{ record.month_year or '' }}"><button type="submit">Update Advance</button><a class="btn cancel" href="{{ url_for('advance', month=record.month_year) }}">Cancel</a></form></div></main></body></html>
 """
 
 BUILTIN_LOGIN_TEMPLATE = r"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>REEDOY PAYROLL Login</title><style>body{font-family:Arial,sans-serif;background:#f3f6fb;display:flex;align-items:center;justify-content:center;min-height:100vh}.box{background:#fff;padding:30px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);width:340px}input{width:100%;padding:11px;margin:7px 0 14px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:7px}button{width:100%;padding:11px;background:#1764c0;color:#fff;border:0;border-radius:7px;cursor:pointer}.msg{padding:8px;background:#fee2e2;color:#991b1b;margin-bottom:12px;border-radius:6px}</style></head><body><div class="box"><h2>REEDOY PAYROLL</h2>{% with messages=get_flashed_messages(with_categories=true) %}{% for c,m in messages %}<div class="msg">{{ m }}</div>{% endfor %}{% endwith %}<form method="post"><label>User ID</label><input name="username" required><label>Password</label><input type="password" name="password" required><button type="submit">Login</button></form></div></body></html>"""
 
-BUILTIN_PAYSLIP_TEMPLATE = r"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reedoy Payroll - Payslip</title><style>body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;color:#1f2937}.wrap{max-width:900px;margin:30px auto;padding:0 16px}.box{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:24px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.05)}h1{margin-top:0;color:#174a7e}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.item{padding:12px;background:#f8fafc;border-radius:8px}.label{font-size:13px;color:#64748b}.value{font-size:18px;font-weight:700;margin-top:4px}.net{font-size:26px;color:#1764c0}.nav a{margin-right:14px;color:#1764c0;text-decoration:none}select,button{padding:10px;border:1px solid #cbd5e1;border-radius:7px}button{background:#1764c0;color:#fff;border:0;cursor:pointer}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 18px}.btn{display:inline-block;padding:10px 14px;border-radius:7px;background:#1764c0;color:#fff;text-decoration:none;border:0;cursor:pointer;font-size:14px}.btn.print{background:#0f766e}@media print{body{background:#fff}.wrap{max-width:none;margin:0;padding:0}.box{box-shadow:none;border:0;border-radius:0}.nav,form,.actions{display:none}.item{background:#fff;border:1px solid #ddd}h1{font-size:22px}}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style></head><body><main class="wrap"><div class="box"><div class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a></div><h1>Single Payslip</h1><form method="get"><div class="grid"><div><div class="label">Worker</div><select name="worker_id" required><option value="">Select Worker</option>{% for w in workers %}<option value="{{ w.id }}" {% if worker and w.id|string == worker.id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language == 'bn' and w.bangla_name else w.name }}</option>{% endfor %}</select></div><div><div class="label">Payroll Month</div><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.startswith(m + ' ') %}selected{% endif %}>{{ m }}</option>{% endfor %}</select><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.endswith(y|string) %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div></div><br><button type="submit">View Payslip</button></form></div>{% if worker %}<div class="box"><h2>REEDOY TEXTILE DYEING PRINTING & FINISHING</h2><p><b>Payroll Month:</b> {{ month }}</p><div class="actions"><a class="btn" href="{{ url_for('export_payslip_pdf', worker_id=worker.id, month=month.split()[0], year=month.split()[1]) }}">Export PDF</a><button class="btn print" type="button" onclick="window.print()">Print Payslip</button></div><div class="grid"><div class="item"><div class="label">Worker ID</div><div class="value">{{ worker.id }}</div></div><div class="item"><div class="label">English Name</div><div class="value">{{ worker.name }}</div></div><div class="item"><div class="label">Bangla Name</div><div class="value">{{ worker.bangla_name or '—' }}</div></div><div class="item"><div class="label">Department</div><div class="value">{{ display_dept(worker.department) }}</div></div><div class="item"><div class="label">Basic Salary</div><div class="value">BDT {{ '%.2f'|format(worker.basic_salary|float) }}</div></div><div class="item"><div class="label">Salary Basis</div><div class="value">30 Days</div></div><div class="item"><div class="label">Present Days</div><div class="value">{{ summary.present|default(0) }}</div></div><div class="item"><div class="label">Absent Days</div><div class="value">{{ summary.absent|default(0) }}</div></div><div class="item"><div class="label">Absent Deduction</div><div class="value">BDT {{ '%.2f'|format(summary.absent_cut|default(0)|float) }}</div></div><div class="item"><div class="label">Overtime</div><div class="value">{{ summary.ot|default(0) }} hours / BDT {{ '%.2f'|format(summary.ot_amt|default(0)|float) }}</div></div><div class="item"><div class="label">Refreshment</div><div class="value">BDT {{ '%.2f'|format(summary.nasta|default(0)|float) }}</div></div><div class="item"><div class="label">Advance Salary</div><div class="value">BDT {{ '%.2f'|format(summary.advance|default(0)|float) }}</div></div><div class="item"><div class="label">Gross Salary</div><div class="value">BDT {{ '%.2f'|format(summary.gross|default(0)|float) }}</div></div><div class="item"><div class="label">Net Payable</div><div class="value net">BDT {{ '%.2f'|format(summary.net|default(0)|float) }}</div></div></div></div>{% endif %}</main>
+BUILTIN_PAYSLIP_TEMPLATE = r"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reedoy Payroll - Payslip</title><style>body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;color:#1f2937}.wrap{max-width:900px;margin:30px auto;padding:0 16px}.box{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:24px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.05)}h1{margin-top:0;color:#174a7e}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.item{padding:12px;background:#f8fafc;border-radius:8px}.label{font-size:13px;color:#64748b}.value{font-size:18px;font-weight:700;margin-top:4px}.net{font-size:26px;color:#1764c0}.nav a{margin-right:14px;color:#1764c0;text-decoration:none}select,button{padding:10px;border:1px solid #cbd5e1;border-radius:7px}button{background:#1764c0;color:#fff;border:0;cursor:pointer}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 18px}.btn{display:inline-block;padding:10px 14px;border-radius:7px;background:#1764c0;color:#fff;text-decoration:none;border:0;cursor:pointer;font-size:14px}.btn.print{background:#0f766e}@media print{body{background:#fff}.wrap{max-width:none;margin:0;padding:0}.box{box-shadow:none;border:0;border-radius:0}.nav,form,.actions{display:none}.item{background:#fff;border:1px solid #ddd}h1{font-size:22px}}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style></head><body><main class="wrap"><div class="box"><div class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a></div><h1>Single Payslip</h1><form method="get"><div class="grid"><div><div class="label">Worker</div><select name="worker_id" required><option value="">Select Worker</option>{% for w in workers %}<option value="{{ w.id }}" {% if worker and w.id|string == worker.id|string %}selected{% endif %}>{{ w.id }} - {{ w.bangla_name if language == 'bn' and w.bangla_name else w.name }}</option>{% endfor %}</select></div><div><div class="label">Payroll Month</div><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.startswith(m + ' ') %}selected{% endif %}>{{ m }}</option>{% endfor %}</select><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.endswith(y|string) %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div></div><br><button type="submit">View Payslip</button></form></div>{% if worker %}<div class="box"><h2>REEDOY TEXTILE DYEING PRINTING & FINISHING</h2><p><b>Payroll Month:</b> {{ month }}</p><div class="actions"><a class="btn" href="{{ url_for('export_payslip_pdf', worker_id=worker.id, month=month.split()[0], year=month.split()[1]) }}">Export PDF</a><button class="btn print" type="button" onclick="window.print()">Print Payslip</button></div><div class="grid"><div class="item"><div class="label">Worker ID</div><div class="value">{{ worker.id }}</div></div><div class="item"><div class="label">English Name</div><div class="value">{{ worker.name }}</div></div><div class="item"><div class="label">Bangla Name</div><div class="value">{{ worker.bangla_name or 'â€”' }}</div></div><div class="item"><div class="label">Department</div><div class="value">{{ display_dept(worker.department) }}</div></div><div class="item"><div class="label">Basic Salary</div><div class="value">BDT {{ '%.2f'|format(worker.basic_salary|float) }}</div></div><div class="item"><div class="label">Salary Basis</div><div class="value">30 Days</div></div><div class="item"><div class="label">Present Days</div><div class="value">{{ summary.present|default(0) }}</div></div><div class="item"><div class="label">Absent Days</div><div class="value">{{ summary.absent|default(0) }}</div></div><div class="item"><div class="label">Absent Deduction</div><div class="value">BDT {{ '%.2f'|format(summary.absent_cut|default(0)|float) }}</div></div><div class="item"><div class="label">Overtime</div><div class="value">{{ summary.ot|default(0) }} hours / BDT {{ '%.2f'|format(summary.ot_amt|default(0)|float) }}</div></div><div class="item"><div class="label">Refreshment</div><div class="value">BDT {{ '%.2f'|format(summary.nasta|default(0)|float) }}</div></div><div class="item"><div class="label">Advance Salary</div><div class="value">BDT {{ '%.2f'|format(summary.advance|default(0)|float) }}</div></div><div class="item"><div class="label">Gross Salary</div><div class="value">BDT {{ '%.2f'|format(summary.gross|default(0)|float) }}</div></div><div class="item"><div class="label">Net Payable</div><div class="value net">BDT {{ '%.2f'|format(summary.net|default(0)|float) }}</div></div></div></div>{% endif %}</main>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   function addSelectSearch(sel){
@@ -3930,7 +3930,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3946,11 +3946,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -3964,14 +3964,14 @@ document.addEventListener('DOMContentLoaded', function(){
 BUILTIN_WORKER_TEMPLATE = r"""
 <!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Workers Management | REEDOY PAYROLL</title>
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1400px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.toolbar{display:flex;gap:10px;flex-wrap:wrap}.toolbar input{flex:1;min-width:220px}input,select{padding:10px;border:1px solid #cbd5e1;border-radius:7px;width:100%;box-sizing:border-box}button,.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;text-decoration:none;display:inline-block}.btn.edit{background:#0f766e}.btn.delete{background:#dc2626}.msg{padding:10px;border-radius:7px;margin-bottom:10px}.danger{background:#fee2e2;color:#991b1b}.success{background:#dcfce7;color:#166534}table{border-collapse:collapse;width:100%;min-width:950px}th,td{border:1px solid #e2e8f0;padding:9px;text-align:left}th{background:#f8fafc}.tablewrap{overflow:auto}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field label{display:block;font-weight:600;margin-bottom:6px}.actions{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:700px){.grid{grid-template-columns:1fr}}@media print{.nav,.toolbar,.actions{display:none}.box{box-shadow:none}}
-</style></head><body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a></nav></header><main class="wrap"><div class="box"><h1>Workers Management</h1>{% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="msg {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}<div class="toolbar"><form method="get" style="display:flex;gap:10px;flex:1;flex-wrap:wrap"><input name="q" value="{{ q or '' }}" placeholder="Search ID, English name, Bangla name, department or designation"><select name="status" style="max-width:180px"><option value="">All Status</option><option value="Active" {{ 'selected' if status=='Active' else '' }}>Active</option><option value="Inactive" {{ 'selected' if status=='Inactive' else '' }}>Inactive</option></select><button type="submit">Search / Filter</button></form><a class="btn" href="{{ url_for('add_worker') }}">+ Add Worker</a></div></div><div class="box tablewrap"><table><thead><tr><th>ID</th><th>English Name</th><th>Bangla Name</th><th>Department</th><th>Designation</th><th>Basic Salary</th><th>OT Rate</th><th>Status</th><th>Actions</th></tr></thead><tbody>{% for w in workers %}<tr><td>{{ w.id }}</td><td>{{ w.name or '' }}</td><td>{{ w.bangla_name or '' }}</td><td>{{ w.department or '' }}</td><td>{{ w.designation or '' }}</td><td>{{ '%.2f'|format((w.basic_salary or 0)|float) }}</td><td>{{ '%.2f'|format((w.ot_rate or 0)|float) }}</td><td><span class="btn {{ 'edit' if (w.status or 'Active')=='Active' else 'delete' }}" style="cursor:default">{{ w.status or 'Active' }}</span></td><td class="actions"><a class="btn edit" href="{{ url_for('edit_worker',worker_id=w.id) }}">Edit</a><form method="post" action="{{ url_for('toggle_worker_status',worker_id=w.id) }}" style="display:inline"><input type="hidden" name="q" value="{{ q or '' }}"><input type="hidden" name="status" value="{{ status or '' }}"><button class="btn {{ 'delete' if (w.status or 'Active')=='Active' else 'edit' }}" type="submit" onclick="return confirm('Change status for {{ w.name }}?');">{{ 'Set Inactive' if (w.status or 'Active')=='Active' else 'Set Active' }}</button></form><a class="btn delete" href="{{ url_for('delete_worker',worker_id=w.id) }}">Delete</a></td></tr>{% else %}<tr><td colspan="9">No workers found.</td></tr>{% endfor %}</tbody></table></div></main><script>
+</style></head><body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a></nav></header><main class="wrap"><div class="box"><h1>Workers Management</h1>{% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="msg {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}<div class="toolbar"><form method="get" style="display:flex;gap:10px;flex:1;flex-wrap:wrap"><input name="q" value="{{ q or '' }}" placeholder="Search ID, English name, Bangla name, department or designation"><select name="status" style="max-width:180px"><option value="">All Status</option><option value="Active" {{ 'selected' if status=='Active' else '' }}>Active</option><option value="Inactive" {{ 'selected' if status=='Inactive' else '' }}>Inactive</option></select><button type="submit">Search / Filter</button></form><a class="btn" href="{{ url_for('add_worker') }}">+ Add Worker</a></div></div><div class="box tablewrap"><table><thead><tr><th>ID</th><th>English Name</th><th>Bangla Name</th><th>Department</th><th>Designation</th><th>Basic Salary</th><th>OT Rate</th><th>Status</th><th>Actions</th></tr></thead><tbody>{% for w in workers %}<tr><td>{{ w.id }}</td><td>{{ w.name or '' }}</td><td>{{ w.bangla_name or '' }}</td><td>{{ w.department or '' }}</td><td>{{ w.designation or '' }}</td><td>{{ '%.2f'|format((w.basic_salary or 0)|float) }}</td><td>{{ '%.2f'|format((w.ot_rate or 0)|float) }}</td><td><span class="btn {{ 'edit' if (w.status or 'Active')=='Active' else 'delete' }}" style="cursor:default">{{ w.status or 'Active' }}</span></td><td class="actions"><a class="btn edit" href="{{ url_for('edit_worker',worker_id=w.id) }}">Edit</a><form method="post" action="{{ url_for('toggle_worker_status',worker_id=w.id) }}" style="display:inline"><input type="hidden" name="q" value="{{ q or '' }}"><input type="hidden" name="status" value="{{ status or '' }}"><button class="btn {{ 'delete' if (w.status or 'Active')=='Active' else 'edit' }}" type="submit" onclick="return confirm('Change status for {{ w.name }}?');">{{ 'Set Inactive' if (w.status or 'Active')=='Active' else 'Set Active' }}</button></form><a class="btn delete" href="{{ url_for('delete_worker',worker_id=w.id) }}">Delete</a></td></tr>{% else %}<tr><td colspan="9">No workers found.</td></tr>{% endfor %}</tbody></table></div></main><script>
 document.addEventListener('DOMContentLoaded', function(){
   function addSelectSearch(sel){
     if(!sel || sel.dataset.workerSearchReady) return;
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -3987,11 +3987,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -4081,7 +4081,7 @@ button,.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10p
 </head>
 <body>
 <header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div>
-<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
+<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap">
 <div class="box">
 <h1>Department Salary Sheet</h1>
@@ -4094,14 +4094,14 @@ button,.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10p
 </div>
 </form>
 </div>
-<div class="box"><h2>{{ month }}{% if department %} — {{ department }}{% else %} — All Departments{% endif %}</h2>
+<div class="box"><h2>{{ month }}{% if department %} â€” {{ department }}{% else %} â€” All Departments{% endif %}</h2>
 <div style="margin:8px 0 14px;padding:10px 12px;background:#eef6ff;border:1px solid #d7e7fb;border-radius:8px;font-weight:700;color:#334155">Salary Basis: 30 Days &nbsp; | &nbsp; Weekly Holiday: Friday &nbsp; | &nbsp; Friday is excluded from absence deduction</div>
 <div class="cards">
 <div class="card"><div class="label">Workers</div><div class="value">{{ totals.workers }}</div></div>
-<div class="card"><div class="label">Basic Salary</div><div class="value">৳ {{ '%.2f'|format(totals.basic|float) }}</div></div>
-<div class="card"><div class="label">Gross Salary</div><div class="value">৳ {{ '%.2f'|format(totals.gross|float) }}</div></div>
-<div class="card"><div class="label">Advance</div><div class="value">৳ {{ '%.2f'|format(totals.advance|float) }}</div></div>
-<div class="card"><div class="label">Net Payable</div><div class="value">৳ {{ '%.2f'|format(totals.net|float) }}</div></div>
+<div class="card"><div class="label">Basic Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.basic|float) }}</div></div>
+<div class="card"><div class="label">Gross Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.gross|float) }}</div></div>
+<div class="card"><div class="label">Advance</div><div class="value">à§³ {{ '%.2f'|format(totals.advance|float) }}</div></div>
+<div class="card"><div class="label">Net Payable</div><div class="value">à§³ {{ '%.2f'|format(totals.net|float) }}</div></div>
 </div></div>
 <div class="box tablewrap">
 <table>
@@ -4119,7 +4119,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -4135,11 +4135,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -4167,7 +4167,7 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 @media(max-width:700px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
 </style></head><body>
 <header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div>
-<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
+<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap"><div class="box"><h1>Company Settings</h1>
 {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="msg {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
 <form method="post"><div class="grid">
@@ -4187,7 +4187,7 @@ BUILTIN_USERS_TEMPLATE = r"""
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>User Management | REEDOY PAYROLL</title>
 <style>
 body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1200px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.btn{background:#1764c0;color:#fff;border-radius:8px;padding:9px 14px;text-decoration:none;display:inline-block}.btn.delete{background:#b91c1c}table{border-collapse:collapse;width:100%}th,td{padding:10px;border-bottom:1px solid #e2e8f0;text-align:left}th{background:#f8fafc}.badge{padding:4px 8px;border-radius:12px;background:#e2e8f0;font-size:12px}.active{background:#dcfce7;color:#166534}.inactive{background:#fee2e2;color:#991b1b}.msg{padding:10px;border-radius:8px;margin-bottom:12px}.success{background:#dcfce7;color:#166534}.danger{background:#fee2e2;color:#991b1b}
-</style></head><body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('settings') }}">Company Settings</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
+</style></head><body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('settings') }}">Company Settings</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap"><div class="box"><h1>User Management</h1>{% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="msg {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}<a class="btn" href="{{ url_for('add_user') }}">+ Add User</a></div>
 <div class="box"><table><thead><tr><th>ID</th><th>Username</th><th>Full Name</th><th>Role</th><th>Status</th><th>Created</th><th>Last Login</th><th>Action</th></tr></thead><tbody>
 {% for u in users %}<tr><td>{{ u.id }}</td><td>{{ u.username }}</td><td>{{ u.full_name or '' }}</td><td>{{ u.role or '' }}</td><td><span class="badge {{ 'active' if u.active else 'inactive' }}">{{ 'Active' if u.active else 'Inactive' }}</span></td><td>{{ u.created_at or '' }}</td><td>{{ u.last_login or '' }}</td><td>{% if current_user and current_user.get('id') != u.id %}<a class="btn" href="{{ url_for('edit_user',user_id=u.id) }}">Edit</a> <form method="post" action="{{ url_for('toggle_user',user_id=u.id) }}" style="display:inline"><button class="btn" type="submit">{{ 'Deactivate' if u.active else 'Activate' }}</button></form> <a class="btn delete" href="{{ url_for('delete_user',user_id=u.id) }}" onclick="return confirm('Delete this user? This cannot be undone.')">Delete</a>{% else %}Current User{% endif %}</td></tr>{% else %}<tr><td colspan="8">No users found.</td></tr>{% endfor %}
@@ -4206,7 +4206,7 @@ BUILTIN_USER_FORM_TEMPLATE = r"""
 BUILTIN_ACTIVITY_TEMPLATE = r"""
 <!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Activity Log | REEDOY PAYROLL</title>
 <style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none}.wrap{max-width:1400px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:20px;margin-bottom:18px;overflow:auto}.filters{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:12px}.field label{display:block;font-weight:700;margin-bottom:5px}.field input{width:100%;box-sizing:border-box;padding:9px;border:1px solid #cbd5e1;border-radius:8px}.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 14px;text-decoration:none;display:inline-block;cursor:pointer}.btn.secondary{background:#475569}.btn.green{background:#15803d}table{border-collapse:collapse;width:100%;min-width:800px}th,td{padding:9px;border-bottom:1px solid #e2e8f0;text-align:left}th{background:#f8fafc}.muted{color:#64748b;font-size:13px}@media(max-width:800px){.filters{grid-template-columns:1fr 1fr}}@media(max-width:500px){.filters{grid-template-columns:1fr}}</style></head>
-<body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('settings') }}">Company Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
+<body><header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('settings') }}">Company Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap">
 <div class="box"><h1>Activity Log</h1><form method="get"><div class="filters"><div class="field"><label>Username</label><input name="username" value="{{ username or '' }}" placeholder="All users"></div><div class="field"><label>Action contains</label><input name="action" value="{{ action or '' }}" placeholder="e.g. Payment"></div><div class="field"><label>From Date</label><input type="date" name="from_date" value="{{ from_date or '' }}"></div><div class="field"><label>To Date</label><input type="date" name="to_date" value="{{ to_date or '' }}"></div></div><div style="margin-top:12px"><button class="btn" type="submit">Filter</button> <a class="btn secondary" href="{{ url_for('activity') }}">Reset</a> <a class="btn green" href="{{ url_for('activity_export', username=username, action=action, from_date=from_date, to_date=to_date) }}">Export CSV</a></div></form><p class="muted">Showing up to 500 matching records.</p></div>
 <div class="box"><table><thead><tr><th>ID</th><th>Username</th><th>Action</th><th>Time</th></tr></thead><tbody>{% for row in logs %}<tr><td>{{ row.get('id','') }}</td><td>{{ row.get('username','') }}</td><td>{{ row.get('action','') }}</td><td>{{ row.get('log_time',row.get('created_at','')) }}</td></tr>{% else %}<tr><td colspan="4">No activity found.</td></tr>{% endfor %}</tbody></table></div></main></body></html>
@@ -4219,7 +4219,7 @@ BUILTIN_DATA_SYNC_TEMPLATE = r"""
 <html lang="{{ 'bn' if language == 'bn' else 'en' }}">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Online ↔ Offline Data Sync | REEDOY PAYROLL</title>
+<title>Online â†” Offline Data Sync | REEDOY PAYROLL</title>
 <style>
 body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}
 .top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -4244,7 +4244,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px so
 <a href="{{ url_for('department') }}">Department Salary</a>
 <a href="{{ url_for('reports') }}">Reports</a>
 <a href="{{ url_for('backup_maintenance') }}">Backup</a>
-<a href="{{ url_for('data_sync') }}">↔ Sync</a>
+<a href="{{ url_for('data_sync') }}">â†” Sync</a>
 <a href="{{ url_for('logout') }}">Logout</a>
 </nav>
 </header>
@@ -4256,64 +4256,47 @@ table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px so
 {% endwith %}
 
 <div class="box">
-<h1>Online ↔ Offline Data Sync</h1>
-<p>এই tab দিয়ে Online এবং Offline software-এর সম্পূর্ণ payroll data এক backup file-এর মাধ্যমে একে অপরের মধ্যে নেওয়া যাবে।</p>
+<h1>Online â†” Offline Data Sync</h1>
+<p>à¦à¦‡ tab à¦¦à¦¿à§Ÿà§‡ Online à¦à¦¬à¦‚ Offline software-à¦à¦° à¦¸à¦®à§à¦ªà§‚à¦°à§à¦£ payroll data à¦à¦• backup file-à¦à¦° à¦®à¦¾à¦§à§à¦¯à¦®à§‡ à¦à¦•à§‡ à¦…à¦ªà¦°à§‡à¦° à¦®à¦§à§à¦¯à§‡ à¦¨à§‡à¦“à§Ÿà¦¾ à¦¯à¦¾à¦¬à§‡à¥¤</p>
 <div class="note">
 <strong>Backup file:</strong> Reedoy portable backup (.rdb)<br>
-Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Salary/Payment, Payroll Lock, Settings, Users ও Activity data backup-এর মধ্যে রাখা হবে।
+Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Salary/Payment, Payroll Lock, Settings, Users à¦“ Activity data backup-à¦à¦° à¦®à¦§à§à¦¯à§‡ à¦°à¦¾à¦–à¦¾ à¦¹à¦¬à§‡à¥¤
 </div>
 </div>
 
 <div class="box">
-<h2>1. Current Database → Backup File</h2>
-<p>এই software-এর বর্তমান data একটি portable backup file-এ নিন। তারপর সেই file অন্য Online/Offline software-এ Restore করা যাবে।</p>
+<h2>1. Current Database â†’ Backup File</h2>
+<p>à¦à¦‡ software-à¦à¦° à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ data à¦à¦•à¦Ÿà¦¿ portable backup file-à¦ à¦¨à¦¿à¦¨à¥¤ à¦¤à¦¾à¦°à¦ªà¦° à¦¸à§‡à¦‡ file à¦…à¦¨à§à¦¯ Online/Offline software-à¦ Restore à¦•à¦°à¦¾ à¦¯à¦¾à¦¬à§‡à¥¤</p>
 <p><strong>Current database:</strong> {{ 'ONLINE / PostgreSQL' if is_online else 'OFFLINE / SQLite' }}</p>
 <form method="post" action="{{ url_for('create_portable_backup') }}">
 <button class="btn" type="submit">Create Portable Backup & Download</button>
 </form>
 </div>
 
-<div class="box" style="border-left:4px solid #1764c0">
-<h2>Workers Two-Way Sync — Step 1</h2>
-<p>প্রথমে Workers-এর Online ও Offline data field-by-field মিলিয়ে দেখা হবে।</p>
-<div class="note">
-<strong>গুরুত্বপূর্ণ:</strong><br>
-এই Check শুধুমাত্র comparison করবে। এই ধাপে কোনো Worker data, salary, OT rate, department, attendance, advance অথবা payment পরিবর্তন করা হবে না।
-</div>
-<br>
-<p>Difference পাওয়া গেলে সরাসরি Sync করা হবে না। প্রথমে কোন data সঠিক তা যাচাই করে তারপর পরবর্তী Sync ধাপে যাওয়া হবে।</p>
-{% if is_online %}
-<a class="btn" href="{{ url_for('compare_online_workers') }}">Check Workers Before Sync</a>
-<p style="font-size:13px;color:#64748b">এই button চাপলে Online PostgreSQL এবং Worker comparison seed-এর ভিত্তিতে field-by-field difference দেখা যাবে।</p>
-{% else %}
-<div class="note">এই Check Online software থেকে চালাতে হবে, কারণ সেখানে PostgreSQL Workers data যাচাই করা হবে।</div>
-{% endif %}
-</div>
-
 <div class="box">
-<h2>2. Backup File → Current Database</h2>
+<h2>2. Backup File â†’ Current Database</h2>
 <div class="warn">
-<strong>সতর্কতা:</strong> Restore করলে এই software-এর বর্তমান data backup file-এর data দিয়ে replace হবে। Restore করার আগে বর্তমান data-এর একটি safety backup স্বয়ংক্রিয়ভাবে তৈরি হবে। Worker ID ও পুরোনো record ID অপরিবর্তিত রাখার চেষ্টা করা হবে।
+<strong>à¦¸à¦¤à¦°à§à¦•à¦¤à¦¾:</strong> Restore à¦•à¦°à¦²à§‡ à¦à¦‡ software-à¦à¦° à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ data backup file-à¦à¦° data à¦¦à¦¿à§Ÿà§‡ replace à¦¹à¦¬à§‡à¥¤ Restore à¦•à¦°à¦¾à¦° à¦†à¦—à§‡ à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ data-à¦à¦° à¦à¦•à¦Ÿà¦¿ safety backup à¦¸à§à¦¬à§Ÿà¦‚à¦•à§à¦°à¦¿à§Ÿà¦­à¦¾à¦¬à§‡ à¦¤à§ˆà¦°à¦¿ à¦¹à¦¬à§‡à¥¤ Worker ID à¦“ à¦ªà§à¦°à§‹à¦¨à§‹ record ID à¦…à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à¦¿à¦¤ à¦°à¦¾à¦–à¦¾à¦° à¦šà§‡à¦·à§à¦Ÿà¦¾ à¦•à¦°à¦¾ à¦¹à¦¬à§‡à¥¤
 </div>
-<form method="post" action="{{ url_for('restore_portable_backup') }}" enctype="multipart/form-data" onsubmit="return confirm('Restore করলে বর্তমান database-এর data backup file-এর data দিয়ে replace হবে। Continue?');">
+<form method="post" action="{{ url_for('restore_portable_backup') }}" enctype="multipart/form-data" onsubmit="return confirm('Restore à¦•à¦°à¦²à§‡ à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ database-à¦à¦° data backup file-à¦à¦° data à¦¦à¦¿à§Ÿà§‡ replace à¦¹à¦¬à§‡à¥¤ Continue?');">
 <input class="file" type="file" name="backup_file" accept=".rdb,.zip" required>
 <button class="btn danger" type="submit">Restore Backup to This Software</button>
 </form>
 </div>
 
 <div class="box">
-<h2>ব্যবহারের নিয়ম</h2>
+<h2>à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°à§‡à¦° à¦¨à¦¿à§Ÿà¦®</h2>
 <table>
-<tr><th>কাজ</th><th>যেভাবে করবেন</th></tr>
-<tr><td>Online → Offline</td><td>Online-এ Create Portable Backup → file download → Offline-এ এই tab → Restore</td></tr>
-<tr><td>Offline → Online</td><td>Offline-এ Create Portable Backup → file নিয়ে Online-এ এই tab → Restore</td></tr>
-<tr><td>Data নিরাপত্তা</td><td>Restore-এর আগে বর্তমান database-এর safety backup তৈরি হবে</td></tr>
-<tr><td>Database</td><td>Online PostgreSQL এবং Offline SQLite—দুই ধরনের database support করবে</td></tr>
+<tr><th>à¦•à¦¾à¦œ</th><th>à¦¯à§‡à¦­à¦¾à¦¬à§‡ à¦•à¦°à¦¬à§‡à¦¨</th></tr>
+<tr><td>Online â†’ Offline</td><td>Online-à¦ Create Portable Backup â†’ file download â†’ Offline-à¦ à¦à¦‡ tab â†’ Restore</td></tr>
+<tr><td>Offline â†’ Online</td><td>Offline-à¦ Create Portable Backup â†’ file à¦¨à¦¿à§Ÿà§‡ Online-à¦ à¦à¦‡ tab â†’ Restore</td></tr>
+<tr><td>Data à¦¨à¦¿à¦°à¦¾à¦ªà¦¤à§à¦¤à¦¾</td><td>Restore-à¦à¦° à¦†à¦—à§‡ à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ database-à¦à¦° safety backup à¦¤à§ˆà¦°à¦¿ à¦¹à¦¬à§‡</td></tr>
+<tr><td>Database</td><td>Online PostgreSQL à¦à¦¬à¦‚ Offline SQLiteâ€”à¦¦à§à¦‡ à¦§à¦°à¦¨à§‡à¦° database support à¦•à¦°à¦¬à§‡</td></tr>
 </table>
 </div>
 
 <div class="box">
-<a class="btn secondary" href="{{ url_for('backup_maintenance') }}">← Backup & Maintenance</a>
+<a class="btn secondary" href="{{ url_for('backup_maintenance') }}">â† Backup & Maintenance</a>
 <a class="btn secondary" href="{{ url_for('dashboard') }}">Dashboard</a>
 </div>
 </main>
@@ -4359,7 +4342,7 @@ th{background:#f8fafc}
 <a href="{{ url_for('settings') }}">Settings</a>
 <a href="{{ url_for('users') }}">Users</a>
 <a href="{{ url_for('activity') }}">Activity Log</a>
-<a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a>
+<a href="{{ url_for('logout') }}">Logout</a>
 </nav>
 </header>
 <main class="wrap">
@@ -4399,7 +4382,7 @@ th{background:#f8fafc}
 </div>
 
 <div class="box">
-<a class="btn secondary" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+<a class="btn secondary" href="{{ url_for('dashboard') }}">â† Back to Dashboard</a>
 </div>
 </main>
 </body>
@@ -4430,21 +4413,21 @@ button,.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10p
 </style></head>
 <body>
 <header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div>
-<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
+<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap">
 <div class="box filters"><h1>Payroll Reports</h1><p class="muted">Monthly payroll overview and department-wise summary.</p>
 <form method="get" action="{{ url_for('reports') }}"><div class="grid"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.split()[1]|int==y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div><div class="field" style="align-self:end"><button type="submit">Generate Report</button></div><div class="field actions" style="align-self:end"><a class="btn green" href="{{ url_for('export_reports',month=month.split()[0],year=month.split()[1]) }}">Export Excel</a> <button class="btn secondary" type="button" onclick="window.print()">Print Report</button></div></div></form></div>
-<div class="box"><h2>{{ month }} — Payroll Summary</h2><div class="cards">
+<div class="box"><h2>{{ month }} â€” Payroll Summary</h2><div class="cards">
 <div class="card"><div class="label">Workers</div><div class="value">{{ totals.workers }}</div></div>
-<div class="card"><div class="label">Basic Salary</div><div class="value">৳ {{ '%.2f'|format(totals.basic|float) }}</div></div>
-<div class="card"><div class="label">Absent Deduction</div><div class="value">৳ {{ '%.2f'|format(totals.absent_cut|float) }}</div></div>
-<div class="card"><div class="label">OT Amount</div><div class="value">৳ {{ '%.2f'|format(totals.ot_amt|float) }}</div></div>
-<div class="card"><div class="label">Gross Salary</div><div class="value">৳ {{ '%.2f'|format(totals.gross|float) }}</div></div>
-<div class="card"><div class="label">Net Payable</div><div class="value">৳ {{ '%.2f'|format(totals.net|float) }}</div></div>
+<div class="card"><div class="label">Basic Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.basic|float) }}</div></div>
+<div class="card"><div class="label">Absent Deduction</div><div class="value">à§³ {{ '%.2f'|format(totals.absent_cut|float) }}</div></div>
+<div class="card"><div class="label">OT Amount</div><div class="value">à§³ {{ '%.2f'|format(totals.ot_amt|float) }}</div></div>
+<div class="card"><div class="label">Gross Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.gross|float) }}</div></div>
+<div class="card"><div class="label">Net Payable</div><div class="value">à§³ {{ '%.2f'|format(totals.net|float) }}</div></div>
 </div></div>
 <div class="box tablewrap"><h2>Department Summary</h2><table><thead><tr><th>Department</th><th>Workers</th><th>Basic Salary</th><th>Present</th><th>Absent</th><th>OT Hours</th><th>Absent Ded.</th><th>OT Amount</th><th>Nasta</th><th>Gross</th><th>Advance</th><th>Net Payable</th></tr></thead><tbody>{% for row in departments_summary %}<tr><td class="dept">{{ row.department }}</td><td>{{ row.workers }}</td><td>{{ '%.2f'|format(row.basic|float) }}</td><td>{{ '%.2f'|format(row.present|float) }}</td><td>{{ '%.2f'|format(row.absent|float) }}</td><td>{{ '%.2f'|format(row.ot|float) }}</td><td>{{ '%.2f'|format(row.absent_cut|float) }}</td><td>{{ '%.2f'|format(row.ot_amt|float) }}</td><td>{{ '%.2f'|format(row.nasta|float) }}</td><td>{{ '%.2f'|format(row.gross|float) }}</td><td>{{ '%.2f'|format(row.advance|float) }}</td><td>{{ '%.2f'|format(row.net|float) }}</td></tr>{% else %}<tr><td colspan="12">No department data found.</td></tr>{% endfor %}<tr><th>Total</th><th>{{ totals.workers }}</th><th>{{ '%.2f'|format(totals.basic|float) }}</th><th>{{ '%.2f'|format(totals.present|float) }}</th><th>{{ '%.2f'|format(totals.absent|float) }}</th><th>{{ '%.2f'|format(totals.ot|float) }}</th><th>{{ '%.2f'|format(totals.absent_cut|float) }}</th><th>{{ '%.2f'|format(totals.ot_amt|float) }}</th><th>{{ '%.2f'|format(totals.nasta|float) }}</th><th>{{ '%.2f'|format(totals.gross|float) }}</th><th>{{ '%.2f'|format(totals.advance|float) }}</th><th>{{ '%.2f'|format(totals.net|float) }}</th></tr></tbody></table></div>
 <div class="box tablewrap"><h2>Worker Payroll Detail</h2><table><thead><tr><th>ID</th><th class="name">Worker Name</th><th class="dept">Department</th><th>Basic</th><th>Present</th><th>Absent</th><th>OT Hours</th><th>Absent Ded.</th><th>OT Amount</th><th>Nasta</th><th>Gross</th><th>Advance</th><th>Net Payable</th></tr></thead><tbody>{% for row in rows %}<tr><td>{{ row.id }}</td><td class="name">{{ row.bangla_name if language=='bn' and row.bangla_name else row.name }}</td><td class="dept">{{ row.department or '' }}</td><td>{{ '%.2f'|format(row.basic_salary|float) }}</td><td>{{ '%.2f'|format(row.present|float) }}</td><td>{{ '%.2f'|format(row.absent|float) }}</td><td>{{ '%.2f'|format(row.ot|float) }}</td><td>{{ '%.2f'|format(row.absent_cut|float) }}</td><td>{{ '%.2f'|format(row.ot_amt|float) }}</td><td>{{ '%.2f'|format(row.nasta|float) }}</td><td>{{ '%.2f'|format(row.gross|float) }}</td><td>{{ '%.2f'|format(row.advance|float) }}</td><td>{{ '%.2f'|format(row.net|float) }}</td></tr>{% endfor %}</tbody></table></div>
-<div class="box actions"><a class="btn secondary" href="{{ url_for('dashboard') }}">← Back to Dashboard</a></div>
+<div class="box actions"><a class="btn secondary" href="{{ url_for('dashboard') }}">â† Back to Dashboard</a></div>
 </main><script>
 document.addEventListener('DOMContentLoaded', function(){
   function addSelectSearch(sel){
@@ -4452,7 +4435,7 @@ document.addEventListener('DOMContentLoaded', function(){
     sel.dataset.workerSearchReady='1';
     var box=document.createElement('input');
     box.type='search'; box.className='worker-search-box';
-    box.placeholder='🔍 Search Worker: ID / Name / Bangla Name';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
     box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
     sel.parentNode.insertBefore(box,sel);
     var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
@@ -4468,11 +4451,11 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
-      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">🔍 Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
       target.parentNode.insertBefore(wrap,target);
       var inp=wrap.querySelector('input');
       inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
@@ -4504,7 +4487,7 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 </style></head>
 <body>
 <header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div>
-<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
+<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap">
 <div class="box">
 <h1>Worker Search</h1>
@@ -4520,20 +4503,13 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 <div class="box">
 <strong>{{ results|length }}</strong> worker(s) found.
 <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>ID</th><th>English Name</th><th>Bangla Name</th><th>Department</th><th>Designation</th><th>Phone</th><th>Basic Salary</th><th>Status</th><th>Quick Actions</th></tr></thead>
-<tbody>{% for w in results %}<tr><td>{{ w.id }}</td><td>{{ w.name or '' }}</td><td>{{ w.bangla_name or '' }}</td><td>{{ w.department or '' }}</td><td>{{ w.designation or '' }}</td><td>{{ w.phone or '' }}</td><td>৳ {{ '%.2f'|format((w.basic_salary or 0)|float) }}</td><td><span class="badge {{ 'active' if (w.status or 'Active')=='Active' else 'inactive' }}">{{ w.status or 'Active' }}</span></td><td class="actions"><a class="btn small" href="{{ url_for('edit_worker', worker_id=w.id) }}">Edit</a><form method="post" action="{{ url_for('toggle_worker_status', worker_id=w.id) }}" style="display:inline"><input type="hidden" name="q" value="{{ q or '' }}"><input type="hidden" name="department" value="{{ department or '' }}"><input type="hidden" name="status" value="{{ status or '' }}"><button class="btn small {{ 'secondary' if (w.status or 'Active')=='Inactive' else '' }}" type="submit" onclick="return confirm('Change status for {{ w.name }}?');">{{ 'Set Active' if (w.status or 'Active')=='Inactive' else 'Set Inactive' }}</button></form><a class="btn small secondary" href="{{ url_for('attendance', worker_id=w.id) }}">Attendance</a><a class="btn small" href="{{ url_for('payslip', worker_id=w.id) }}">Payslip</a><a class="btn small" href="{{ url_for('advance', worker_id=w.id) }}">Advance</a><a class="btn small secondary" href="{{ url_for('payments', worker_id=w.id) }}">Payment</a></td></tr>{% else %}<tr><td colspan="9">No matching worker found.</td></tr>{% endfor %}</tbody></table></div>
+<tbody>{% for w in results %}<tr><td>{{ w.id }}</td><td>{{ w.name or '' }}</td><td>{{ w.bangla_name or '' }}</td><td>{{ w.department or '' }}</td><td>{{ w.designation or '' }}</td><td>{{ w.phone or '' }}</td><td>à§³ {{ '%.2f'|format((w.basic_salary or 0)|float) }}</td><td><span class="badge {{ 'active' if (w.status or 'Active')=='Active' else 'inactive' }}">{{ w.status or 'Active' }}</span></td><td class="actions"><a class="btn small" href="{{ url_for('edit_worker', worker_id=w.id) }}">Edit</a><form method="post" action="{{ url_for('toggle_worker_status', worker_id=w.id) }}" style="display:inline"><input type="hidden" name="q" value="{{ q or '' }}"><input type="hidden" name="department" value="{{ department or '' }}"><input type="hidden" name="status" value="{{ status or '' }}"><button class="btn small {{ 'secondary' if (w.status or 'Active')=='Inactive' else '' }}" type="submit" onclick="return confirm('Change status for {{ w.name }}?');">{{ 'Set Active' if (w.status or 'Active')=='Inactive' else 'Set Inactive' }}</button></form><a class="btn small secondary" href="{{ url_for('attendance', worker_id=w.id) }}">Attendance</a><a class="btn small" href="{{ url_for('payslip', worker_id=w.id) }}">Payslip</a><a class="btn small" href="{{ url_for('advance', worker_id=w.id) }}">Advance</a><a class="btn small secondary" href="{{ url_for('payments', worker_id=w.id) }}">Payment</a></td></tr>{% else %}<tr><td colspan="9">No matching worker found.</td></tr>{% endfor %}</tbody></table></div>
 </div>
 </main></body></html>
 """
 
 def safe_render_template(template_name, **context):
-    """Use stable built-in templates for core report/sync pages; otherwise use normal template/fallback."""
-    forced = {
-        "reports.html": BUILTIN_REPORTS_TEMPLATE,
-        "data_sync.html": BUILTIN_DATA_SYNC_TEMPLATE,
-        "department.html": BUILTIN_DEPARTMENT_TEMPLATE,
-    }
-    if template_name in forced:
-        return render_template_string(forced[template_name], **context)
+    """Use normal Jinja template when present; otherwise use built-in fallback."""
     try:
         return render_template(template_name, **context)
     except Exception as exc:
@@ -6140,21 +6116,11 @@ def ot_report_export():
 @app.route("/reports")
 @login_required
 def reports():
-    # Reports must accept both the new Month + Year selectors and the
-    # older HTML5 <input type="month"> format (YYYY-MM).
-    raw_month = (request.args.get("month") or "").strip()
-    raw_year = (request.args.get("year") or "").strip()
 
-    if re.match(r"^\d{4}-\d{1,2}$", raw_month):
-        try:
-            y, m = raw_month.split("-")
-            raw_year = y
-            raw_month = MONTHS[int(m) - 1]
-        except Exception:
-            raw_month = ""
-            raw_year = ""
-
-    month = month_name_year(raw_month, raw_year)
+    month = month_name_year(
+        request.args.get("month"),
+        request.args.get("year"),
+    )
 
     workers_list = fetch_all(
         """
@@ -6187,12 +6153,16 @@ def reports():
     department_map = {}
 
     for worker in workers_list:
+
         salary = salary_map.get(worker["id"], {})
         row = dict(worker)
         row.update(salary)
         rows.append(row)
 
-        department_name = worker.get("department") or "Unassigned"
+        department_name = (
+            worker.get("department")
+            or "Unassigned"
+        )
 
         if department_name not in department_map:
             department_map[department_name] = {
@@ -6236,10 +6206,8 @@ def reports():
         key=lambda item: str(item["department"]).lower()
     )
 
-    # Use the built-in reports template deliberately so an older
-    # templates/reports.html cannot hide the Month/Year controls.
-    return render_template_string(
-        BUILTIN_REPORTS_TEMPLATE,
+    return safe_render_template(
+        "reports.html",
         rows=rows,
         totals=totals,
         departments_summary=departments_summary,
@@ -7585,8 +7553,8 @@ def _portable_restore_snapshot(snapshot):
 @app.route("/data-sync")
 @admin_required
 def data_sync():
-    return render_template_string(
-        BUILTIN_DATA_SYNC_TEMPLATE,
+    return safe_render_template(
+        "data_sync.html",
         settings=get_settings(),
         is_online=is_postgres(),
     )
@@ -9738,54 +9706,368 @@ def migrate_online_workers_by_id():
 
 
 
-@app.route("/sync/apply-worker-local-to-online", methods=["GET", "POST"])
+@app.route("/sync/compare-online-workers")
 @login_required
-def apply_worker_local_to_online():
+def compare_online_workers():
     import json
+    import hashlib
     from pathlib import Path
-    from datetime import datetime
+    from collections import Counter
 
     if not is_postgres():
         return """
-        <h2>Worker Local → Online Sync</h2>
+        <h2>Full Worker Comparison</h2>
         <h3 style="color:red">ERROR</h3>
         <p>PostgreSQL connection is not active.</p>
         """, 400
 
+    seed_path = Path(__file__).resolve().parent / "workers_compare_seed.json"
+
+    if not seed_path.exists():
+        return """
+        <h2>Full Worker Comparison</h2>
+        <h3 style="color:red">ERROR</h3>
+        <p>workers_compare_seed.json was not found.</p>
+        """, 500
+
+    fields = [
+        "name",
+        "bangla_name",
+        "department",
+        "designation",
+        "basic_salary",
+        "ot_rate",
+        "refreshment_bill",
+        "phone",
+        "address",
+        "joining_date",
+        "status",
+    ]
+
+    def canonical(value):
+        if value is None:
+            return ""
+
+        if isinstance(value, float):
+            return str(round(value, 10)).strip()
+
+        return str(value).strip()
+
+    def field_hash(value):
+        return hashlib.sha256(
+            canonical(value).encode("utf-8")
+        ).hexdigest()
+
+    conn = None
+
+    try:
+        with open(seed_path, "r", encoding="utf-8") as f:
+            seed = json.load(f)
+
+        if len(seed) != 169:
+            raise RuntimeError(
+                f"Comparison seed contains {len(seed)} workers; expected 169."
+            )
+
+        local_map = {}
+
+        for item in seed:
+            worker_id = int(item["id"])
+
+            if worker_id in local_map:
+                raise RuntimeError(
+                    f"Duplicate worker ID in comparison seed: {worker_id}"
+                )
+
+            local_map[worker_id] = item["hashes"]
+
+        conn = db_connect()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT id,
+                   name,
+                   bangla_name,
+                   department,
+                   designation,
+                   basic_salary,
+                   ot_rate,
+                   refreshment_bill,
+                   phone,
+                   address,
+                   joining_date,
+                   status
+            FROM workers
+            ORDER BY id
+        """)
+
+        rows = cur.fetchall()
+
+        online_ids = {int(row[0]) for row in rows}
+        local_ids = set(local_map.keys())
+
+        missing_online = sorted(local_ids - online_ids)
+        extra_online = sorted(online_ids - local_ids)
+
+        differences = []
+
+        for row in rows:
+            worker_id = int(row[0])
+
+            if worker_id not in local_map:
+                continue
+
+            online_values = {
+                field: row[i + 1]
+                for i, field in enumerate(fields)
+            }
+
+            for field in fields:
+                online_hash = field_hash(online_values[field])
+                local_hash = local_map[worker_id].get(field, "")
+
+                if online_hash != local_hash:
+                    differences.append({
+                        "id": worker_id,
+                        "field": field,
+                        "online": canonical(online_values[field]),
+                        "local_hash": local_hash,
+                    })
+
+        db_release(conn)
+        conn = None
+
+        # Build a read-only field summary.
+        field_counts = Counter(
+            item["field"] for item in differences
+        )
+
+        # Read the local database separately to obtain the actual
+        # local values for the differing fields.
+        local_conn = None
+
+        try:
+            local_conn = sqlite3.connect(DB_PATH)
+            local_conn.row_factory = sqlite3.Row
+
+            local_cur = local_conn.cursor()
+
+            local_cur.execute("""
+                SELECT id,
+                       name,
+                       bangla_name,
+                       department,
+                       designation,
+                       basic_salary,
+                       ot_rate,
+                       refreshment_bill,
+                       phone,
+                       address,
+                       joining_date,
+                       status
+                FROM workers
+                ORDER BY id
+            """)
+
+            local_rows = local_cur.fetchall()
+
+            local_value_map = {
+                int(row["id"]): dict(row)
+                for row in local_rows
+            }
+
+        finally:
+            if local_conn is not None:
+                local_conn.close()
+
+        detailed_differences = []
+
+        for item in differences:
+            worker_id = item["id"]
+            field = item["field"]
+
+            local_row = local_value_map.get(worker_id, {})
+            local_value = canonical(local_row.get(field, ""))
+
+            detailed_differences.append({
+                "id": worker_id,
+                "field": field,
+                "local": local_value,
+                "online": item["online"],
+            })
+
+        difference_count = len(detailed_differences)
+
+        if (
+            len(rows) == 169
+            and not missing_online
+            and not extra_online
+            and difference_count == 0
+        ):
+            status_html = """
+            <h2 style="color:green">
+                ALL WORKER DATA MATCH
+            </h2>
+            """
+        else:
+            status_html = """
+            <h2 style="color:#b00000">
+                WORKER DATA DIFFERENCES FOUND
+            </h2>
+            """
+
+        return render_template_string("""
+        <h2>Reedoy v49 - Full Worker Comparison</h2>
+
+        {{ status_html|safe }}
+
+        <table border="1" cellpadding="8">
+            <tr>
+                <th>Check</th>
+                <th>Result</th>
+            </tr>
+
+            <tr>
+                <td>Local Workers</td>
+                <td>169</td>
+            </tr>
+
+            <tr>
+                <td>Online Workers</td>
+                <td>{{ online_count }}</td>
+            </tr>
+
+            <tr>
+                <td>Missing Online IDs</td>
+                <td>{{ missing_online }}</td>
+            </tr>
+
+            <tr>
+                <td>Extra Online IDs</td>
+                <td>{{ extra_online }}</td>
+            </tr>
+
+            <tr>
+                <td>Total Field Differences</td>
+                <td>{{ difference_count }}</td>
+            </tr>
+        </table>
+
+        {% if field_counts %}
+        <h3>Differences by Field</h3>
+
+        <table border="1" cellpadding="8">
+            <tr>
+                <th>Field</th>
+                <th>Difference Count</th>
+            </tr>
+
+            {% for field, count in field_counts %}
+            <tr>
+                <td>{{ field }}</td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+
+        {% if detailed_differences %}
+        <h3>Detailed Differences</h3>
+
+        <table border="1" cellpadding="8">
+            <tr>
+                <th>Worker ID</th>
+                <th>Different Field</th>
+                <th>Local Value</th>
+                <th>Online Value</th>
+            </tr>
+
+            {% for item in detailed_differences %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ item.field }}</td>
+                <td>{{ item.local }}</td>
+                <td>{{ item.online }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+
+        <p>
+        Compared fields:
+        Name, Bangla Name, Department, Designation,
+        Basic Salary, OT Rate, Refreshment Bill,
+        Phone, Address, Joining Date, Status.
+        </p>
+
+        <p>
+        <b>READ ONLY — no database changes were made.</b>
+        </p>
+
+        """,
+        status_html=status_html,
+        online_count=len(rows),
+        missing_online=missing_online,
+        extra_online=extra_online,
+        difference_count=difference_count,
+        field_counts=sorted(
+            field_counts.items(),
+            key=lambda x: (-x[1], x[0])
+        ),
+        detailed_differences=detailed_differences
+        )
+
+    except Exception as e:
+
+        if conn is not None:
+            try:
+                db_release(conn)
+            except Exception:
+                pass
+
+        return f"""
+        <h2>Full Worker Comparison Error</h2>
+        <p>{type(e).__name__}: {e}</p>
+        <p><b>READ ONLY — no database changes were made.</b></p>
+        """, 500
+
+
+
+# ============================================================
+# WORKER SYNC — SAFE PREVIEW / APPLY
+# ============================================================
+
+@app.route("/sync/preview-worker-sync")
+@login_required
+def preview_worker_sync():
+    import json
+    from pathlib import Path
+
+    if not is_postgres():
+        return "<h2>Worker Sync Preview</h2><p style='color:red'>STOP: PostgreSQL connection is not active.</p>", 400
+
     payload_path = Path(__file__).resolve().parent / "workers_sync_values.json"
     if not payload_path.exists():
-        return """
-        <h2>Worker Local → Online Sync</h2>
-        <h3 style="color:red">SYNC PAYLOAD NOT FOUND</h3>
-        <p>workers_sync_values.json was not found.</p>
-        <p>Export the verified Local Worker sync values first and push that file.</p>
-        """, 500
+        return "<h2>Worker Sync Preview</h2><p style='color:red'>workers_sync_values.json was not found.</p>", 500
 
     fields = ["name", "bangla_name", "designation", "status", "ot_rate"]
     conn = None
-
-    def canon(v):
-        if v is None:
-            return ""
-        if isinstance(v, float):
-            return str(round(v, 10)).strip()
-        return str(v).strip()
-
     try:
         with open(payload_path, "r", encoding="utf-8") as f:
             payload = json.load(f)
 
-        if not isinstance(payload, list) or len(payload) != 169:
-            raise RuntimeError(
-                f"Sync payload must contain exactly 169 workers; found {len(payload) if isinstance(payload, list) else 'invalid'}"
-            )
+        if len(payload) != 169:
+            raise RuntimeError(f"Sync payload contains {len(payload)} workers; expected 169.")
 
-        ids = [int(x["id"]) for x in payload]
-        uuids = [str(x["sync_uuid"]).strip() for x in payload]
-        if len(set(ids)) != 169 or len(set(uuids)) != 169:
-            raise RuntimeError("Duplicate Worker ID or sync_uuid found in sync payload.")
-        if any(not u for u in uuids):
-            raise RuntimeError("One or more workers have an empty sync_uuid.")
+        local_map = {}
+        for item in payload:
+            wid = int(item["id"])
+            if wid in local_map:
+                raise RuntimeError(f"Duplicate Worker ID in sync payload: {wid}")
+            uuid = str(item.get("sync_uuid") or "").strip()
+            if not uuid:
+                raise RuntimeError(f"Worker {wid} has empty sync_uuid in payload.")
+            local_map[wid] = item
 
         conn = db_connect()
         cur = conn.cursor()
@@ -9797,90 +10079,170 @@ def apply_worker_local_to_online():
         rows = cur.fetchall()
 
         if len(rows) != 169:
-            raise RuntimeError(f"Online workers count is {len(rows)}; expected 169.")
+            raise RuntimeError(f"Online worker count is {len(rows)}; expected 169.")
 
-        online = {int(r[0]): r for r in rows}
-        if set(online.keys()) != set(ids):
-            missing = sorted(set(ids) - set(online.keys()))
-            extra = sorted(set(online.keys()) - set(ids))
+        online_ids = {int(r[0]) for r in rows}
+        payload_ids = set(local_map)
+        missing = sorted(payload_ids - online_ids)
+        extra = sorted(online_ids - payload_ids)
+        if missing or extra:
             raise RuntimeError(f"Worker ID mismatch. Missing online: {missing}; Extra online: {extra}")
 
-        # Verify the identity pairing before ANY write.
-        for item in payload:
-            wid = int(item["id"])
-            expected_uuid = str(item["sync_uuid"]).strip()
-            actual_uuid = str(online[wid][1] or "").strip()
-            if expected_uuid != actual_uuid:
-                raise RuntimeError(
-                    f"sync_uuid mismatch for Worker {wid}. No data was changed."
-                )
-
-        # Build the exact preview first.
         changes = []
+        uuid_mismatch = []
+        for r in rows:
+            wid = int(r[0])
+            item = local_map[wid]
+            online_uuid = str(r[1] or "").strip()
+            if online_uuid != str(item["sync_uuid"]).strip():
+                uuid_mismatch.append(wid)
+                continue
+            online = {"name": r[2], "bangla_name": r[3], "designation": r[4], "status": r[5], "ot_rate": r[6]}
+            for field in fields:
+                lv = "" if item.get(field) is None else str(item.get(field)).strip()
+                ov = "" if online.get(field) is None else str(online.get(field)).strip()
+                if field == "ot_rate":
+                    try:
+                        lv = str(round(float(item.get(field) or 0), 10))
+                        ov = str(round(float(online.get(field) or 0), 10))
+                    except Exception:
+                        pass
+                if lv != ov:
+                    changes.append({"id": wid, "field": field, "local": lv, "online": ov})
+
+        db_release(conn)
+        conn = None
+
+        html = [
+            "<h2>Reedoy v49 - Worker Sync Preview</h2>",
+            "<h2 style='color:#b00000'>PREVIEW ONLY — NO DATABASE CHANGES</h2>",
+            f"<p>Workers checked: <b>{len(rows)}</b></p>",
+            f"<p>Changes ready to apply: <b>{len(changes)}</b></p>",
+            f"<p>UUID mismatches: <b>{len(uuid_mismatch)}</b> {uuid_mismatch}</p>",
+            "<p><b>Only these fields will be changed:</b> name, bangla_name, designation, status, ot_rate.</p>",
+            "<p>Basic salary, department, refreshment bill, phone, address, joining date, attendance, advances and payments will NOT be changed.</p>",
+        ]
+        if changes:
+            html.append("<h3>Changes</h3><table border='1' cellpadding='6'><tr><th>Worker ID</th><th>Field</th><th>Local</th><th>Online</th></tr>")
+            for x in changes:
+                html.append(f"<tr><td>{x['id']}</td><td>{x['field']}</td><td>{x['local']}</td><td>{x['online']}</td></tr>")
+            html.append("</table>")
+        else:
+            html.append("<p style='color:green'><b>No changes are required.</b></p>")
+        if changes and not uuid_mismatch:
+            html.append("""<hr><h3>Apply</h3>
+            <p style='color:#b00000'><b>WARNING:</b> Apply will update Online workers after creating a 169-worker safety snapshot. This is the only action on this page that writes to the Online database.</p>
+            <form method='post' action='/sync/apply-worker-sync' onsubmit="return confirm('Apply the verified Local Worker changes to Online now? A safety snapshot will be created first.');">
+            <button type='submit' style='padding:10px 18px;background:#b00000;color:white;border:0;border-radius:5px'>Apply Worker Sync</button>
+            </form>""")
+        html.append("<p><b>Preview itself is READ ONLY.</b></p>")
+        return "".join(html)
+    except Exception as e:
+        if conn is not None:
+            try: db_release(conn)
+            except Exception: pass
+        return f"<h2>Worker Sync Preview Error</h2><p style='color:red'>{type(e).__name__}: {e}</p><p><b>NO DATABASE CHANGES WERE MADE.</b></p>", 409
+
+
+@app.route("/sync/apply-worker-sync", methods=["POST", "GET"])
+@login_required
+def apply_worker_sync():
+    import json
+    from pathlib import Path
+    from datetime import datetime, timezone
+    import uuid as uuid_module
+
+    if not is_postgres():
+        return "<h2>Worker Sync Apply</h2><p style='color:red'>STOP: PostgreSQL connection is not active.</p>", 400
+
+    if request.method != "POST":
+        return "<h2>Worker Sync Apply</h2><p style='color:red'>POST only. No database changes were made.</p>", 405
+
+    payload_path = Path(__file__).resolve().parent / "workers_sync_values.json"
+    if not payload_path.exists():
+        return "<h2>Worker Sync Apply</h2><p style='color:red'>workers_sync_values.json was not found.</p>", 500
+
+    fields = ["name", "bangla_name", "designation", "status", "ot_rate"]
+    conn = None
+    backup_run = str(uuid_module.uuid4())
+    try:
+        with open(payload_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        if len(payload) != 169:
+            raise RuntimeError(f"Sync payload contains {len(payload)} workers; expected 169.")
+
+        local_map = {}
         for item in payload:
             wid = int(item["id"])
-            row = online[wid]
-            for idx, field in enumerate(fields, start=2):
-                old = row[idx]
-                new = item.get(field)
-                if canon(old) != canon(new):
-                    changes.append({"id": wid, "field": field, "old": canon(old), "new": canon(new)})
+            if wid in local_map:
+                raise RuntimeError(f"Duplicate Worker ID in payload: {wid}")
+            su = str(item.get("sync_uuid") or "").strip()
+            if not su:
+                raise RuntimeError(f"Worker {wid} has empty sync_uuid.")
+            local_map[wid] = item
 
-        if request.method == "GET":
-            by_field = {}
-            for c in changes:
-                by_field[c["field"]] = by_field.get(c["field"], 0) + 1
-            rows_html = "".join(
-                f"<tr><td>{c['id']}</td><td>{c['field']}</td><td>{c['old'] or '(blank)'}</td><td>{c['new'] or '(blank)'}</td></tr>"
-                for c in changes
-            )
-            summary_html = "".join(
-                f"<li><b>{k}</b>: {v}</li>" for k, v in sorted(by_field.items())
-            ) or "<li>No changes detected.</li>"
-            return f"""
-            <h2>Worker Local → Online Sync</h2>
-            <p style="color:green;font-weight:bold">PREVIEW ONLY — no database changes were made.</p>
-            <p>Verified Worker IDs: 169 &nbsp; | &nbsp; UUID matches: 169</p>
-            <h3>Planned field changes: {len(changes)}</h3>
-            <ul>{summary_html}</ul>
-            <p><b>Only these fields will be updated:</b> Name, Bangla Name, Designation, Status, OT Rate.</p>
-            <p><b>Not touched:</b> Department, Basic Salary, Refreshment Bill, Phone, Address, Joining Date, Attendance, Advances, Salary, Payments, Payroll Locks.</p>
-            <p style="color:#b00000"><b>Before applying, an Online Worker backup will be stored in reedoy_sync_worker_backup.</b></p>
-            <table border="1" cellpadding="6" cellspacing="0">
-                <tr><th>Worker ID</th><th>Field</th><th>Current Online</th><th>Local Value to Apply</th></tr>
-                {rows_html}
-            </table>
-            <br>
-            <form method="post" onsubmit="return confirm('Apply the verified Local → Online Worker changes? This will update only the 5 listed Worker fields after creating an online backup.');">
-                <button type="submit" style="padding:10px 18px;background:#c62828;color:white;border:0;border-radius:5px;font-weight:bold;">APPLY VERIFIED WORKER SYNC</button>
-            </form>
-            """
+        conn = db_connect()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, sync_uuid, name, bangla_name, designation, status, ot_rate,
+                   basic_salary, department, refreshment_bill, phone, address, joining_date
+            FROM workers ORDER BY id
+        """)
+        rows = cur.fetchall()
+        if len(rows) != 169:
+            raise RuntimeError(f"Online worker count is {len(rows)}; expected 169. Nothing was changed.")
 
-        # POST: re-read the database and perform one atomic transaction.
-        backup_run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        online_ids = {int(r[0]) for r in rows}
+        if online_ids != set(local_map):
+            raise RuntimeError("Online Worker IDs do not exactly match the verified local payload. Nothing was changed.")
+
+        for r in rows:
+            wid = int(r[0])
+            if str(r[1] or "").strip() != str(local_map[wid]["sync_uuid"]).strip():
+                raise RuntimeError(f"sync_uuid mismatch for Worker {wid}. Nothing was changed.")
+
+        # Safety snapshot of ALL 169 current Online worker records.
         cur.execute("""
             CREATE TABLE IF NOT EXISTS reedoy_sync_worker_backup (
-                backup_run_id VARCHAR(32) NOT NULL,
-                worker_id INTEGER NOT NULL,
-                sync_uuid VARCHAR(100),
+                backup_run TEXT NOT NULL,
+                backed_up_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                id INTEGER NOT NULL,
+                sync_uuid TEXT,
                 name TEXT,
                 bangla_name TEXT,
                 designation TEXT,
                 status TEXT,
-                ot_rate NUMERIC,
-                backed_up_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ot_rate DOUBLE PRECISION,
+                basic_salary DOUBLE PRECISION,
+                department TEXT,
+                refreshment_bill DOUBLE PRECISION,
+                phone TEXT,
+                address TEXT,
+                joining_date TEXT
             )
         """)
-
         cur.execute("""
             INSERT INTO reedoy_sync_worker_backup
-            (backup_run_id, worker_id, sync_uuid, name, bangla_name, designation, status, ot_rate)
-            SELECT %s, id, sync_uuid, name, bangla_name, designation, status, ot_rate
+            (backup_run,id,sync_uuid,name,bangla_name,designation,status,ot_rate,
+             basic_salary,department,refreshment_bill,phone,address,joining_date)
+            SELECT %s,id,sync_uuid,name,bangla_name,designation,status,ot_rate,
+                   basic_salary,department,refreshment_bill,phone,address,joining_date
             FROM workers
             ORDER BY id
-        """, (backup_run_id,))
+        """, (backup_run,))
 
-        for item in payload:
+        changed = 0
+        for r in rows:
+            wid = int(r[0])
+            item = local_map[wid]
+            vals = (
+                item.get("name") or "",
+                item.get("bangla_name") or "",
+                item.get("designation") or "",
+                item.get("status") or "",
+                float(item.get("ot_rate") or 0),
+                wid,
+            )
             cur.execute("""
                 UPDATE workers
                 SET name=%s,
@@ -9889,253 +10251,32 @@ def apply_worker_local_to_online():
                     status=%s,
                     ot_rate=%s
                 WHERE id=%s AND sync_uuid=%s
-            """, (
-                item.get("name"),
-                item.get("bangla_name"),
-                item.get("designation"),
-                item.get("status"),
-                item.get("ot_rate"),
-                int(item["id"]),
-                str(item["sync_uuid"]).strip(),
-            ))
+            """, vals[:-1] + (wid, str(item["sync_uuid"]).strip()))
             if cur.rowcount != 1:
-                raise RuntimeError(f"Worker {item['id']} update did not affect exactly one row.")
-
-        # Verify every requested field before commit.
-        cur.execute("""
-            SELECT id, name, bangla_name, designation, status, ot_rate
-            FROM workers ORDER BY id
-        """)
-        verify_rows = {int(r[0]): r for r in cur.fetchall()}
-        for item in payload:
-            wid = int(item["id"])
-            r = verify_rows[wid]
-            for idx, field in enumerate(fields, start=1):
-                if canon(r[idx]) != canon(item.get(field)):
-                    raise RuntimeError(f"Post-update verification failed for Worker {wid}, field {field}.")
+                raise RuntimeError(f"Worker {wid} update failed. Transaction will be rolled back.")
+            changed += 1
 
         conn.commit()
+        db_release(conn)
         conn = None
 
         return f"""
-        <h2>Worker Local → Online Sync Completed</h2>
-        <p style="color:green;font-weight:bold">SUCCESS — transaction committed.</p>
-        <p>Workers checked: <b>169</b></p>
-        <p>Field changes applied: <b>{len(changes)}</b></p>
-        <p>Online backup run ID: <b>{backup_run_id}</b></p>
-        <p>The backup is stored in <b>reedoy_sync_worker_backup</b>.</p>
-        <p><b>Attendance, advances, salary and payments were not modified.</b></p>
-        <p><a href="/sync/compare-online-workers">Run the Worker comparison again</a></p>
+        <h2>Reedoy v49 - Worker Sync Apply</h2>
+        <h2 style='color:green'>SUCCESS — WORKER SYNC COMPLETED</h2>
+        <p>Workers updated: <b>{changed}</b></p>
+        <p>Backup run ID: <b>{backup_run}</b></p>
+        <p>A safety snapshot of all 169 Online workers was stored before the update.</p>
+        <p>Changed fields only: <b>name, bangla_name, designation, status, ot_rate</b>.</p>
+        <p>Salary, department, refreshment bill, phone, address, joining date, attendance, advances and payments were not updated.</p>
+        <p><a href='/sync/compare-online-workers'>Run Full Worker Comparison</a></p>
         """
-
     except Exception as e:
         if conn is not None:
-            try:
-                conn.rollback()
-            except Exception:
-                pass
-        return f"""
-        <h2>Worker Local → Online Sync STOPPED</h2>
-        <p style="color:red;font-weight:bold">NO DATABASE CHANGES WERE COMMITTED.</p>
-        <p><b>{type(e).__name__}:</b> {e}</p>
-        <p>Any transaction was rolled back.</p>
-        """, 409
-    finally:
-        if conn is not None:
-            try:
-                db_release(conn)
-            except Exception:
-                pass
-
-
-@app.route("/sync/compare-online-workers")
-@login_required
-def compare_online_workers():
-    """READ-ONLY comparison. Never opens Render's local SQLite DB.
-    Local values come from workers_sync_values.json; all online values
-    come from PostgreSQL. The comparison seed is used for the complete
-    11-field hash comparison, while the sync payload supplies the local
-    display values for fields that differ.
-    """
-    import json
-    import hashlib
-    from pathlib import Path
-    from collections import Counter
-
-    if not is_postgres():
-        return """
-        <h2>Full Worker Comparison</h2>
-        <h3 style="color:red">ERROR</h3>
-        <p>PostgreSQL connection is not active.</p>
-        <p><b>READ ONLY — no database changes were made.</b></p>
-        """, 400
-
-    base = Path(__file__).resolve().parent
-    seed_path = base / "workers_compare_seed.json"
-    payload_path = base / "workers_sync_values.json"
-
-    if not seed_path.exists():
-        return """
-        <h2>Full Worker Comparison</h2>
-        <h3 style="color:red">ERROR</h3>
-        <p>workers_compare_seed.json was not found.</p>
-        <p><b>READ ONLY — no database changes were made.</b></p>
-        """, 500
-
-    if not payload_path.exists():
-        return """
-        <h2>Full Worker Comparison</h2>
-        <h3 style="color:red">ERROR</h3>
-        <p>workers_sync_values.json was not found.</p>
-        <p>Push the verified local Worker sync payload first.</p>
-        <p><b>READ ONLY — no database changes were made.</b></p>
-        """, 500
-
-    fields = [
-        "name", "bangla_name", "department", "designation",
-        "basic_salary", "ot_rate", "refreshment_bill", "phone",
-        "address", "joining_date", "status"
-    ]
-    payload_display_fields = {"name", "bangla_name", "designation", "status", "ot_rate"}
-
-    def canonical(value):
-        if value is None:
-            return ""
-        if isinstance(value, float):
-            return str(round(value, 10)).strip()
-        return str(value).strip()
-
-    def field_hash(value):
-        return hashlib.sha256(canonical(value).encode("utf-8")).hexdigest()
-
-    conn = None
-    try:
-        with open(seed_path, "r", encoding="utf-8") as f:
-            seed = json.load(f)
-        with open(payload_path, "r", encoding="utf-8") as f:
-            payload = json.load(f)
-
-        if not isinstance(seed, list) or len(seed) != 169:
-            raise RuntimeError("Comparison seed must contain exactly 169 workers.")
-        if not isinstance(payload, list) or len(payload) != 169:
-            raise RuntimeError("Sync payload must contain exactly 169 workers.")
-
-        seed_map = {}
-        payload_map = {}
-        for item in seed:
-            wid = int(item["id"])
-            if wid in seed_map:
-                raise RuntimeError(f"Duplicate Worker ID in comparison seed: {wid}")
-            seed_map[wid] = item["hashes"]
-        for item in payload:
-            wid = int(item["id"])
-            if wid in payload_map:
-                raise RuntimeError(f"Duplicate Worker ID in sync payload: {wid}")
-            payload_map[wid] = item
-
-        if set(seed_map) != set(payload_map):
-            raise RuntimeError("Comparison seed and sync payload Worker IDs do not match.")
-
-        conn = db_connect()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT id, name, bangla_name, department, designation,
-                   basic_salary, ot_rate, refreshment_bill, phone,
-                   address, joining_date, status
-            FROM workers ORDER BY id
-        """)
-        rows = cur.fetchall()
-        online_ids = {int(r[0]) for r in rows}
-        local_ids = set(seed_map)
-        missing_online = sorted(local_ids - online_ids)
-        extra_online = sorted(online_ids - local_ids)
-
-        differences = []
-        for row in rows:
-            wid = int(row[0])
-            if wid not in seed_map:
-                continue
-            online_values = {field: row[i + 1] for i, field in enumerate(fields)}
-            for field in fields:
-                if field_hash(online_values[field]) != seed_map[wid].get(field, ""):
-                    local_display = "Unavailable on Render (offline value is in local SQLite)"
-                    if field in payload_display_fields:
-                        local_display = canonical(payload_map[wid].get(field))
-                    differences.append({
-                        "id": wid,
-                        "field": field,
-                        "local": local_display,
-                        "online": canonical(online_values[field]),
-                    })
-
-        online_count = len(rows)
-        difference_count = len(differences)
-        field_counts = Counter(item["field"] for item in differences)
-
-        if online_count == 169 and not missing_online and not extra_online and difference_count == 0:
-            status_html = '<h2 style="color:green">ALL WORKER DATA MATCH</h2>'
-        else:
-            status_html = '<h2 style="color:#b00000">WORKER DATA DIFFERENCES FOUND</h2>'
-
-        return render_template_string("""
-        <h2>Reedoy v49 - Full Worker Comparison</h2>
-        {{ status_html|safe }}
-        <p style="color:#555"><b>READ ONLY:</b> This comparison does not use Render's local SQLite database and performs no database writes.</p>
-        <table border="1" cellpadding="8">
-            <tr><th>Check</th><th>Result</th></tr>
-            <tr><td>Local Workers</td><td>169</td></tr>
-            <tr><td>Online Workers</td><td>{{ online_count }}</td></tr>
-            <tr><td>Missing Online IDs</td><td>{{ missing_online }}</td></tr>
-            <tr><td>Extra Online IDs</td><td>{{ extra_online }}</td></tr>
-            <tr><td>Total Field Differences</td><td>{{ difference_count }}</td></tr>
-        </table>
-        {% if field_counts %}
-        <h3>Differences by Field</h3>
-        <table border="1" cellpadding="8">
-            <tr><th>Field</th><th>Difference Count</th></tr>
-            {% for field, count in field_counts %}
-            <tr><td>{{ field }}</td><td>{{ count }}</td></tr>
-            {% endfor %}
-        </table>
-        {% endif %}
-        {% if differences %}
-        <h3>Detailed Differences</h3>
-        <table border="1" cellpadding="8">
-            <tr><th>Worker ID</th><th>Different Field</th><th>Local Value</th><th>Online Value</th></tr>
-            {% for item in differences %}
-            <tr><td>{{ item.id }}</td><td>{{ item.field }}</td><td>{{ item.local }}</td><td>{{ item.online }}</td></tr>
-            {% endfor %}
-        </table>
-        {% endif %}
-        <p><b>Compared fields:</b> Name, Bangla Name, Department, Designation, Basic Salary, OT Rate, Refreshment Bill, Phone, Address, Joining Date, Status.</p>
-        <p><b>READ ONLY — no database changes were made.</b></p>
-        """,
-        status_html=status_html,
-        online_count=online_count,
-        missing_online=missing_online,
-        extra_online=extra_online,
-        difference_count=difference_count,
-        field_counts=sorted(field_counts.items(), key=lambda x: (-x[1], x[0])),
-        differences=differences)
-
-    except Exception as e:
-        if conn is not None:
-            try:
-                db_release(conn)
-            except Exception:
-                pass
-        return f"""
-        <h2>Full Worker Comparison Error</h2>
-        <p><b>{type(e).__name__}:</b> {e}</p>
-        <p><b>READ ONLY — no database changes were made.</b></p>
-        """, 500
-    finally:
-        if conn is not None:
-            try:
-                db_release(conn)
-            except Exception:
-                pass
-
+            try: conn.rollback()
+            except Exception: pass
+            try: db_release(conn)
+            except Exception: pass
+        return f"<h2>Worker Sync Apply STOPPED</h2><p style='color:red'>{type(e).__name__}: {e}</p><p><b>TRANSACTION ROLLED BACK — NO WORKER CHANGES WERE COMMITTED.</b></p>", 409
 
 if __name__ == "__main__":
 
