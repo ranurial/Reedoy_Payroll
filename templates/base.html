@@ -5,14 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ settings.get('company_name','Reedoy Payroll') if settings else 'Reedoy Payroll' }}{% endblock %}</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Inter,"Noto Sans Bengali","Nirmala UI",Arial,sans-serif}
-    .topbar{background:#fff;border-bottom:1px solid #e5eaf2;padding:14px 4%;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
-    .brand{font-weight:800;font-size:20px;color:#1764c0;margin-right:auto}.nav{display:flex;gap:7px;flex-wrap:wrap}.nav a,.lang a{color:#334155;text-decoration:none;padding:8px 11px;border-radius:8px;background:#f1f5f9;font-size:14px}.nav a:hover,.nav a.active{background:#dbeafe;color:#1d4ed8}.lang{display:flex;gap:5px}
-    .wrap{max-width:1280px;margin:28px auto;padding:0 20px}.page-card{background:#fff;border:1px solid #e7edf5;border-radius:16px;padding:22px;box-shadow:0 5px 18px rgba(15,23,42,.04)}
-    h1{margin:0 0 18px;font-size:28px}h2{margin:0 0 14px}.muted{color:#64748b;font-size:14px}.flash{padding:11px 14px;border-radius:8px;background:#dcfce7;color:#166534;margin-bottom:14px}.flash.danger{background:#fee2e2;color:#991b1b}
-    input,select,button{font:inherit}input,select{padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff}button,.btn{border:0;border-radius:8px;padding:10px 15px;background:#1764c0;color:#fff;text-decoration:none;cursor:pointer}.btn.secondary{background:#64748b}
+    *{box-sizing:border-box}
+    body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Inter,"Noto Sans Bengali","Nirmala UI",Arial,sans-serif}
+    .topbar{background:#fff;border-bottom:1px solid #e5eaf2;padding:12px 4%;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+    .brand{font-weight:800;font-size:20px;color:#1764c0;margin-right:10px;white-space:nowrap}
+    .nav{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+    .nav a,.lang a{color:#334155;text-decoration:none;padding:7px 10px;border-radius:8px;background:#f1f5f9;font-size:13px;white-space:nowrap}
+    .nav a:hover,.nav a.active{background:#dbeafe;color:#1d4ed8}
+    .nav a.primary{background:#e8f1ff;color:#1459a6;font-weight:600}
+    .lang{display:flex;gap:4px;margin-left:auto}
+    .wrap{max-width:1280px;margin:24px auto;padding:0 20px}
+    .page-card{background:#fff;border:1px solid #e7edf5;border-radius:16px;padding:22px;box-shadow:0 5px 18px rgba(15,23,42,.04)}
+    h1{margin:0 0 18px;font-size:28px}h2{margin:0 0 14px}.muted{color:#64748b;font-size:14px}
+    .flash{padding:11px 14px;border-radius:8px;background:#dcfce7;color:#166534;margin-bottom:14px}.flash.danger{background:#fee2e2;color:#991b1b}
+    input,select,button{font:inherit}input,select{padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff}
+    button,.btn{border:0;border-radius:8px;padding:10px 15px;background:#1764c0;color:#fff;text-decoration:none;cursor:pointer}
+    .btn.secondary{background:#64748b}
     table{width:100%;border-collapse:collapse}th,td{padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px}th{background:#f8fafc}.tablewrap{overflow:auto}
-    @media(max-width:900px){.brand{width:100%}.wrap{padding:0 12px}}@media(max-width:600px){.nav a{font-size:12px;padding:7px}.page-card{padding:14px}}
+    @media(max-width:1100px){.brand{width:100%;margin-right:0}.lang{margin-left:0}}
+    @media(max-width:600px){.nav a{font-size:12px;padding:7px 8px}.wrap{padding:0 12px}.page-card{padding:14px}}
   </style>
   {% block head %}{% endblock %}
 </head>
@@ -20,13 +31,23 @@
 <header class="topbar">
   <div class="brand">{{ settings.get('company_name','Reedoy Payroll') if settings else 'Reedoy Payroll' }}</div>
   <nav class="nav" aria-label="Main navigation">
-    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint=='dashboard' else '' }}">{{ tr('Dashboard') }}</a>
-    <a href="{{ url_for('workers') }}" class="{{ 'active' if request.endpoint=='workers' else '' }}">{{ tr('Workers') }}</a>
-    <a href="{{ url_for('attendance') }}" class="{{ 'active' if request.endpoint in ['attendance','save_attendance'] else '' }}">{{ tr('Attendance') }}</a>
-    <a href="{{ url_for('payslip') }}" class="{{ 'active' if request.endpoint=='payslip' else '' }}">{{ tr('Payslip') }}</a>
-    <a href="{{ url_for('advance') }}" class="{{ 'active' if request.endpoint=='advance' else '' }}">{{ tr('Advance Salary') }}</a>
-    <a href="{{ url_for('department') }}" class="{{ 'active' if request.endpoint=='department' else '' }}">{{ tr('Department') }}</a>
+    <a class="primary {{ 'active' if request.endpoint=='dashboard' else '' }}" href="{{ url_for('dashboard') }}">{{ tr('Dashboard') }}</a>
+    <a class="primary {{ 'active' if request.endpoint=='workers' else '' }}" href="{{ url_for('workers') }}">{{ tr('Workers') }}</a>
+    <a class="primary {{ 'active' if request.endpoint in ['attendance','save_attendance'] else '' }}" href="{{ url_for('attendance') }}">{{ tr('Attendance') }}</a>
+    <a class="primary {{ 'active' if request.endpoint=='payslip' else '' }}" href="{{ url_for('payslip') }}">{{ tr('Payslip') }}</a>
+    <a class="primary {{ 'active' if request.endpoint in ['advance','advances'] else '' }}" href="{{ url_for('advance') }}">{{ tr('Advance Salary') }}</a>
+    <a class="primary {{ 'active' if request.endpoint=='department' else '' }}" href="{{ url_for('department') }}">{{ tr('Department') }}</a>
+    <a href="{{ url_for('reports') }}" class="{{ 'active' if request.endpoint=='reports' else '' }}">{{ tr('Reports') }}</a>
+    <a href="{{ url_for('ot_report') }}" class="{{ 'active' if request.endpoint=='ot_report' else '' }}">{{ tr('OT Report') }}</a>
+    <a href="{{ url_for('accounts') }}" class="{{ 'active' if request.endpoint=='accounts' else '' }}">{{ tr('Accounts') }}</a>
+    <a href="{{ url_for('payments') }}" class="{{ 'active' if request.endpoint=='payments' else '' }}">{{ tr('Payments') }}</a>
+    <a href="{{ url_for('payment_history') }}" class="{{ 'active' if request.endpoint=='payment_history' else '' }}">{{ tr('Payment History') }}</a>
+    <a href="{{ url_for('payroll_closing') }}" class="{{ 'active' if request.endpoint=='payroll_closing' else '' }}">{{ tr('Payroll Closing') }}</a>
+    <a href="{{ url_for('data_sync') }}" class="{{ 'active' if request.endpoint=='data_sync' else '' }}">{{ tr('Data Sync') }}</a>
+    <a href="{{ url_for('backup_maintenance') }}" class="{{ 'active' if request.endpoint=='backup_maintenance' else '' }}">{{ tr('Backup') }}</a>
     <a href="{{ url_for('settings') }}" class="{{ 'active' if request.endpoint=='settings' else '' }}">{{ tr('Settings') }}</a>
+    <a href="{{ url_for('users') }}" class="{{ 'active' if request.endpoint=='users' else '' }}">{{ tr('Users') }}</a>
+    <a href="{{ url_for('activity') }}" class="{{ 'active' if request.endpoint=='activity' else '' }}">{{ tr('Activity Log') }}</a>
     <a href="{{ url_for('logout') }}">{{ tr('Logout') }}</a>
   </nav>
   <div class="lang"><a href="{{ url_for('language',lang='en') }}">English</a><a href="{{ url_for('language',lang='bn') }}">বাংলা</a></div>
