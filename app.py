@@ -3809,7 +3809,7 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 {% if worker %}<div class="box"><div class="workername">{{ worker.bangla_name if language=='bn' and worker.bangla_name else worker.name }}</div><div class="muted">ID: {{ worker.id }} &nbsp; | &nbsp; Department: {{ worker.department or '' }} &nbsp; | &nbsp; Designation: {{ worker.designation or '' }} &nbsp; | &nbsp; Month: {{ month }}</div></div>
 <form method="post" action="{{ url_for('save_attendance') }}"><input type="hidden" name="worker_id" value="{{ worker.id }}"><input type="hidden" name="month" value="{{ month.split()[0] }}"><input type="hidden" name="year" value="{{ month.split()[1] }}">
 <div class="box"><h2>Monthly Summary</h2><div class="summary"><div class="stat"><label>Present Days</label><input type="number" min="0" name="present_days" value="{{ summary.get('present',0) }}"></div><div class="stat"><label>Absent Days</label><input type="number" min="0" name="absent_days" value="{{ summary.get('absent',0) }}"></div><div class="stat"><label>Overtime Hours</label><input type="number" min="0" step="0.01" name="ot_hours" value="{{ summary.get('ot',0) }}"></div><div class="stat"><label>Net Salary</label><b>৳ {{ '%.2f'|format(summary.get('net',0)|float) }}</b></div></div></div>
-<div class="box calendar"><h2>Daily Attendance — {{ month }}</h2><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><button type="button" class="btn" onclick="markAllAttendance('P')">âœ“ Mark All Present</button><button type="button" class="btn" style="background:#b91c1c" onclick="markAllAttendance('A')">âœ• Mark All Absent</button><button type="button" class="btn" style="background:#64748b" onclick="markAllAttendance('')">↺ Clear All / Not Set</button></div><table><thead><tr><th>Day</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for d in days %}<tr class="{% if d.date.weekday()==4 %}weekend{% endif %}"><td class="day">{{ d.day }}</td><td>{{ d.date.strftime('%d-%b-%Y') }}</td><td><select name="day_{{ d.day }}"><option value="" {% if not d.status %}selected{% endif %}>-- Not Set --</option><option value="P" {% if d.status=='P' %}selected{% endif %}>P - Present</option><option value="A" {% if d.status=='A' %}selected{% endif %}>A - Absent</option></select></td></tr>{% endfor %}</tbody></table></div>
+<div class="box calendar"><h2>Daily Attendance — {{ month }}</h2><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><button type="button" class="btn" onclick="markAllAttendance('P')">✓ Mark All Present</button><button type="button" class="btn" style="background:#b91c1c" onclick="markAllAttendance('A')">✕ Mark All Absent</button><button type="button" class="btn" style="background:#64748b" onclick="markAllAttendance('')">↺ Clear All / Not Set</button></div><table><thead><tr><th>Day</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for d in days %}<tr class="{% if d.date.weekday()==4 %}weekend{% endif %}"><td class="day">{{ d.day }}</td><td>{{ d.date.strftime('%d-%b-%Y') }}</td><td><select name="day_{{ d.day }}"><option value="" {% if not d.status %}selected{% endif %}>-- Not Set --</option><option value="P" {% if d.status=='P' %}selected{% endif %}>P - Present</option><option value="A" {% if d.status=='A' %}selected{% endif %}>A - Absent</option></select></td></tr>{% endfor %}</tbody></table></div>
 <div class="box"><button type="submit">Save Attendance</button> <a class="btn" style="background:#64748b" href="{{ url_for('attendance') }}">Clear</a></div></form>{% endif %}
 </main>
 <script>
@@ -4257,7 +4257,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px so
 
 <div class="box">
 <h1>Online ↔ Offline Data Sync</h1>
-<p>এই tab à¦¦à¦¿à§Ÿে Online এবং Offline software-এর সম্পূর্ণ payroll data এক backup file-এর মাধ্যমে একে à¦…পরের মধ্যে à¦¨à§‡à¦“à§Ÿা যাবে।</p>
+<p>এই tab দিয়ে Online এবং Offline software-এর সম্পূর্ণ payroll data এক backup file-এর মাধ্যমে একে à¦…পরের মধ্যে নেওয়া যাবে।</p>
 <div class="note">
 <strong>Backup file:</strong> Reedoy portable backup (.rdb)<br>
 Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Salary/Payment, Payroll Lock, Settings, Users ও Activity data backup-এর মধ্যে à¦°à¦¾à¦–া হবে।
@@ -4266,7 +4266,7 @@ Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Sala
 
 <div class="box">
 <h2>1. Current Database → Backup File</h2>
-<p>এই software-এর বর্তমান data à¦à¦•à¦Ÿি portable backup file-এ নিন। তারপর সেই file à¦…ন্য Online/Offline software-এ Restore করা যাবে।</p>
+<p>এই software-এর বর্তমান data একটি portable backup file-এ নিন। তারপর সেই file à¦…ন্য Online/Offline software-এ Restore করা যাবে।</p>
 <p><strong>Current database:</strong> {{ 'ONLINE / PostgreSQL' if is_online else 'OFFLINE / SQLite' }}</p>
 <form method="post" action="{{ url_for('create_portable_backup') }}">
 <button class="btn" type="submit">Create Portable Backup & Download</button>
@@ -4276,20 +4276,20 @@ Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Sala
 <div class="box">
 <h2>2. Backup File → Current Database</h2>
 <div class="warn">
-<strong>সতর্কতা:</strong> Restore করলে এই software-এর বর্তমান data backup file-এর data à¦¦à¦¿à§Ÿে replace হবে। Restore করার à¦†à¦—ে বর্তমান data-এর à¦à¦•à¦Ÿি safety backup à¦¸à§à¦¬à§Ÿà¦‚à¦•à§à¦°à¦¿à§Ÿভাবে à¦¤à§ˆরি হবে। Worker ID ও à¦ªà§à¦°à§‹à¦¨à§‹ record ID à¦…পরিবর্তিত à¦°à¦¾à¦–ার à¦šà§‡à¦·à§à¦Ÿা করা হবে।
+<strong>সতর্কতা:</strong> Restore করলে এই software-এর বর্তমান data backup file-এর data দিয়ে replace হবে। Restore করার à¦†à¦—ে বর্তমান data-এর একটি safety backup স্বয়ংক্রিয়ভাবে à¦¤à§ˆরি হবে। Worker ID ও à¦ªà§à¦°à§‹à¦¨à§‹ record ID à¦…পরিবর্তিত à¦°à¦¾à¦–ার চেষ্টা করা হবে।
 </div>
-<form method="post" action="{{ url_for('restore_portable_backup') }}" enctype="multipart/form-data" onsubmit="return confirm('Restore করলে বর্তমান database-এর data backup file-এর data à¦¦à¦¿à§Ÿে replace হবে। Continue?');">
+<form method="post" action="{{ url_for('restore_portable_backup') }}" enctype="multipart/form-data" onsubmit="return confirm('Restore করলে বর্তমান database-এর data backup file-এর data দিয়ে replace হবে। Continue?');">
 <input class="file" type="file" name="backup_file" accept=".rdb,.zip" required>
 <button class="btn danger" type="submit">Restore Backup to This Software</button>
 </form>
 </div>
 
 <div class="box">
-<h2>ব্যবহারের à¦¨à¦¿à§Ÿম</h2>
+<h2>ব্যবহারের নিয়ম</h2>
 <table>
-<tr><th>à¦•à¦¾à¦œ</th><th>যেভাবে করবেন</th></tr>
+<tr><th>কাজ</th><th>যেভাবে করবেন</th></tr>
 <tr><td>Online → Offline</td><td>Online-এ Create Portable Backup → file download → Offline-এ এই tab → Restore</td></tr>
-<tr><td>Offline → Online</td><td>Offline-এ Create Portable Backup → file à¦¨à¦¿à§Ÿে Online-এ এই tab → Restore</td></tr>
+<tr><td>Offline → Online</td><td>Offline-এ Create Portable Backup → file নিয়ে Online-এ এই tab → Restore</td></tr>
 <tr><td>Data নিরাপত্তা</td><td>Restore-এর à¦†à¦—ে বর্তমান database-এর safety backup à¦¤à§ˆরি হবে</td></tr>
 <tr><td>Database</td><td>Online PostgreSQL এবং Offline SQLite—দুই ধরনের database support করবে</td></tr>
 </table>
