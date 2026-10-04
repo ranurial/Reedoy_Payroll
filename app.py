@@ -6820,6 +6820,10 @@ def settings():
                     commit=True,
                 )
 
+        # Settings are cached for normal page loads; refresh immediately
+        # after an administrator changes them.
+        invalidate_settings_cache()
+
         log_activity(
             current_user().get("username") if current_user() else "system",
             "Company settings updated"
