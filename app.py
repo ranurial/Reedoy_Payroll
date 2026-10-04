@@ -3630,7 +3630,7 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 @media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.cards{grid-template-columns:1fr}}
 </style></head><body>
 <header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div>
-<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance & Calendar</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('data_sync') }}">â†” Sync</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('ot_report') }}">OT Report</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a></nav></header>
+<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance & Calendar</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('users') }}">Users</a><a href="{{ url_for('activity') }}">Activity Log</a><a href="{{ url_for('backup_maintenance') }}">Backup</a><a href="{{ url_for('data_sync') }}">↔ Sync</a><a href="{{ url_for('logout') }}">Logout</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('ot_report') }}">OT Report</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a></nav></header>
 <main class="wrap"><h1>{{ tr('Dashboard') }}</h1><p>{{ month }}</p>
 <section class="cards"><div class="card"><div class="label">Total Workers</div><div class="value">{{ total_workers|default(0) }}</div></div><div class="card"><div class="label">Present Today</div><div class="value">{{ today_present|default(0) }}</div></div><div class="card"><div class="label">Absent Today</div><div class="value">{{ today_absent|default(0) }}</div></div><div class="card"><div class="label">Gross Salary</div><div class="value">৳ {{ '%.2f'|format(gross|default(0)|float) }}</div></div></section>
 <section class="box"><h2>Attendance</h2><p>Attendance & Calendar module is ready.</p><a href="{{ url_for('attendance') }}">Open Attendance & Calendar →</a></section><section class="box"><h2>Payslip</h2><p>View the selected worker monthly payslip.</p><a href="{{ url_for('payslip') }}">Open Payslip →</a></section><section class="box"><h2>Advance Salary</h2><p>Add, edit and delete worker advance salary records.</p><a href="{{ url_for('advance') }}">Open Advance Salary →</a></section><section class="box"><h2>Backup & Maintenance</h2><p>Create and download a safe backup of the payroll database.</p><a href="{{ url_for('backup_maintenance') }}">Open Backup & Maintenance →</a></section><section class="box"><h2>Reports</h2><p>View monthly payroll totals, department summary and worker payroll details.</p><a href="{{ url_for('reports') }}">Open Reports →</a></section><section class="box"><h2>Payment History</h2><p>View saved payment transactions by month and worker.</p><a href="{{ url_for('payment_history') }}">Open Payment History →</a></section><section class="box"><h2>Accounts / Financial Summary</h2><p>View monthly payroll financial summary and department-wise financial totals.</p><a href="{{ url_for('accounts') }}">Open Accounts →</a></section><section class="box"><h2>OT Report</h2><p>View monthly overtime hours and OT amount by worker and department.</p><a href="{{ url_for('ot_report') }}">Open OT Report →</a></section><section class="box"><h2>Payment Management</h2><p>Track paid, unpaid and partially paid monthly salaries.</p><a href="{{ url_for('payments') }}">Open Payments →</a></section><section class="box"><h2>Payroll Closing</h2><p>Lock a completed payroll month so attendance, advances and payments cannot be changed accidentally.</p><a href="{{ url_for('payroll_closing') }}">Open Payroll Closing →</a></section>
@@ -3809,7 +3809,7 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 {% if worker %}<div class="box"><div class="workername">{{ worker.bangla_name if language=='bn' and worker.bangla_name else worker.name }}</div><div class="muted">ID: {{ worker.id }} &nbsp; | &nbsp; Department: {{ worker.department or '' }} &nbsp; | &nbsp; Designation: {{ worker.designation or '' }} &nbsp; | &nbsp; Month: {{ month }}</div></div>
 <form method="post" action="{{ url_for('save_attendance') }}"><input type="hidden" name="worker_id" value="{{ worker.id }}"><input type="hidden" name="month" value="{{ month.split()[0] }}"><input type="hidden" name="year" value="{{ month.split()[1] }}">
 <div class="box"><h2>Monthly Summary</h2><div class="summary"><div class="stat"><label>Present Days</label><input type="number" min="0" name="present_days" value="{{ summary.get('present',0) }}"></div><div class="stat"><label>Absent Days</label><input type="number" min="0" name="absent_days" value="{{ summary.get('absent',0) }}"></div><div class="stat"><label>Overtime Hours</label><input type="number" min="0" step="0.01" name="ot_hours" value="{{ summary.get('ot',0) }}"></div><div class="stat"><label>Net Salary</label><b>৳ {{ '%.2f'|format(summary.get('net',0)|float) }}</b></div></div></div>
-<div class="box calendar"><h2>Daily Attendance — {{ month }}</h2><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><button type="button" class="btn" onclick="markAllAttendance('P')">âœ“ Mark All Present</button><button type="button" class="btn" style="background:#b91c1c" onclick="markAllAttendance('A')">âœ• Mark All Absent</button><button type="button" class="btn" style="background:#64748b" onclick="markAllAttendance('')">â†º Clear All / Not Set</button></div><table><thead><tr><th>Day</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for d in days %}<tr class="{% if d.date.weekday()==4 %}weekend{% endif %}"><td class="day">{{ d.day }}</td><td>{{ d.date.strftime('%d-%b-%Y') }}</td><td><select name="day_{{ d.day }}"><option value="" {% if not d.status %}selected{% endif %}>-- Not Set --</option><option value="P" {% if d.status=='P' %}selected{% endif %}>P - Present</option><option value="A" {% if d.status=='A' %}selected{% endif %}>A - Absent</option></select></td></tr>{% endfor %}</tbody></table></div>
+<div class="box calendar"><h2>Daily Attendance — {{ month }}</h2><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><button type="button" class="btn" onclick="markAllAttendance('P')">âœ“ Mark All Present</button><button type="button" class="btn" style="background:#b91c1c" onclick="markAllAttendance('A')">âœ• Mark All Absent</button><button type="button" class="btn" style="background:#64748b" onclick="markAllAttendance('')">↺ Clear All / Not Set</button></div><table><thead><tr><th>Day</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for d in days %}<tr class="{% if d.date.weekday()==4 %}weekend{% endif %}"><td class="day">{{ d.day }}</td><td>{{ d.date.strftime('%d-%b-%Y') }}</td><td><select name="day_{{ d.day }}"><option value="" {% if not d.status %}selected{% endif %}>-- Not Set --</option><option value="P" {% if d.status=='P' %}selected{% endif %}>P - Present</option><option value="A" {% if d.status=='A' %}selected{% endif %}>A - Absent</option></select></td></tr>{% endfor %}</tbody></table></div>
 <div class="box"><button type="submit">Save Attendance</button> <a class="btn" style="background:#64748b" href="{{ url_for('attendance') }}">Clear</a></div></form>{% endif %}
 </main>
 <script>
@@ -4219,7 +4219,7 @@ BUILTIN_DATA_SYNC_TEMPLATE = r"""
 <html lang="{{ 'bn' if language == 'bn' else 'en' }}">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Online â†” Offline Data Sync | REEDOY PAYROLL</title>
+<title>Online ↔ Offline Data Sync | REEDOY PAYROLL</title>
 <style>
 body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}
 .top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -4244,7 +4244,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px so
 <a href="{{ url_for('department') }}">Department Salary</a>
 <a href="{{ url_for('reports') }}">Reports</a>
 <a href="{{ url_for('backup_maintenance') }}">Backup</a>
-<a href="{{ url_for('data_sync') }}">â†” Sync</a>
+<a href="{{ url_for('data_sync') }}">↔ Sync</a>
 <a href="{{ url_for('logout') }}">Logout</a>
 </nav>
 </header>
@@ -4256,17 +4256,17 @@ table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px so
 {% endwith %}
 
 <div class="box">
-<h1>Online â†” Offline Data Sync</h1>
-<p>à¦à¦‡ tab à¦¦à¦¿à§Ÿà§‡ Online à¦à¦¬à¦‚ Offline software-à¦র à¦¸à¦®à§à¦ªà§‚à¦°à§ণ payroll data à¦à¦• backup file-à¦র à¦®à¦¾à¦§à§à¦¯à¦®à§‡ à¦à¦•à§‡ à¦…à¦ªà¦°à§‡র à¦®à¦§à§à¦¯à§‡ à¦¨à§‡à¦“à§Ÿা à¦¯à¦¾à¦¬à§‡।</p>
+<h1>Online ↔ Offline Data Sync</h1>
+<p>এই tab à¦¦à¦¿à§Ÿে Online এবং Offline software-এর সম্পূর্ণ payroll data এক backup file-এর মাধ্যমে একে à¦…পরের মধ্যে à¦¨à§‡à¦“à§Ÿা যাবে।</p>
 <div class="note">
 <strong>Backup file:</strong> Reedoy portable backup (.rdb)<br>
-Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Salary/Payment, Payroll Lock, Settings, Users à¦“ Activity data backup-à¦র à¦®à¦§à§à¦¯à§‡ à¦°à¦¾à¦–া à¦¹à¦¬à§‡।
+Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Salary/Payment, Payroll Lock, Settings, Users ও Activity data backup-এর মধ্যে à¦°à¦¾à¦–া হবে।
 </div>
 </div>
 
 <div class="box">
 <h2>1. Current Database → Backup File</h2>
-<p>à¦à¦‡ software-à¦র à¦¬à¦°à§তমান data à¦à¦•à¦Ÿি portable backup file-à¦ নিন। তারপর à¦¸à§‡à¦‡ file à¦…à¦¨à§য Online/Offline software-à¦ Restore à¦•রা à¦¯à¦¾à¦¬à§‡।</p>
+<p>এই software-এর বর্তমান data à¦à¦•à¦Ÿি portable backup file-এ নিন। তারপর সেই file à¦…ন্য Online/Offline software-এ Restore করা যাবে।</p>
 <p><strong>Current database:</strong> {{ 'ONLINE / PostgreSQL' if is_online else 'OFFLINE / SQLite' }}</p>
 <form method="post" action="{{ url_for('create_portable_backup') }}">
 <button class="btn" type="submit">Create Portable Backup & Download</button>
@@ -4276,22 +4276,22 @@ Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Sala
 <div class="box">
 <h2>2. Backup File → Current Database</h2>
 <div class="warn">
-<strong>à¦¸à¦¤à¦°à§à¦•তা:</strong> Restore à¦•à¦°à¦²à§‡ à¦à¦‡ software-à¦র à¦¬à¦°à§তমান data backup file-à¦র data à¦¦à¦¿à§Ÿà§‡ replace à¦¹à¦¬à§‡। Restore à¦•রার à¦†à¦—à§‡ à¦¬à¦°à§তমান data-à¦র à¦à¦•à¦Ÿি safety backup à¦¸à§à¦¬à§Ÿà¦‚à¦•à§à¦°à¦¿à§Ÿà¦­à¦¾à¦¬à§‡ à¦¤à§ˆরি à¦¹à¦¬à§‡। Worker ID à¦“ à¦ªà§à¦°à§‹à¦¨à§‹ record ID à¦…à¦ªà¦°à¦¿à¦¬à¦°à§তিত à¦°à¦¾à¦–ার à¦šà§‡à¦·à§à¦Ÿা à¦•রা à¦¹à¦¬à§‡।
+<strong>সতর্কতা:</strong> Restore করলে এই software-এর বর্তমান data backup file-এর data à¦¦à¦¿à§Ÿে replace হবে। Restore করার à¦†à¦—ে বর্তমান data-এর à¦à¦•à¦Ÿি safety backup à¦¸à§à¦¬à§Ÿà¦‚à¦•à§à¦°à¦¿à§Ÿভাবে à¦¤à§ˆরি হবে। Worker ID ও à¦ªà§à¦°à§‹à¦¨à§‹ record ID à¦…পরিবর্তিত à¦°à¦¾à¦–ার à¦šà§‡à¦·à§à¦Ÿা করা হবে।
 </div>
-<form method="post" action="{{ url_for('restore_portable_backup') }}" enctype="multipart/form-data" onsubmit="return confirm('Restore à¦•à¦°à¦²à§‡ à¦¬à¦°à§তমান database-à¦র data backup file-à¦র data à¦¦à¦¿à§Ÿà§‡ replace à¦¹à¦¬à§‡। Continue?');">
+<form method="post" action="{{ url_for('restore_portable_backup') }}" enctype="multipart/form-data" onsubmit="return confirm('Restore করলে বর্তমান database-এর data backup file-এর data à¦¦à¦¿à§Ÿে replace হবে। Continue?');">
 <input class="file" type="file" name="backup_file" accept=".rdb,.zip" required>
 <button class="btn danger" type="submit">Restore Backup to This Software</button>
 </form>
 </div>
 
 <div class="box">
-<h2>à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°à§‡র à¦¨à¦¿à§Ÿম</h2>
+<h2>ব্যবহারের à¦¨à¦¿à§Ÿম</h2>
 <table>
-<tr><th>à¦•à¦¾à¦œ</th><th>à¦¯à§‡à¦­à¦¾à¦¬à§‡ à¦•à¦°à¦¬à§‡ন</th></tr>
-<tr><td>Online → Offline</td><td>Online-à¦ Create Portable Backup → file download → Offline-à¦ à¦à¦‡ tab → Restore</td></tr>
-<tr><td>Offline → Online</td><td>Offline-à¦ Create Portable Backup → file à¦¨à¦¿à§Ÿà§‡ Online-à¦ à¦à¦‡ tab → Restore</td></tr>
-<tr><td>Data à¦¨à¦¿à¦°à¦¾à¦ªà¦¤à§তা</td><td>Restore-à¦র à¦†à¦—à§‡ à¦¬à¦°à§তমান database-à¦র safety backup à¦¤à§ˆরি à¦¹à¦¬à§‡</td></tr>
-<tr><td>Database</td><td>Online PostgreSQL à¦à¦¬à¦‚ Offline SQLite—à¦¦à§à¦‡ à¦§à¦°à¦¨à§‡র database support à¦•à¦°à¦¬à§‡</td></tr>
+<tr><th>à¦•à¦¾à¦œ</th><th>যেভাবে করবেন</th></tr>
+<tr><td>Online → Offline</td><td>Online-এ Create Portable Backup → file download → Offline-এ এই tab → Restore</td></tr>
+<tr><td>Offline → Online</td><td>Offline-এ Create Portable Backup → file à¦¨à¦¿à§Ÿে Online-এ এই tab → Restore</td></tr>
+<tr><td>Data নিরাপত্তা</td><td>Restore-এর à¦†à¦—ে বর্তমান database-এর safety backup à¦¤à§ˆরি হবে</td></tr>
+<tr><td>Database</td><td>Online PostgreSQL এবং Offline SQLite—দুই ধরনের database support করবে</td></tr>
 </table>
 </div>
 
