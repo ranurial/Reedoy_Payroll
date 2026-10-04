@@ -15,10 +15,11 @@
     </form>
   </div>
 
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
     <div style="background:#f8fafc;border-radius:10px;padding:14px"><div class="muted">Records</div><strong style="font-size:22px">{{ rows|length }}</strong></div>
     <div style="background:#f8fafc;border-radius:10px;padding:14px"><div class="muted">Total Advance</div><strong style="font-size:22px">৳ {{ '%.2f'|format(total_advance|default(0)|float) }}</strong></div>
-    <div style="background:#f8fafc;border-radius:10px;padding:14px"><div class="muted">Selected Month</div><strong style="font-size:18px">{{ month }}</strong></div>
+    <div style="background:#f8fafc;border-radius:10px;padding:14px"><div class="muted">Total Paid</div><strong style="font-size:22px">৳ {{ '%.2f'|format(total_paid|default(0)|float) }}</strong></div>
+    <div style="background:#f8fafc;border-radius:10px;padding:14px"><div class="muted">Total Due</div><strong style="font-size:22px">৳ {{ '%.2f'|format(total_due|default(0)|float) }}</strong></div>
   </div>
 
   <div style="border:1px solid #e5eaf2;border-radius:12px;padding:16px;margin-bottom:18px;background:#fff">
@@ -28,6 +29,8 @@
         <div><label>Worker *</label><select name="worker_id" required style="width:100%"><option value="">-- Select Worker --</option>{% for worker in workers %}<option value="{{ worker.id }}">{{ worker.id }} - {{ worker.bangla_name if language=='bn' and worker.bangla_name else worker.name }}{% if worker.department %} - {{ worker.department }}{% endif %}</option>{% endfor %}</select></div>
         <div><label>Advance Date *</label><input type="date" name="advance_date" value="{{ today_date|default('') }}" required style="width:100%"></div>
         <div><label>Amount (৳) *</label><input type="number" name="amount" min="1" step="0.01" required style="width:100%"></div>
+        <div><label>Paid Amount (৳)</label><input type="number" name="paid_amount" min="0" step="0.01" value="0" style="width:100%"></div>
+        <div><label>Paid Date</label><input type="date" name="paid_date" style="width:100%"></div>
         <div><label>Note</label><input type="text" name="note" placeholder="Optional note" style="width:100%"></div>
         <input type="hidden" name="month_year" value="{{ month }}"><button type="submit">Save Advance</button>
       </div>
@@ -36,7 +39,7 @@
 
   <div class="tablewrap">
     <table>
-      <thead><tr><th>ID</th><th>Worker</th><th>Department</th><th>Month</th><th>Date</th><th style="text-align:right">Amount (৳)</th><th>Note</th><th style="text-align:center">Action</th></tr></thead>
+      <thead><tr><th>ID</th><th>Worker</th><th>Department</th><th>Month</th><th>Date</th><th style="text-align:right">Amount (৳)</th><th style="text-align:right">Paid (৳)</th><th style="text-align:right">Due (৳)</th><th>Status</th><th>Note</th><th style="text-align:center">Action</th></tr></thead>
       <tbody>
       {% for r in rows %}
         <tr>
@@ -46,11 +49,14 @@
           <td>{{ r.month_year or month }}</td>
           <td>{{ r.advance_date or '' }}</td>
           <td style="text-align:right">৳ {{ '%.2f'|format((r.amount or 0)|float) }}</td>
+          <td style="text-align:right">৳ {{ '%.2f'|format((r.paid_amount or 0)|float) }}</td>
+          <td style="text-align:right">৳ {{ '%.2f'|format((r.due_amount or 0)|float) }}</td>
+          <td>{{ r.status or 'Due' }}</td>
           <td>{{ r.note or '' }}</td>
           <td style="text-align:center;white-space:nowrap"><a class="btn" style="padding:7px 10px;background:#d97706" href="{{ url_for('edit_advance', aid=r.id) }}">Edit</a> <a class="btn" style="padding:7px 10px;background:#dc2626" href="{{ url_for('delete_advance', aid=r.id) }}" onclick="return confirm('Delete this advance record?');">Delete</a></td>
         </tr>
       {% else %}
-        <tr><td colspan="8" style="text-align:center;padding:30px;color:#64748b">No advance records found for {{ month }}. Please select another month/year.</td></tr>
+        <tr><td colspan="11" style="text-align:center;padding:30px;color:#64748b">No advance records found for {{ month }}. Please select another month/year.</td></tr>
       {% endfor %}
       </tbody>
     </table>
