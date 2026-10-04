@@ -3,11 +3,17 @@
 <div class="container mt-4">
   <h2>Generate Payslip</h2>
   <form method="get" action="{{ url_for('payslip') }}" class="row g-3 mb-4">
+    <div class="col-md-3"><label class="form-label">Month</label><select name="month" class="form-select">
+      {% for m in months %}<option value="{{ m }}" {% if month.split()[0] == m %}selected{% endif %}>{{ m }}</option>{% endfor %}
+    </select></div>
+    <div class="col-md-3"><label class="form-label">Year</label><select name="year" class="form-select">
+      {% for y in years %}<option value="{{ y }}" {% if month.split()[1]|int == y %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select></div>
     <div class="col-md-6"><label class="form-label">Worker</label><select name="worker_id" class="form-select" required>
       <option value="">Select worker</option>
       {% for w in workers %}<option value="{{ w.id }}" {% if worker and worker.id|string == w.id|string %}selected{% endif %}>{{ w.id }} - {{ w.name }}{% if w.department %} ({{ w.department }}){% endif %}</option>{% endfor %}
     </select></div>
-    <div class="col-md-3 align-self-end"><button class="btn btn-primary" type="submit">Generate Payslip</button></div>
+    <div class="col-12"><button class="btn btn-primary" type="submit">Generate Payslip</button></div>
   </form>
   {% if worker %}
   <div class="card"><div class="card-header"><h4>{{ settings.company_name if settings and settings.company_name else 'Reedoy Textile Dyeing Printing & Finishing' }}</h4><strong>Salary Payslip — {{ month }}</strong></div>
