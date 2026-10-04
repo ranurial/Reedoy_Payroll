@@ -1521,11 +1521,40 @@ def legacy_advance_source():
 # ============================================================
 # ADVANCE ROWS
 # ============================================================
+def ensure_advance_payment_columns():
+    """Safely add advance recovery fields; never changes existing amounts."""
+    try:
+        if not table_exists("worker_advances"):
+            return
+        cols = columns("worker_advances")
+        additions = []
+        if "paid_amount" not in cols:
+            additions.append(("paid_amount", "DOUBLE PRECISION NOT NULL DEFAULT 0" if is_postgres() else "REAL NOT NULL DEFAULT 0"))
+        if "paid_date" not in cols:
+            additions.append(("paid_date", "TEXT"))
+        for name, definition in additions:
+            execute(f"ALTER TABLE worker_advances ADD COLUMN {name} {definition}", commit=True)
+    except Exception as e:
+        app.logger.warning("Advance payment columns check error: %r", e)
+
+
+def enrich_advance_rows(rows):
+    for row in rows:
+        amount = parse_num(row.get("amount"), 0)
+        paid = max(0, min(parse_num(row.get("paid_amount"), 0), amount))
+        row["paid_amount"] = paid
+        row["due_amount"] = max(0, amount - paid)
+        row["status"] = "Paid" if row["due_amount"] <= 0 else ("Partial" if paid > 0 else "Due")
+    return rows
+
+
 
 def advance_rows(
     month=None,
     worker_id=None
 ):
+
+    ensure_advance_payment_columns()
 
     table_name = (
         legacy_advance_source()
@@ -1570,6 +1599,8 @@ def advance_rows(
                 wa.month_year,
                 wa.advance_date,
                 wa.amount,
+                {("wa.paid_amount" if "paid_amount" in table_columns else "0")} AS paid_amount,
+                {("wa.paid_date" if "paid_date" in table_columns else "NULL")} AS paid_date,
                 {("wa.note" if "note" in table_columns else "''")} AS note,
                 w.name AS worker_name,
                 w.bangla_name,
@@ -1588,10 +1619,10 @@ def advance_rows(
 
         query += " ORDER BY wa.id DESC"
 
-        return fetch_all(
+        return enrich_advance_rows(fetch_all(
             query,
             params
-        )
+        ))
 
     # --------------------------------------------------------
     # Legacy advance_salary
@@ -1739,7 +1770,9 @@ def save_advance_record(
     month,
     advance_date,
     amount,
-    note
+    note,
+    paid_amount=0,
+    paid_date=""
 ):
 
     table_name = (
@@ -1775,6 +1808,14 @@ def save_advance_record(
             (
                 "amount",
                 amount
+            ),
+            (
+                "paid_amount",
+                paid_amount
+            ),
+            (
+                "paid_date",
+                paid_date
             ),
             (
                 "note",
@@ -2074,6 +2115,12 @@ def edit_advance(aid):
         .strip()
     )
 
+    paid_amount = parse_num(form.get("paid_amount"), 0)
+    paid_date = (form.get("paid_date") or "").strip()
+    if paid_amount < 0 or paid_amount > amount:
+        flash("Paid amount must be between 0 and the advance amount.", "danger")
+        return redirect(url_for("edit_advance", aid=aid))
+
     if amount <= 0:
 
         flash(
@@ -2097,6 +2144,8 @@ def edit_advance(aid):
             advance_date,
             amount,
             note,
+            paid_amount,
+            paid_date,
         )
 
         log_activity(
@@ -2169,7 +2218,9 @@ def update_advance_record(
     month,
     advance_date,
     amount,
-    note
+    note,
+    paid_amount=0,
+    paid_date=""
 ):
     table_name = legacy_advance_source()
 
@@ -2216,6 +2267,14 @@ def update_advance_record(
         if "amount" in table_columns:
             fields.append("amount=?")
             values.append(amount)
+
+        if "paid_amount" in table_columns:
+            fields.append("paid_amount=?")
+            values.append(paid_amount)
+
+        if "paid_date" in table_columns:
+            fields.append("paid_date=?")
+            values.append(paid_date)
 
         if "note" in table_columns:
             fields.append("note=?")
@@ -6462,7 +6521,10 @@ def advance():
 
     worker_id = request.args.get("worker_id")
 
-    total_advance = sum(parse_num(r.get("amount"), 0) for r in advance_rows(month, worker_id))
+    rows = advance_rows(month, worker_id)
+    total_advance = sum(parse_num(r.get("amount"), 0) for r in rows)
+    total_paid = sum(parse_num(r.get("paid_amount"), 0) for r in rows)
+    total_due = sum(parse_num(r.get("due_amount"), 0) for r in rows)
 
     return safe_render_template(
         "advance.html",
@@ -6477,11 +6539,10 @@ def advance():
             ORDER BY id
             """
         ),
-        rows=advance_rows(
-            month,
-            worker_id
-        ),
+        rows=rows,
         total_advance=total_advance,
+        total_paid=total_paid,
+        total_due=total_due,
         month=month,
         months=MONTHS,
         years=list(range(datetime.date.today().year - 2, datetime.date.today().year + 3)),
@@ -6560,6 +6621,12 @@ def save_advance():
         "note",
         ""
     ).strip()
+
+    paid_amount = parse_num(form.get("paid_amount"), 0)
+    paid_date = (form.get("paid_date") or "").strip()
+    if paid_amount < 0 or paid_amount > amount:
+        flash("Paid amount must be between 0 and the advance amount.", "danger")
+        return redirect(url_for("advance", month=month))
 
     if amount <= 0:
 
