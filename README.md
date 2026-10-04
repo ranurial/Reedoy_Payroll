@@ -19,3 +19,6 @@ Create a new Web Service from this folder/repository and add a PostgreSQL databa
 - SQLite is used only as a local fallback. PostgreSQL is recommended for multiple users over the Internet.
 - Change the default admin password immediately after first login.
 - The PDF export uses a standard Latin font; for guaranteed Bengali PDF output, add a Bengali Unicode TTF font to the project and register it in `report_pdf()`.
+
+
+<!-- Stable Master v6 deployment verification trigger: 2026-10-04 -->
