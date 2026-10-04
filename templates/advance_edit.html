@@ -59,15 +59,7 @@
                 placeholder="Example: September 2026">
         </div>
 
-        <div class="mb-3">
-            <label for="paid_amount" class="form-label">Paid Amount (BDT)</label>
-            <input type="number" name="paid_amount" id="paid_amount" class="form-control" min="0" step="0.01" value="{{ record.paid_amount|default(0) }}">
-        </div>
-
-        <div class="mb-3">
-            <label for="paid_date" class="form-label">Paid Date</label>
-            <input type="date" name="paid_date" id="paid_date" class="form-control" value="{{ record.paid_date or '' }}">
-        </div>
+        <div class="alert alert-info">This advance was issued to the worker, so it is recorded as <strong>Paid</strong>. Paid amount equals the advance amount.</div>
 
         <div class="mb-3">
             <label for="note" class="form-label">Note</label>
