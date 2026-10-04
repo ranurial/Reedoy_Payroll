@@ -27,6 +27,7 @@ from flask import (
     send_file,
     abort,
     jsonify,
+    g,
 )
 
 
@@ -253,6 +254,12 @@ def is_postgres():
 # ============================================================
 
 _PG_POOL = None
+
+# Small per-process caches for data that changes rarely. These caches are
+# deliberately limited to metadata/settings; payroll records are never cached.
+_SETTINGS_CACHE = None
+_ADVANCE_SOURCE_CACHE = None
+_ADVANCE_COLUMNS_CACHE = None
 
 
 def _get_pg_pool():
@@ -1257,8 +1264,15 @@ def advance_pdf():
 
 def get_settings():
 
-    try:
+    global _SETTINGS_CACHE
 
+    # Company settings are displayed on almost every page but change only
+    # occasionally. Cache them per Gunicorn worker and refresh explicitly
+    # after a settings save. This removes one DB round-trip from normal pages.
+    if _SETTINGS_CACHE is not None:
+        return _SETTINGS_CACHE.copy()
+
+    try:
         rows = fetch_all(
             """
             SELECT key,value
@@ -1267,25 +1281,24 @@ def get_settings():
         )
 
         result = {}
-
         for row in rows:
-            result[
-                row["key"]
-            ] = row["value"]
+            result[row["key"]] = row["value"]
 
         if "company_name" not in result:
-            result["company_name"] = (
-                DEFAULT_COMPANY_NAME
-            )
+            result["company_name"] = DEFAULT_COMPANY_NAME
 
-        return result
+        _SETTINGS_CACHE = result
+        return result.copy()
 
     except Exception:
+        fallback = {"company_name": DEFAULT_COMPANY_NAME}
+        _SETTINGS_CACHE = fallback
+        return fallback.copy()
 
-        return {
-            "company_name":
-                DEFAULT_COMPANY_NAME
-        }
+
+def invalidate_settings_cache():
+    global _SETTINGS_CACHE
+    _SETTINGS_CACHE = None
 
 
 # ============================================================
@@ -1327,16 +1340,20 @@ def log_activity(
 
 def current_user():
 
-    user_id = session.get(
-        "user_id"
-    )
+    # login_required/admin_required may call this more than once during one
+    # request. Keep one user lookup per request instead of opening another DB
+    # cursor each time.
+    if hasattr(g, "_reedoy_current_user"):
+        return g._reedoy_current_user
+
+    user_id = session.get("user_id")
 
     if not user_id:
+        g._reedoy_current_user = None
         return None
 
     try:
-
-        return fetch_one(
+        user = fetch_one(
             """
             SELECT *
             FROM users
@@ -1344,9 +1361,11 @@ def current_user():
             """,
             (user_id,),
         )
+        g._reedoy_current_user = user
+        return user
 
     except Exception:
-
+        g._reedoy_current_user = None
         return None
 
 
@@ -1488,33 +1507,30 @@ def month_name_from_date(value):
 
 def legacy_advance_source():
 
-    if table_exists(
-        "worker_advances"
-    ):
+    global _ADVANCE_SOURCE_CACHE, _ADVANCE_COLUMNS_CACHE
 
-        cols = columns(
-            "worker_advances"
-        )
+    if _ADVANCE_SOURCE_CACHE is not None:
+        return _ADVANCE_SOURCE_CACHE
 
-        if {
-            "worker_id",
-            "amount",
-        }.issubset(cols):
+    if table_exists("worker_advances"):
+        cols = columns("worker_advances")
+        if {"worker_id", "amount"}.issubset(cols):
+            _ADVANCE_SOURCE_CACHE = "worker_advances"
+            _ADVANCE_COLUMNS_CACHE = cols
+            return _ADVANCE_SOURCE_CACHE
 
-            return "worker_advances"
+    if table_exists("advance_salary"):
+        _ADVANCE_SOURCE_CACHE = "advance_salary"
+        _ADVANCE_COLUMNS_CACHE = columns("advance_salary")
+        return _ADVANCE_SOURCE_CACHE
 
-    if table_exists(
-        "advance_salary"
-    ):
+    if table_exists("advances"):
+        _ADVANCE_SOURCE_CACHE = "advances"
+        _ADVANCE_COLUMNS_CACHE = columns("advances")
+        return _ADVANCE_SOURCE_CACHE
 
-        return "advance_salary"
-
-    if table_exists(
-        "advances"
-    ):
-
-        return "advances"
-
+    _ADVANCE_SOURCE_CACHE = ""
+    _ADVANCE_COLUMNS_CACHE = set()
     return None
 
 
@@ -1568,18 +1584,19 @@ def advance_rows(
     worker_id=None
 ):
 
-    ensure_advance_payment_columns()
+    global _ADVANCE_SOURCE_CACHE, _ADVANCE_COLUMNS_CACHE
 
-    table_name = (
-        legacy_advance_source()
-    )
+    # Schema inspection is expensive on PostgreSQL. Do it once per process;
+    # normal advance page loads only execute the actual data query.
+    if _ADVANCE_SOURCE_CACHE is None:
+        ensure_advance_payment_columns()
+
+    table_name = legacy_advance_source()
 
     if not table_name:
         return []
 
-    table_columns = columns(
-        table_name
-    )
+    table_columns = _ADVANCE_COLUMNS_CACHE or set()
 
     # --------------------------------------------------------
     # Modern worker_advances
