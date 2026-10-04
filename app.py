@@ -5646,9 +5646,7 @@ def payslip():
         request.args.get("year"),
     )
 
-    worker_id = request.args.get(
-        "worker_id"
-    )
+    worker_id = request.args.get("worker_id")
 
     worker = (
         fetch_one(
@@ -5689,6 +5687,8 @@ def payslip():
         worker=worker,
         summary=summary,
         month=month,
+        months=MONTHS,
+        years=list(range(datetime.date.today().year-2, datetime.date.today().year+3)),
     )
 
 
