@@ -4257,16 +4257,16 @@ table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px so
 
 <div class="box">
 <h1>Online ↔ Offline Data Sync</h1>
-<p>এই tab দিয়ে Online এবং Offline software-এর সম্পূর্ণ payroll data এক backup file-এর মাধ্যমে একে à¦…পরের মধ্যে নেওয়া যাবে।</p>
+<p>এই tab দিয়ে Online এবং Offline software-এর সম্পূর্ণ payroll data এক backup file-এর মাধ্যমে একে অপরের মধ্যে নেওয়া যাবে।</p>
 <div class="note">
 <strong>Backup file:</strong> Reedoy portable backup (.rdb)<br>
-Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Salary/Payment, Payroll Lock, Settings, Users ও Activity data backup-এর মধ্যে à¦°à¦¾à¦–া হবে।
+Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Salary/Payment, Payroll Lock, Settings, Users ও Activity data backup-এর মধ্যে রাখা হবে।
 </div>
 </div>
 
 <div class="box">
 <h2>1. Current Database → Backup File</h2>
-<p>এই software-এর বর্তমান data একটি portable backup file-এ নিন। তারপর সেই file à¦…ন্য Online/Offline software-এ Restore করা যাবে।</p>
+<p>এই software-এর বর্তমান data একটি portable backup file-এ নিন। তারপর সেই file অন্য Online/Offline software-এ Restore করা যাবে।</p>
 <p><strong>Current database:</strong> {{ 'ONLINE / PostgreSQL' if is_online else 'OFFLINE / SQLite' }}</p>
 <form method="post" action="{{ url_for('create_portable_backup') }}">
 <button class="btn" type="submit">Create Portable Backup & Download</button>
@@ -4276,7 +4276,7 @@ Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Sala
 <div class="box">
 <h2>2. Backup File → Current Database</h2>
 <div class="warn">
-<strong>সতর্কতা:</strong> Restore করলে এই software-এর বর্তমান data backup file-এর data দিয়ে replace হবে। Restore করার à¦†à¦—ে বর্তমান data-এর একটি safety backup স্বয়ংক্রিয়ভাবে à¦¤à§ˆরি হবে। Worker ID ও à¦ªà§à¦°à§‹à¦¨à§‹ record ID à¦…পরিবর্তিত à¦°à¦¾à¦–ার চেষ্টা করা হবে।
+<strong>সতর্কতা:</strong> Restore করলে এই software-এর বর্তমান data backup file-এর data দিয়ে replace হবে। Restore করার আগে বর্তমান data-এর একটি safety backup স্বয়ংক্রিয়ভাবে তৈরি হবে। Worker ID ও পুরোনো record ID অপরিবর্তিত রাখার চেষ্টা করা হবে।
 </div>
 <form method="post" action="{{ url_for('restore_portable_backup') }}" enctype="multipart/form-data" onsubmit="return confirm('Restore করলে বর্তমান database-এর data backup file-এর data দিয়ে replace হবে। Continue?');">
 <input class="file" type="file" name="backup_file" accept=".rdb,.zip" required>
@@ -4290,7 +4290,7 @@ Worker ID, Worker Name, Bangla Name, Attendance, Daily Attendance, Advance, Sala
 <tr><th>কাজ</th><th>যেভাবে করবেন</th></tr>
 <tr><td>Online → Offline</td><td>Online-এ Create Portable Backup → file download → Offline-এ এই tab → Restore</td></tr>
 <tr><td>Offline → Online</td><td>Offline-এ Create Portable Backup → file নিয়ে Online-এ এই tab → Restore</td></tr>
-<tr><td>Data নিরাপত্তা</td><td>Restore-এর à¦†à¦—ে বর্তমান database-এর safety backup à¦¤à§ˆরি হবে</td></tr>
+<tr><td>Data নিরাপত্তা</td><td>Restore-এর আগে বর্তমান database-এর safety backup তৈরি হবে</td></tr>
 <tr><td>Database</td><td>Online PostgreSQL এবং Offline SQLite—দুই ধরনের database support করবে</td></tr>
 </table>
 </div>
