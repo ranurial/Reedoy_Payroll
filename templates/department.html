@@ -1,637 +1,119 @@
 <!doctype html>
 <html lang="{{ 'bn' if language == 'bn' else 'en' }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>
-        {{ tr('Department') }} |
-        {{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}
-    </title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            background: #f3f6fb;
-            color: #1e293b;
-            font-family: Inter, "Noto Sans Bengali", "Nirmala UI", Arial, sans-serif;
-        }
-
-        .topbar {
-            background: #fff;
-            border-bottom: 1px solid #e5eaf2;
-            padding: 15px 4%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .brand {
-            font-size: 20px;
-            font-weight: 800;
-            color: #1764c0;
-        }
-
-        .nav {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .nav a,
-        .lang a {
-            color: #334155;
-            text-decoration: none;
-            padding: 9px 12px;
-            border-radius: 8px;
-            background: #f1f5f9;
-            font-size: 14px;
-        }
-
-        .nav a:hover,
-        .lang a:hover {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .wrap {
-            max-width: 1450px;
-            margin: 28px auto;
-            padding: 0 20px;
-        }
-
-        .heading {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 28px;
-        }
-
-        .muted {
-            color: #64748b;
-            font-size: 14px;
-            margin-top: 6px;
-        }
-
-        .card {
-            background: #fff;
-            border: 1px solid #e7edf5;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 18px rgba(15, 23, 42, .04);
-        }
-
-        .filter-form {
-            display: flex;
-            align-items: end;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            min-width: 260px;
-        }
-
-        label {
-            font-size: 13px;
-            font-weight: 700;
-            color: #475569;
-        }
-
-        select {
-            padding: 10px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            background: #fff;
-            font-size: 14px;
-            min-width: 250px;
-        }
-
-        select:focus {
-            outline: none;
-            border-color: #1764c0;
-        }
-
-        .btn {
-            display: inline-block;
-            border: 0;
-            border-radius: 8px;
-            padding: 10px 15px;
-            text-decoration: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .btn-primary {
-            background: #1764c0;
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background: #12549f;
-        }
-
-        .btn-secondary {
-            background: #e2e8f0;
-            color: #334155;
-        }
-
-        .btn-secondary:hover {
-            background: #cbd5e1;
-        }
-
-        .table-wrap {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            min-width: 1100px;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #edf1f6;
-            font-size: 14px;
-            text-align: left;
-            white-space: nowrap;
-        }
-
-        th {
-            background: #f8fafc;
-            color: #475569;
-            font-weight: 700;
-        }
-
-        tr:hover td {
-            background: #f8fbff;
-        }
-
-        .id {
-            font-weight: 700;
-            color: #1764c0;
-        }
-
-        .number {
-            text-align: right;
-        }
-
-        .total-row td {
-            background: #eff6ff;
-            font-weight: 800;
-            border-top: 2px solid #bfdbfe;
-        }
-
-        .empty {
-            text-align: center;
-            padding: 35px;
-            color: #64748b;
-        }
-
-        .summary {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-bottom: 18px;
-        }
-
-        .summary-box {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 12px 18px;
-        }
-
-        .summary-label {
-            display: block;
-            color: #64748b;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-
-        .summary-value {
-            font-size: 20px;
-            font-weight: 800;
-            color: #1764c0;
-        }
-
-        @media (max-width: 700px) {
-            .wrap {
-                padding: 0 12px;
-            }
-
-            .topbar {
-                padding: 12px;
-            }
-
-            .field,
-            select {
-                width: 100%;
-                min-width: 100%;
-            }
-
-            .filter-form .btn {
-                width: 100%;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Department Salary Sheet | REEDOY PAYROLL</title>
+<style>
+body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}
+.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:20px;color:#1764c0}
+.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}
+.wrap{max-width:1500px;margin:24px auto;padding:0 18px}
+.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}
+.filters{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px;align-items:end}
+label{display:block;font-weight:600;font-size:13px;margin-bottom:6px}
+select{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:7px;background:#fff}
+button,.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10px 15px;text-decoration:none;cursor:pointer;display:inline-block}
+.btn.green{background:#0f766e}.btn.gray{background:#64748b}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.card{background:#f8fafc;border-radius:10px;padding:15px}.label{color:#64748b;font-size:13px}.value{font-size:21px;font-weight:800;color:#1764c0;margin-top:5px}
+.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1450px}th,td{border:1px solid #e2e8f0;padding:8px;text-align:right;white-space:nowrap}th{background:#f8fafc;text-align:center}th.name,td.name,th.dept,td.dept,th.desig,td.desig{text-align:left}.total{font-weight:800;background:#eef6ff}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+@media(max-width:900px){.filters{grid-template-columns:1fr 1fr}.cards{grid-template-columns:repeat(2,1fr)}}
+@media print{
+  @page{size:A4 landscape;margin:6mm}
+  html,body{background:#fff;width:100%;margin:0;padding:0}
+  .nav,.filters,.actions{display:none!important}
+  .top{display:none!important}
+  .wrap{max-width:none;width:100%;margin:0;padding:0}
+  .box{box-shadow:none;border:0;padding:2px;margin:0 0 4px}
+  .box h1,.box h2{margin:2px 0 4px}
+  .cards{grid-template-columns:repeat(5,1fr);gap:4px}
+  .card{padding:4px}
+  .label{font-size:8px}
+  .value{font-size:11px;margin-top:1px}
+  .tablewrap{overflow:visible;width:100%}
+  table{width:100%;min-width:0;table-layout:fixed;font-size:6.5px}
+  th,td{padding:3px 2px;white-space:nowrap;overflow:hidden}
+  th.name,td.name{width:15%}
+  th.dept,td.dept{width:9%}
+  th.desig,td.desig{width:9%}
+  th:first-child,td:first-child{width:4%}
+  th:nth-child(5),td:nth-child(5){width:7%}
+  th:nth-child(6),td:nth-child(6){width:5%}
+  th:nth-child(7),td:nth-child(7){width:5%}
+  th:nth-child(8),td:nth-child(8){width:6%}
+  th:nth-child(n+9),td:nth-child(n+9){width:6.5%}
+  tr{page-break-inside:avoid}
+}
+</style>
 </head>
-
 <body>
-
-<header class="topbar">
-
-    <div class="brand">
-        {{ settings.get('company_name', 'Reedoy Payroll') if settings else 'Reedoy Payroll' }}
-    </div>
-
-    <nav class="nav">
-
-        <a href="{{ url_for('dashboard') }}">
-            {{ tr('Dashboard') }}
-        </a>
-
-        <a href="{{ url_for('workers') }}">
-            {{ tr('Workers') }}
-        </a>
-
-        <a href="{{ url_for('attendance') }}">
-            {{ tr('Attendance') }}
-        </a>
-
-        <a href="{{ url_for('payslip') }}">
-            {{ tr('Payslip') }}
-        </a>
-
-        <a href="{{ url_for('advance') }}">
-            {{ tr('Advance Salary') }}
-        </a>
-
-        <a href="{{ url_for('department') }}">
-            {{ tr('Department') }}
-        </a>
-
-        <a href="{{ url_for('settings') }}">
-            {{ tr('Settings') }}
-        </a>
-
-        <a href="{{ url_for('logout') }}">
-            {{ tr('Logout') }}
-        </a>
-
-    </nav>
-
-    <div class="lang">
-        <a href="{{ url_for('language', lang='en') }}">English</a>
-        <a href="{{ url_for('language', lang='bn') }}">বাংলা</a>
-    </div>
-
-</header>
-
-
+<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div>
+<nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
 <main class="wrap">
-
-    <div class="heading">
-
-        <div>
-            <h1>{{ tr('Department Salary Report') }}</h1>
-
-            <div class="muted">
-                {{ month }}
-            </div>
-        </div>
-
-    </div>
-
-
-    <div class="card">
-
-        <form
-            method="get"
-            action="{{ url_for('department') }}"
-            class="filter-form"
-        >
-
-            <div class="field">
-
-                <label for="department">
-                    {{ tr('Select Department') }}
-                </label>
-
-                <select
-                    id="department"
-                    name="department"
-                >
-
-                    <option value="">
-                        {{ tr('All Departments') }}
-                    </option>
-
-                    {% for d in departments %}
-
-                        <option
-                            value="{{ d }}"
-                            {% if selected_department == d or department == d %}
-                                selected
-                            {% endif %}
-                        >
-                            {{ dept(d) }}
-                        </option>
-
-                    {% endfor %}
-
-                </select>
-
-            </div>
-
-
-            <button
-                type="submit"
-                class="btn btn-primary"
-            >
-                {{ tr('View Report') }}
-            </button>
-
-
-            {% if selected_department or department %}
-
-                <a
-                    href="{{ url_for('department') }}"
-                    class="btn btn-secondary"
-                >
-                    {{ tr('Clear') }}
-                </a>
-
-            {% endif %}
-
-        </form>
-
-    </div>
-
-
-    {% if rows %}
-
-        <div class="summary">
-
-            <div class="summary-box">
-
-                <span class="summary-label">
-                    {{ tr('Workers') }}
-                </span>
-
-                <span class="summary-value">
-                    {{ rows|length }}
-                </span>
-
-            </div>
-
-
-            <div class="summary-box">
-
-                <span class="summary-label">
-                    {{ tr('Department') }}
-                </span>
-
-                <span class="summary-value">
-
-                    {% if selected_department or department %}
-                        {{ dept(selected_department or department) }}
-                    {% else %}
-                        {{ tr('All') }}
-                    {% endif %}
-
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <div class="card">
-
-            <div class="table-wrap">
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                {{ tr('ID') }}
-                            </th>
-
-                            <th>
-                                {{ tr('Name') }}
-                            </th>
-
-                            <th>
-                                {{ tr('Department') }}
-                            </th>
-
-                            <th>
-                                {{ tr('Designation') }}
-                            </th>
-
-                            <th class="number">
-                                {{ tr('Basic Salary') }}
-                            </th>
-
-                            <th class="number">
-                                {{ tr('Earned Basic') }}
-                            </th>
-
-                            <th class="number">
-                                {{ tr('OT') }}
-                            </th>
-
-                            <th class="number">
-                                {{ tr('Nasta') }}
-                            </th>
-
-                            <th class="number">
-                                {{ tr('Gross') }}
-                            </th>
-
-                            <th class="number">
-                                {{ tr('Advance') }}
-                            </th>
-
-                            <th class="number">
-                                {{ tr('Net Salary') }}
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody>
-
-                    {% set ns = namespace(
-                        basic=0,
-                        earned=0,
-                        ot=0,
-                        nasta=0,
-                        gross=0,
-                        advance=0,
-                        net=0
-                    ) %}
-
-
-                    {% for r in rows %}
-
-                        {% set ns.basic = ns.basic + (r.get('basic_salary', 0) or 0)|float %}
-                        {% set ns.earned = ns.earned + (r.get('earned_basic', 0) or 0)|float %}
-                        {% set ns.ot = ns.ot + (r.get('ot_amount', 0) or 0)|float %}
-                        {% set ns.nasta = ns.nasta + (r.get('nasta', r.get('refreshment', 0)) or 0)|float %}
-                        {% set ns.gross = ns.gross + (r.get('gross', 0) or 0)|float %}
-                        {% set ns.advance = ns.advance + (r.get('advance', 0) or 0)|float %}
-                        {% set ns.net = ns.net + (r.get('net', 0) or 0)|float %}
-
-                        <tr>
-
-                            <td class="id">
-                                {{ r['id'] }}
-                            </td>
-
-                            <td>
-                                {{ r['name'] or '' }}
-                            </td>
-
-                            <td>
-                                {{ dept(r.get('department', '')) }}
-                            </td>
-
-                            <td>
-                                {{ r.get('designation', '') or '' }}
-                            </td>
-
-                            <td class="number">
-                                ৳ {{ "{:,.2f}".format((r.get('basic_salary', 0) or 0)|float) }}
-                            </td>
-
-                            <td class="number">
-                                ৳ {{ "{:,.2f}".format((r.get('earned_basic', 0) or 0)|float) }}
-                            </td>
-
-                            <td class="number">
-                                ৳ {{ "{:,.2f}".format((r.get('ot_amount', 0) or 0)|float) }}
-                            </td>
-
-                            <td class="number">
-                                ৳ {{
-                                    "{:,.2f}".format(
-                                        (
-                                            r.get(
-                                                'nasta',
-                                                r.get('refreshment', 0)
-                                            ) or 0
-                                        )|float
-                                    )
-                                }}
-                            </td>
-
-                            <td class="number">
-                                ৳ {{ "{:,.2f}".format((r.get('gross', 0) or 0)|float) }}
-                            </td>
-
-                            <td class="number">
-                                ৳ {{ "{:,.2f}".format((r.get('advance', 0) or 0)|float) }}
-                            </td>
-
-                            <td class="number">
-                                <strong>
-                                    ৳ {{ "{:,.2f}".format((r.get('net', 0) or 0)|float) }}
-                                </strong>
-                            </td>
-
-                        </tr>
-
-                    {% endfor %}
-
-
-                    <tr class="total-row">
-
-                        <td colspan="4">
-                            {{ tr('TOTAL') }}
-                        </td>
-
-                        <td class="number">
-                            ৳ {{ "{:,.2f}".format(ns.basic) }}
-                        </td>
-
-                        <td class="number">
-                            ৳ {{ "{:,.2f}".format(ns.earned) }}
-                        </td>
-
-                        <td class="number">
-                            ৳ {{ "{:,.2f}".format(ns.ot) }}
-                        </td>
-
-                        <td class="number">
-                            ৳ {{ "{:,.2f}".format(ns.nasta) }}
-                        </td>
-
-                        <td class="number">
-                            ৳ {{ "{:,.2f}".format(ns.gross) }}
-                        </td>
-
-                        <td class="number">
-                            ৳ {{ "{:,.2f}".format(ns.advance) }}
-                        </td>
-
-                        <td class="number">
-                            ৳ {{ "{:,.2f}".format(ns.net) }}
-                        </td>
-
-                    </tr>
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-    {% else %}
-
-        <div class="card">
-
-            <div class="empty">
-                {{ tr('No workers found for this department.') }}
-            </div>
-
-        </div>
-
-    {% endif %}
-
+<div class="box">
+<h1>Department Salary Sheet</h1>
+<form method="get">
+<div class="filters">
+<div><label>Payroll Month</label><select name="month">{% for m in months %}<option value="{{ m }}" {% if month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select></div>
+<div><label>Year</label><select name="year">{% for y in years %}<option value="{{ y }}" {% if month.split()[1]|int==y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div>
+<div><label>Department</label><select name="department"><option value="">All Departments</option>{% for d in departments %}<option value="{{ d }}" {% if department==d %}selected{% endif %}>{{ d }}</option>{% endfor %}</select></div>
+<div><button type="submit">Generate Sheet</button></div>
+</div>
+</form>
+</div>
+<div class="box"><h2>{{ month }}{% if department %} â€” {{ department }}{% else %} â€” All Departments{% endif %}</h2>
+<div style="margin:8px 0 14px;padding:10px 12px;background:#eef6ff;border:1px solid #d7e7fb;border-radius:8px;font-weight:700;color:#334155">Salary Basis: 30 Days &nbsp; | &nbsp; Weekly Holiday: Friday &nbsp; | &nbsp; Friday is excluded from absence deduction</div>
+<div class="cards">
+<div class="card"><div class="label">Workers</div><div class="value">{{ totals.workers }}</div></div>
+<div class="card"><div class="label">Basic Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.basic|float) }}</div></div>
+<div class="card"><div class="label">Gross Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.gross|float) }}</div></div>
+<div class="card"><div class="label">Advance</div><div class="value">à§³ {{ '%.2f'|format(totals.advance|float) }}</div></div>
+<div class="card"><div class="label">Net Payable</div><div class="value">à§³ {{ '%.2f'|format(totals.net|float) }}</div></div>
+</div></div>
+<div class="box tablewrap">
+<table>
+<thead><tr><th>ID</th><th class="name">Worker Name</th><th class="dept">Department</th><th class="desig">Designation</th><th>Basic</th><th>Present</th><th>Absent</th><th>OT Hours</th><th>Absent Ded.</th><th>OT Amount</th><th>Nasta</th><th>Gross</th><th>Advance</th><th>Net Payable</th></tr></thead>
+<tbody>
+{% for r in rows %}<tr><td>{{ r.id }}</td><td class="name">{{ r.bangla_name if language=='bn' and r.bangla_name else r.name }}</td><td class="dept">{{ display_dept(r.department) }}</td><td class="desig">{{ r.designation or '' }}</td><td>{{ '%.2f'|format(r.basic_salary|default(0)|float) }}</td><td>{{ r.present|default(0) }}</td><td>{{ r.absent|default(0) }}</td><td>{{ r.ot|default(0) }}</td><td>{{ '%.2f'|format(r.absent_cut|default(0)|float) }}</td><td>{{ '%.2f'|format(r.ot_amt|default(0)|float) }}</td><td>{{ '%.2f'|format(r.nasta|default(0)|float) }}</td><td>{{ '%.2f'|format(r.gross|default(0)|float) }}</td><td>{{ '%.2f'|format(r.advance|default(0)|float) }}</td><td>{{ '%.2f'|format(r.net|default(0)|float) }}</td></tr>{% else %}<tr><td colspan="14">No workers found.</td></tr>{% endfor %}
+{% if rows %}<tr class="total"><td colspan="4" class="name">TOTAL</td><td>{{ '%.2f'|format(totals.basic|float) }}</td><td>{{ totals.present }}</td><td>{{ totals.absent }}</td><td>{{ totals.ot }}</td><td>{{ '%.2f'|format(totals.absent_cut|float) }}</td><td>{{ '%.2f'|format(totals.ot_amt|float) }}</td><td>{{ '%.2f'|format(totals.nasta|float) }}</td><td>{{ '%.2f'|format(totals.gross|float) }}</td><td>{{ '%.2f'|format(totals.advance|float) }}</td><td>{{ '%.2f'|format(totals.net|float) }}</td></tr>{% endif %}
+</tbody></table></div>
+<div class="box actions"><a class="btn green" href="{{ url_for('export_department', month=month.split()[0], year=month.split()[1], department=department) }}">Export Excel</a><button class="btn" type="button" onclick="window.print()">Print Salary Sheet</button><a class="btn gray" href="{{ url_for('dashboard') }}">Dashboard</a></div>
 </main>
-
-</body>
-</html>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function addSelectSearch(sel){
+    if(!sel || sel.dataset.workerSearchReady) return;
+    sel.dataset.workerSearchReady='1';
+    var box=document.createElement('input');
+    box.type='search'; box.className='worker-search-box';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
+    box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
+    sel.parentNode.insertBefore(box,sel);
+    var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
+    box.addEventListener('input',function(){
+      var q=box.value.trim().toLowerCase(), current=sel.value;
+      sel.innerHTML='';
+      original.forEach(function(o){if(!q || o.text.toLowerCase().indexOf(q)!==-1) sel.insertAdjacentHTML('beforeend',o.html);});
+      if(Array.from(sel.options).some(function(o){return o.value===current;})) sel.value=current;
+    });
+  }
+  document.querySelectorAll('select[name="worker_id"]').forEach(addSelectSearch);
+  var path=window.location.pathname;
+  var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
+  if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
+    var target=null;
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
+    if(target){
+      var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
+      wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      target.parentNode.insertBefore(wrap,target);
+      var inp=wrap.querySelector('input');
+      inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
+    }
+  }
+});
+</script>
+</body></html>
