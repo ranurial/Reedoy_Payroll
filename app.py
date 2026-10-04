@@ -1539,12 +1539,26 @@ def ensure_advance_payment_columns():
 
 
 def enrich_advance_rows(rows):
+    """
+    An advance row represents money already paid out to the worker.
+
+    Therefore:
+    - Paid = full advance amount
+    - Due = 0
+    - Status = Paid
+    - Paid Date = Advance Date (when available)
+
+    This is display/reconciliation logic only. It does not change the
+    existing salary calculation, which continues to deduct the advance
+    amount exactly as before.
+    """
     for row in rows:
-        amount = parse_num(row.get("amount"), 0)
-        paid = max(0, min(parse_num(row.get("paid_amount"), 0), amount))
-        row["paid_amount"] = paid
-        row["due_amount"] = max(0, amount - paid)
-        row["status"] = "Paid" if row["due_amount"] <= 0 else ("Partial" if paid > 0 else "Due")
+        amount = max(0, parse_num(row.get("amount"), 0))
+        row["paid_amount"] = amount
+        row["due_amount"] = 0
+        row["status"] = "Paid"
+        if not str(row.get("paid_date") or "").strip():
+            row["paid_date"] = row.get("advance_date") or ""
     return rows
 
 
@@ -2144,8 +2158,8 @@ def edit_advance(aid):
             advance_date,
             amount,
             note,
-            paid_amount,
-            paid_date,
+            amount,
+            advance_date,
         )
 
         log_activity(
@@ -6650,6 +6664,8 @@ def save_advance():
             advance_date,
             amount,
             note,
+            amount,
+            advance_date,
         )
 
         log_activity(
