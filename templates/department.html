@@ -63,14 +63,14 @@ button,.btn{background:#1764c0;color:#fff;border:0;border-radius:8px;padding:10p
 </div>
 </form>
 </div>
-<div class="box"><h2>{{ month }}{% if department %} â€” {{ department }}{% else %} â€” All Departments{% endif %}</h2>
+<div class="box"><h2>{{ month }}{% if department %} — {{ department }}{% else %} — All Departments{% endif %}</h2>
 <div style="margin:8px 0 14px;padding:10px 12px;background:#eef6ff;border:1px solid #d7e7fb;border-radius:8px;font-weight:700;color:#334155">Salary Basis: 30 Days &nbsp; | &nbsp; Weekly Holiday: Friday &nbsp; | &nbsp; Friday is excluded from absence deduction</div>
 <div class="cards">
 <div class="card"><div class="label">Workers</div><div class="value">{{ totals.workers }}</div></div>
-<div class="card"><div class="label">Basic Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.basic|float) }}</div></div>
-<div class="card"><div class="label">Gross Salary</div><div class="value">à§³ {{ '%.2f'|format(totals.gross|float) }}</div></div>
-<div class="card"><div class="label">Advance</div><div class="value">à§³ {{ '%.2f'|format(totals.advance|float) }}</div></div>
-<div class="card"><div class="label">Net Payable</div><div class="value">à§³ {{ '%.2f'|format(totals.net|float) }}</div></div>
+<div class="card"><div class="label">Basic Salary</div><div class="value">৳ {{ '%.2f'|format(totals.basic|float) }}</div></div>
+<div class="card"><div class="label">Gross Salary</div><div class="value">৳ {{ '%.2f'|format(totals.gross|float) }}</div></div>
+<div class="card"><div class="label">Advance</div><div class="value">৳ {{ '%.2f'|format(totals.advance|float) }}</div></div>
+<div class="card"><div class="label">Net Payable</div><div class="value">৳ {{ '%.2f'|format(totals.net|float) }}</div></div>
 </div></div>
 <div class="box tablewrap">
 <table>
