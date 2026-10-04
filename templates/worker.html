@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
   if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
     var target=null;
-    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|কর্মী/i.test(t.innerText.slice(0,500))) target=t;});
     if(target){
       var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
       wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
