@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-card">
   <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:15px;flex-wrap:wrap;margin-bottom:18px">
-    <div><h1 style="margin-bottom:5px">Advance Salary</h1><div class="muted">Worker advance records — {{ month }}</div></div>
+    <div><h1 style="margin-bottom:5px">Advance Salary</h1><div class="muted">Worker advance records — {{ month }} · An advance issued to a worker is recorded as Paid</div></div>
     <form method="get" action="{{ url_for('advance') }}" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
       <div><label class="muted">Month</label><select name="month">
         {% for m in months %}<option value="{{ m }}" {% if month.split()[0]==m %}selected{% endif %}>{{ m }}</option>{% endfor %}
@@ -29,8 +29,6 @@
         <div><label>Worker *</label><select name="worker_id" required style="width:100%"><option value="">-- Select Worker --</option>{% for worker in workers %}<option value="{{ worker.id }}">{{ worker.id }} - {{ worker.bangla_name if language=='bn' and worker.bangla_name else worker.name }}{% if worker.department %} - {{ worker.department }}{% endif %}</option>{% endfor %}</select></div>
         <div><label>Advance Date *</label><input type="date" name="advance_date" value="{{ today_date|default('') }}" required style="width:100%"></div>
         <div><label>Amount (৳) *</label><input type="number" name="amount" min="1" step="0.01" required style="width:100%"></div>
-        <div><label>Paid Amount (৳)</label><input type="number" name="paid_amount" min="0" step="0.01" value="0" style="width:100%"></div>
-        <div><label>Paid Date</label><input type="date" name="paid_date" style="width:100%"></div>
         <div><label>Note</label><input type="text" name="note" placeholder="Optional note" style="width:100%"></div>
         <input type="hidden" name="month_year" value="{{ month }}"><button type="submit">Save Advance</button>
       </div>
