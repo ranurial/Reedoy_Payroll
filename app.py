@@ -6436,17 +6436,30 @@ def report():
 @login_required
 def advance():
 
-    # Respect the month/year selected by the user.
-    # Previously this always used the current month, so loading an older
-    # month from the Advance Salary filter did not actually change the data.
-    month = month_name_year(
-        request.args.get("month"),
-        request.args.get("year"),
-    )
+    # Respect an explicitly selected month/year. When the page is opened
+    # without a filter, show the latest month that actually has advance
+    # records instead of an empty current month.
+    month_arg = request.args.get("month")
+    year_arg = request.args.get("year")
 
-    worker_id = request.args.get(
-        "worker_id"
-    )
+    if month_arg or year_arg:
+        month = month_name_year(month_arg, year_arg)
+    else:
+        all_advance_rows = advance_rows()
+        available_months = [
+            str(r.get("month_year") or "").strip()
+            for r in all_advance_rows
+            if str(r.get("month_year") or "").strip()
+        ]
+        month = max(
+            available_months,
+            key=lambda value: datetime.datetime.strptime(value, "%B %Y")
+            if re.match(r"^[A-Za-z]+ \\d{4}$", value)
+            else datetime.datetime.min,
+            default=month_name_year(None, None),
+        )
+
+    worker_id = request.args.get("worker_id")
 
     total_advance = sum(parse_num(r.get("amount"), 0) for r in advance_rows(month, worker_id))
 
