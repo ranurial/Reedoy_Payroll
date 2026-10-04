@@ -1,0 +1,45 @@
+
+<!doctype html><html lang="{{ 'bn' if language == 'bn' else 'en' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OT Report | REEDOY PAYROLL</title>
+<style>body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Bengali",sans-serif}.top{background:#fff;border-bottom:1px solid #e5eaf2;padding:15px 4%;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:20px;color:#1764c0}.nav a{display:inline-block;margin:3px;padding:9px 12px;border-radius:8px;background:#eef2f7;color:#334155;text-decoration:none;font-size:14px}.wrap{max-width:1500px;margin:24px auto;padding:0 18px}.box{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.filters{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}.field select{padding:9px;border:1px solid #cbd5e1;border-radius:7px}.btn{display:inline-block;background:#1764c0;color:#fff;border:0;border-radius:8px;padding:9px 14px;text-decoration:none;cursor:pointer}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:#f8fafc;padding:14px;border-radius:10px}.label{color:#64748b;font-size:13px}.value{font-size:21px;font-weight:800;color:#1764c0;margin-top:5px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1000px}th,td{padding:8px;border-bottom:1px solid #e2e8f0;text-align:right;white-space:nowrap}th{background:#f8fafc}th:nth-child(1),td:nth-child(1),th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){text-align:left}.msg{padding:9px;background:#ecfdf5;color:#166534;border-radius:7px;margin-bottom:12px}.actions{display:flex;gap:10px;flex-wrap:wrap}@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.cards{grid-template-columns:1fr}}@media print{@page{size:A4 landscape;margin:6mm}.nav,.filters,.actions{display:none!important}.wrap{max-width:none;width:100%;margin:0;padding:0}.box{box-shadow:none;border:0;padding:2px;margin-bottom:6px}.cards{grid-template-columns:repeat(4,1fr)}table{min-width:0;font-size:7px}th,td{padding:3px 2px}tr{page-break-inside:avoid}}</style></head><body>
+<header class="top"><div class="brand">{{ settings.get('company_name','REEDOY PAYROLL') if settings else 'REEDOY PAYROLL' }}</div><nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('workers') }}">Workers</a><a href="{{ url_for('worker_search') }}">Worker Search</a><a href="{{ url_for('attendance') }}">Attendance</a><a href="{{ url_for('payslip') }}">Payslip</a><a href="{{ url_for('advance') }}">Advance Salary</a><a href="{{ url_for('department') }}">Department Salary</a><a href="{{ url_for('reports') }}">Reports</a><a href="{{ url_for('accounts') }}">Accounts</a><a href="{{ url_for('ot_report') }}">OT Report</a><a href="{{ url_for('payments') }}">Payments</a><a href="{{ url_for('payment_history') }}">Payment History</a><a href="{{ url_for('payroll_closing') }}">Payroll Closing</a><a href="{{ url_for('settings') }}">Settings</a><a href="{{ url_for('logout') }}">Logout</a></nav></header>
+<main class="wrap"><div class="box filters"><div><h1 style="margin:0">Overtime Report</h1><p style="color:#64748b">Monthly OT hours and OT amount by worker and department.</p></div><form method="get" action="{{ url_for('ot_report') }}"><div class="field"><label>Month</label><select name="month">{% for m in months %}<option value="{{m}}" {% if month.split()[0]==m %}selected{% endif %}>{{m}}</option>{% endfor %}</select></div><div class="field"><label>Year</label><select name="year">{% for y in years %}<option value="{{y}}" {% if month.split()[1]|int==y %}selected{% endif %}>{{y}}</option>{% endfor %}</select></div><button class="btn" type="submit">Generate</button></form></div>
+<div class="cards"><div class="card"><div class="label">Workers with OT</div><div class="value">{{ totals.workers }}</div></div><div class="card"><div class="label">Total OT Hours</div><div class="value">{{ '%.2f'|format(totals.hours) }}</div></div><div class="card"><div class="label">Total OT Amount</div><div class="value">à§³ {{ '%.2f'|format(totals.amount) }}</div></div><div class="card"><div class="label">Payroll Month</div><div class="value">{{ month }}</div></div></div>
+<div class="box"><h2>Worker-wise OT â€” {{ month }}</h2><div class="tablewrap"><table><tr><th>Worker ID</th><th>Worker Name</th><th>Department</th><th>Designation</th><th>Basic Salary</th><th>OT Rate</th><th>OT Hours</th><th>OT Amount</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.bangla_name if language == 'bn' and r.bangla_name else r.name}}</td><td>{{display_dept(r.department)}}</td><td>{{r.designation or ''}}</td><td>à§³ {{'%.2f'|format((r.basic_salary or 0)|float)}}</td><td>à§³ {{'%.2f'|format((r.ot_rate or 0)|float)}}</td><td>{{'%.2f'|format((r.ot or 0)|float)}}</td><td>à§³ {{'%.2f'|format((r.ot_amt or 0)|float)}}</td></tr>{% else %}<tr><td colspan="9">No workers found.</td></tr>{% endfor %}<tr><th colspan="6">Total</th><th>{{'%.2f'|format(totals.hours)}}</th><th>à§³ {{'%.2f'|format(totals.amount)}}</th></tr></table></div></div>
+<div class="box"><h2>Department-wise OT Summary</h2><div class="tablewrap"><table><tr><th>Department</th><th>Workers with OT</th><th>OT Hours</th><th>OT Amount</th></tr>{% for d in departments_summary %}<tr><td>{{display_dept(d.department)}}</td><td>{{d.workers}}</td><td>{{'%.2f'|format(d.hours)}}</td><td>à§³ {{'%.2f'|format(d.amount)}}</td></tr>{% endfor %}<tr><th>Total</th><th>{{totals.workers}}</th><th>{{'%.2f'|format(totals.hours)}}</th><th>à§³ {{'%.2f'|format(totals.amount)}}</th></tr></table></div></div>
+<div class="box actions"><a class="btn" href="{{url_for('ot_report_export',month=month.split()[0],year=month.split()[1])}}">Export CSV</a><button class="btn" onclick="window.print()">Print OT Report</button><a class="btn" href="{{url_for('dashboard')}}">Dashboard</a></div></main>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function addSelectSearch(sel){
+    if(!sel || sel.dataset.workerSearchReady) return;
+    sel.dataset.workerSearchReady='1';
+    var box=document.createElement('input');
+    box.type='search'; box.className='worker-search-box';
+    box.placeholder='ðŸ” Search Worker: ID / Name / Bangla Name';
+    box.style.cssText='width:100%;box-sizing:border-box;padding:10px 12px;margin:0 0 7px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff';
+    sel.parentNode.insertBefore(box,sel);
+    var original=Array.from(sel.options).map(function(o){return {text:o.text,value:o.value,html:o.outerHTML};});
+    box.addEventListener('input',function(){
+      var q=box.value.trim().toLowerCase(), current=sel.value;
+      sel.innerHTML='';
+      original.forEach(function(o){if(!q || o.text.toLowerCase().indexOf(q)!==-1) sel.insertAdjacentHTML('beforeend',o.html);});
+      if(Array.from(sel.options).some(function(o){return o.value===current;})) sel.value=current;
+    });
+  }
+  document.querySelectorAll('select[name="worker_id"]').forEach(addSelectSearch);
+  var path=window.location.pathname;
+  var tablePages=['/payments','/payment-history','/ot-report','/department','/reports','/accounts'];
+  if(tablePages.indexOf(path)!==-1 && !document.querySelector('.worker-search-table-box')){
+    var target=null;
+    document.querySelectorAll('table').forEach(function(t){if(!target && /worker|à¦•à¦°à§à¦®à§€/i.test(t.innerText.slice(0,500))) target=t;});
+    if(target){
+      var wrap=document.createElement('div'); wrap.className='worker-search-table-box';
+      wrap.style.cssText='margin:0 0 10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px';
+      wrap.innerHTML='<label style="display:block;font-weight:600;margin-bottom:6px">ðŸ” Search Worker</label><input type="search" placeholder="Worker ID / English Name / Bangla Name" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff">';
+      target.parentNode.insertBefore(wrap,target);
+      var inp=wrap.querySelector('input');
+      inp.addEventListener('input',function(){var q=inp.value.trim().toLowerCase();Array.from(target.querySelectorAll('tr')).forEach(function(row,i){if(i>0) row.style.display=(!q||row.innerText.toLowerCase().indexOf(q)!==-1)?'':'none';});});
+    }
+  }
+});
+</script>
+</body></html>
