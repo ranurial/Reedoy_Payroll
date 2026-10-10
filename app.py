@@ -3636,6 +3636,33 @@ def language(lang):
 
 
 # ============================================================
+# GLOBAL LANGUAGE SWITCHER (UI ONLY)
+# ============================================================
+@app.after_request
+def inject_language_switcher(response):
+    try:
+        if response.status_code != 200:
+            return response
+        if "text/html" not in (response.content_type or "").lower():
+            return response
+        html = response.get_data(as_text=True)
+        if "</body>" not in html.lower() or "reedoy-language-switcher" in html:
+            return response
+        switcher = """
+<div id="reedoy-language-switcher" style="position:fixed;top:12px;right:14px;z-index:99999;display:flex;gap:6px;font-family:Arial,'Noto Sans Bengali',sans-serif">
+  <a href="/language/bn" style="display:inline-block;padding:8px 12px;border-radius:8px;background:#1764c0;color:#fff;text-decoration:none;font-size:13px;font-weight:700;box-shadow:0 2px 8px #0002">বাংলা</a>
+  <a href="/language/en" style="display:inline-block;padding:8px 12px;border-radius:8px;background:#fff;color:#1764c0;border:1px solid #1764c0;text-decoration:none;font-size:13px;font-weight:700;box-shadow:0 2px 8px #0002">English</a>
+</div>
+"""
+        body_pos = html.lower().rfind("</body>")
+        html = html[:body_pos] + switcher + html[body_pos:]
+        response.set_data(html)
+    except Exception:
+        pass
+    return response
+
+
+# ============================================================
 # INDEX
 # ============================================================
 
