@@ -3655,6 +3655,53 @@ def inject_language_switcher(response):
 </div>
 """
         body_pos = html.lower().rfind("</body>")
+        language = session.get("language", "en")
+        if language == "bn" and "reedoy-language-translator" not in html:
+            translations = dict(LANG)
+            translations.update({
+                "Total Workers": "মোট কর্মী",
+                "Present Today": "আজ উপস্থিত",
+                "Absent Today": "আজ অনুপস্থিত",
+                "Gross Salary": "মোট বেতন",
+                "Attendance": "উপস্থিতি",
+                "Payslip": "পে-স্লিপ",
+                "Workers": "কর্মী",
+                "Dashboard": "ড্যাশবোর্ড",
+                "Advance Salary": "অগ্রিম বেতন",
+                "Users": "ব্যবহারকারী",
+                "Activity Log": "কার্যক্রমের লগ",
+                "Backup": "ব্যাকআপ",
+                "Sync": "সিঙ্ক",
+                "Logout": "লগআউট",
+                "Department Salary": "বিভাগভিত্তিক বেতন",
+                "Reports": "রিপোর্ট",
+                "Accounts": "হিসাব",
+                "OT Report": "ওভারটাইম রিপোর্ট",
+                "Payments": "পেমেন্ট",
+                "Payment History": "পেমেন্টের ইতিহাস",
+                "Payroll Closing": "বেতন বন্ধ",
+                "Attendance & Calendar module is ready.": "উপস্থিতি ও ক্যালেন্ডার মডিউল প্রস্তুত।",
+                "Open Attendance & Calendar →": "উপস্থিতি ও ক্যালেন্ডার খুলুন →",
+                "View the selected worker monthly payslip.": "নির্বাচিত কর্মীর মাসিক পে-স্লিপ দেখুন।",
+                "Open Payslip →": "পে-স্লিপ খুলুন →",
+                "October": "অক্টোবর",
+            })
+            script = """<script id="reedoy-language-translator">
+(function(){
+const d=__DICT__;
+const keys=Object.keys(d).sort((a,b)=>b.length-a.length);
+function tr(s){const t=s.trim();if(!t)return s;if(d[t])return s.replace(t,d[t]);let o=t;keys.forEach(k=>{if(k.length>2&&o.includes(k))o=o.split(k).join(d[k]);});return o===t?s:s.replace(t,o);}
+function run(){
+const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);const a=[];while(w.nextNode())a.push(w.currentNode);
+a.forEach(n=>{if(n.parentElement&&n.parentElement.closest('#reedoy-language-switcher,script,style,textarea'))return;n.nodeValue=tr(n.nodeValue);});
+document.querySelectorAll('input[placeholder],input[title],button[title],select[title],textarea[placeholder]').forEach(e=>['placeholder','title'].forEach(a=>{if(e.hasAttribute(a))e.setAttribute(a,tr(e.getAttribute(a)));}));
+document.documentElement.lang='bn';
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
+})();
+</script>""".replace("__DICT__", json.dumps(translations, ensure_ascii=False))
+            body_pos = html.lower().rfind("</body>")
+            html = html[:body_pos] + script + html[body_pos:]
         html = html[:body_pos] + switcher + html[body_pos:]
         response.set_data(html)
     except Exception:
