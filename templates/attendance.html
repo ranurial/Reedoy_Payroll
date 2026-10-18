@@ -15,7 +15,7 @@ body{margin:0;background:#f3f6fb;color:#1e293b;font-family:Arial,"Noto Sans Beng
 {% if worker %}<div class="box"><div class="workername">{{ worker.bangla_name if language=='bn' and worker.bangla_name else worker.name }}</div><div class="muted">ID: {{ worker.id }} &nbsp; | &nbsp; Department: {{ worker.department or '' }} &nbsp; | &nbsp; Designation: {{ worker.designation or '' }} &nbsp; | &nbsp; Month: {{ month }}</div></div>
 <form method="post" action="{{ url_for('save_attendance') }}"><input type="hidden" name="worker_id" value="{{ worker.id }}"><input type="hidden" name="month" value="{{ month.split()[0] }}"><input type="hidden" name="year" value="{{ month.split()[1] }}">
 <div class="box"><h2>Monthly Summary</h2><div class="summary"><div class="stat"><label>Present Days</label><input type="number" min="0" name="present_days" value="{{ summary.get('present',0) }}"></div><div class="stat"><label>Absent Days</label><input type="number" min="0" name="absent_days" value="{{ summary.get('absent',0) }}"></div><div class="stat"><label>Overtime Hours</label><input type="number" min="0" step="0.01" name="ot_hours" value="{{ summary.get('ot',0) }}"></div><div class="stat"><label>Net Salary</label><b>৳ {{ '%.2f'|format(summary.get('net',0)|float) }}</b></div></div></div>
-<div class="box calendar"><h2>Daily Attendance — {{ month }}</h2><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><button type="button" class="btn" onclick="markAllAttendance('P')">✓ Mark All Present</button><button type="button" class="btn" style="background:#b91c1c" onclick="markAllAttendance('A')">✕ Mark All Absent</button><button type="button" class="btn" style="background:#64748b" onclick="markAllAttendance('')">↪ Clear All / Not Set</button></div><table><thead><tr><th>Day</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for d in days %}<tr class="{% if d.date.weekday()==4 %}weekend{% endif %}"><td class="day">{{ d.day }}</td><td>{{ d.date.strftime('%d-%b-%Y') }}</td><td><select name="day_{{ d.day }}"><option value="" {% if not d.status %}selected{% endif %}>-- Not Set --</option><option value="P" {% if d.status=='P' %}selected{% endif %}>P - Present</option><option value="A" {% if d.status=='A' %}selected{% endif %}>A - Absent</option></select></td></tr>{% endfor %}</tbody></table></div>
+<div class="box calendar"><h2>Daily Attendance — {{ month }}</h2><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><button type="button" class="btn" onclick="markAllAttendance('P')">✓ Mark All Present</button><button type="button" class="btn" style="background:#b91c1c" onclick="markAllAttendance('A')">✕ Mark All Absent</button><button type="button" class="btn" style="background:#64748b" onclick="markAllAttendance('')">↪ Clear All / Not Set</button></div><table><thead><tr><th>Day</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for d in days %}<tr class="{% if d.date.weekday()==4 %}weekend{% endif %}"><td class="day">{{ d.day }}</td><td>{{ d.date.strftime('%d-%b-%Y') }}</td><td><select name="day_{{ d.day }}" data-friday="{{ 1 if d.date.weekday()==4 else 0 }}"><option value="" {% if not d.status %}selected{% endif %}>-- Not Set --</option>{% if d.date.weekday()==4 %}<option value="OFF" {% if d.status=='OFF' %}selected{% endif %}>OFF - Weekly Holiday</option>{% endif %}<option value="P" {% if d.status=='P' %}selected{% endif %}>P - Present</option><option value="A" {% if d.status=='A' %}selected{% endif %}>A - Absent</option></select></td></tr>{% endfor %}</tbody></table></div>
 <div class="box"><button type="submit">Save Attendance</button> <a class="btn" style="background:#64748b" href="{{ url_for('attendance') }}">Clear</a></div></form>{% endif %}
 </main>
 <script>
@@ -55,12 +55,10 @@ document.addEventListener('DOMContentLoaded', function(){
 function markAllAttendance(status){
   var selects=document.querySelectorAll('select[name^="day_"]');
   selects.forEach(function(sel){
-    var row=sel.closest('tr');
-    var dayCell=row ? row.querySelector('.day') : null;
-    var dayNumber=dayCell ? parseInt(dayCell.textContent.trim(),10) : 0;
-    // Friday is the weekly holiday. It must always display as Absent.
-    if(row && row.classList.contains('weekend')){
-      sel.value='A';
+    var isFriday=sel.getAttribute('data-friday')==='1';
+    // Bulk actions preserve Friday as OFF; users can manually select P/A.
+    if(isFriday){
+      sel.value='OFF';
     } else {
       sel.value=status;
     }

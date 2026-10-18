@@ -2475,37 +2475,23 @@ def daily_map(worker_id, month):
 
     result = {}
 
-    # Preserve all stored non-Friday attendance
+    # Preserve explicitly stored statuses, including Friday OFF/P/A.
+    # Unrecorded Fridays are displayed as OFF without creating DB rows.
     for row in rows:
         try:
             day_number = int(row["day"])
         except Exception:
             continue
+        result[day_number] = str(row["status"] or "")
 
-        status = row["status"]
-
-        # Friday is ALWAYS A
-        if year is not None and month_number is not None:
-            try:
-                current_date = datetime.date(year, month_number, day_number)
-                if current_date.weekday() == 4:
-                    result[day_number] = "A"
-                    continue
-            except Exception:
-                pass
-
-        result[day_number] = str(status or "")
-
-    # Add Friday=A even when there is no database attendance row
     if year is not None and month_number is not None:
         for day_number in range(1, 32):
             try:
                 current_date = datetime.date(year, month_number, day_number)
             except ValueError:
                 break
-
-            if current_date.weekday() == 4:
-                result[day_number] = "A"
+            if current_date.weekday() == 4 and day_number not in result:
+                result[day_number] = "OFF"
 
     return result
 
@@ -2882,10 +2868,7 @@ def calculate_salary_bulk(
 
                     is_friday = False
 
-                if (
-                    status == "P"
-                    and not is_friday
-                ):
+                if status == "P":
 
                     billable_days += 1
 
@@ -3103,11 +3086,7 @@ def calculate_salary(
                 day
             )
 
-            if (
-                status == "P"
-                and current_date.weekday()
-                != 4
-            ):
+            if status == "P":
 
                 billable_days += 1
 
@@ -5400,8 +5379,6 @@ def attendance():
             for day_number, status in daily.items():
                 try:
                     current_date = datetime.date(year, month_number, int(day_number))
-                    if current_date.weekday() == 4:
-                        continue
                 except Exception:
                     continue
                 if status == "P":
@@ -5588,26 +5565,22 @@ def save_attendance():
 
         status_text = str(status or "").strip().upper()
 
-        # Friday is the weekly holiday. Keep it as Absent in the
-        # attendance calendar, while salary calculation separately
-        # ignores Friday for absent deduction.
+        # Friday supports explicit OFF, P, or A. Other days support P/A
+        # (and blank to clear an existing record).
         try:
-            current_date = datetime.date(
-                attendance_year,
-                attendance_month,
-                day_number,
-            )
-            if current_date.weekday() == 4:
-                status_text = "A"
+            current_date = datetime.date(attendance_year, attendance_month, day_number)
+            is_friday = current_date.weekday() == 4
         except Exception:
-            pass
+            is_friday = False
 
         if not status_text or status_text in {"-", "NOT SET", "NONE"}:
             # Explicitly clear an existing daily attendance record.
             # A blank/Not Set selection means the user wants that day's P/A record removed, if one exists.
             unset_daily.add(day_number)
             continue
-        if status_text.startswith("A"):
+        if is_friday and status_text in {"OFF", "O"}:
+            normalized_daily[day_number] = "OFF"
+        elif status_text.startswith("A"):
             normalized_daily[day_number] = "A"
         elif status_text.startswith("P"):
             normalized_daily[day_number] = "P"
@@ -5693,11 +5666,8 @@ def save_attendance():
                 try:
                     day_number = int(row[0])
                     status_value = str(row[1] or "").upper()
-                    # Friday is the weekly holiday and never counts as
-                    # Present or Absent for monthly salary attendance.
-                    current_date = datetime.date(year, month_number, day_number)
-                    if current_date.weekday() == 4:
-                        continue
+                    # Count explicit P/A statuses even on Friday.
+                    # OFF remains a weekly holiday and is excluded.
                     if status_value == "P":
                         present += 1
                     elif status_value == "A":
