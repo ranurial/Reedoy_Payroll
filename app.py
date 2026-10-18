@@ -2830,6 +2830,10 @@ def calculate_salary_bulk(
         # Nasta
         # ----------------------------------------------------
 
+        # Daily attendance uses actual calendar length; salary remains
+        # on the fixed 30-day payroll basis.
+        calendar_days = calendar.monthrange(year, month_number)[1]
+
         daily = daily_by_worker.get(
             worker_id,
             {}
@@ -2841,7 +2845,7 @@ def calculate_salary_bulk(
 
             for day in range(
                 1,
-                days_in_month + 1
+                calendar_days + 1
             ):
 
                 status = daily.get(
@@ -2883,7 +2887,7 @@ def calculate_salary_bulk(
                 1
                 for day in range(
                     1,
-                    days_in_month + 1
+                    calendar_days + 1
                 )
                 if datetime.date(
                     year,
@@ -2892,13 +2896,13 @@ def calculate_salary_bulk(
                 ).weekday() != 4
             )
 
-            if days_in_month:
+            if calendar_days:
 
                 nasta = round(
                     present
                     * (
                         non_friday_days
-                        / days_in_month
+                        / calendar_days
                     )
                     * nasta_rate,
                     2,
@@ -3061,6 +3065,10 @@ def calculate_salary(
         overtime * ot_rate
     )
 
+    # Daily attendance uses actual calendar length; salary remains
+    # on the fixed 30-day payroll basis.
+    calendar_days = calendar.monthrange(year, month_number)[1]
+
     daily = daily_map(
         worker["id"],
         month
@@ -3072,7 +3080,7 @@ def calculate_salary(
 
         for day in range(
             1,
-            days_in_month + 1
+            calendar_days + 1
         ):
 
             status = daily.get(
@@ -3101,7 +3109,7 @@ def calculate_salary(
             1
             for day in range(
                 1,
-                days_in_month + 1
+                calendar_days + 1
             )
             if datetime.date(
                 year,
@@ -3115,12 +3123,12 @@ def calculate_salary(
                 present
                 * (
                     non_friday_days
-                    / days_in_month
+                    / calendar_days
                 )
                 * nasta_rate,
                 2,
             )
-            if days_in_month
+            if calendar_days
             else 0
         )
 
